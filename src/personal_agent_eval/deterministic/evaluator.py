@@ -207,9 +207,7 @@ class DeterministicEvaluator:
             source="declarative",
             passed=passed,
             message=(
-                None
-                if passed
-                else "Recorded tool call count did not match the expected value."
+                None if passed else "Recorded tool call count did not match the expected value."
             ),
             outputs={
                 "expected_count": declarative.count,
@@ -352,9 +350,7 @@ class DeterministicEvaluator:
             hook_context = DeterministicHookContext(
                 check_id=check.check_id,
                 description=check.description,
-                case_source_path=(
-                    None if case_source_path is None else str(case_source_path)
-                ),
+                case_source_path=(None if case_source_path is None else str(case_source_path)),
             )
             raw_result = self._invoke_hook(hook_callable, artifact, hook_context)
             normalized = self._normalize_hook_result(raw_result)
@@ -469,9 +465,7 @@ class DeterministicEvaluator:
             kind=kind,
             source=source,
             outcome=(
-                DeterministicCheckOutcome.PASSED
-                if passed
-                else DeterministicCheckOutcome.FAILED
+                DeterministicCheckOutcome.PASSED if passed else DeterministicCheckOutcome.FAILED
             ),
             passed=passed,
             description=check.description,

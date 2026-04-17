@@ -109,12 +109,7 @@ def test_llm_probe_runner_builds_success_artifact_from_case_profile_and_model() 
     assert artifact.request.metadata["attachments"] == [
         str(
             (
-                FIXTURES_ROOT
-                / "configs"
-                / "cases"
-                / "example_case"
-                / "artifacts"
-                / "prompt.txt"
+                FIXTURES_ROOT / "configs" / "cases" / "example_case" / "artifacts" / "prompt.txt"
             ).resolve()
         )
     ]

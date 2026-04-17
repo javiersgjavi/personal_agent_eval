@@ -119,10 +119,7 @@ class ReuseDecision(ArtifactModel):
     requested_run_fingerprint: str = Field(pattern=FINGERPRINT_HEX_PATTERN)
     requested_evaluation_fingerprint: str = Field(pattern=FINGERPRINT_HEX_PATTERN)
     stored_run_fingerprint: str | None = Field(default=None, pattern=FINGERPRINT_HEX_PATTERN)
-    stored_evaluation_fingerprint: str | None = Field(
-        default=None, pattern=FINGERPRINT_HEX_PATTERN
-    )
+    stored_evaluation_fingerprint: str | None = Field(default=None, pattern=FINGERPRINT_HEX_PATTERN)
     run_reusable: bool
     evaluation_reusable: bool
     action: ReuseAction
-

@@ -110,7 +110,10 @@ def build_parser() -> argparse.ArgumentParser:
     eval_parent.add_argument(
         "--evaluation-profile",
         required=True,
-        help="Evaluation profile path or evaluation_profile_id discovered under configs/evaluation_profiles/.",
+        help=(
+            "Evaluation profile path or evaluation_profile_id discovered under "
+            "configs/evaluation_profiles/."
+        ),
     )
     eval_parent.add_argument(
         "--output",

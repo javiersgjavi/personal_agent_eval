@@ -430,9 +430,9 @@ def test_e2e_same_run_different_evaluation_profile_re_evaluates_only(
 
     alternate_eval = workspace_root / "configs" / "evaluation_profiles" / "alternate.yaml"
     alternate_payload = yaml.safe_load(
-        (
-            workspace_root / "configs" / "evaluation_profiles" / "default.yaml"
-        ).read_text(encoding="utf-8")
+        (workspace_root / "configs" / "evaluation_profiles" / "default.yaml").read_text(
+            encoding="utf-8"
+        )
     )
     alternate_payload["evaluation_profile_id"] = "alternate"
     alternate_payload["final_aggregation"]["dimensions"]["task"]["judge_weight"] = 0.9

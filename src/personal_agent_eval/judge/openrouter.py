@@ -32,9 +32,7 @@ class JudgeInvocation:
     @property
     def raw_result_ref(self) -> str:
         """Return the stable raw result reference for the attempt."""
-        return (
-            f"{self.judge_name}:repetition:{self.repetition_index}:attempt:{self.attempt_index}"
-        )
+        return f"{self.judge_name}:repetition:{self.repetition_index}:attempt:{self.attempt_index}"
 
 
 class OpenRouterJudgeBackend(Protocol):

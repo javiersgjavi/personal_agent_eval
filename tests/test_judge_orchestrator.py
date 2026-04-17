@@ -121,9 +121,7 @@ def _valid_contract(
 
 
 def test_build_judge_messages_includes_case_artifact_and_deterministic_summary() -> None:
-    config = load_test_config(
-        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
-    )
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
 
     messages = build_judge_messages(
         judge_name="rubric_judge",

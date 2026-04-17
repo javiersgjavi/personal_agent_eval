@@ -232,9 +232,9 @@ class DeterministicCheck(ConfigModel):
 
     check_id: str = Field(pattern=ID_PATTERN)
     description: str | None = None
-    dimensions: list[
-        Literal["task", "process", "autonomy", "closeness", "efficiency", "spark"]
-    ] = Field(default_factory=list)
+    dimensions: list[Literal["task", "process", "autonomy", "closeness", "efficiency", "spark"]] = (
+        Field(default_factory=list)
+    )
     declarative: DeclarativeCheck | None = None
     python_hook: PythonHook | None = None
 

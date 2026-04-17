@@ -22,9 +22,7 @@ class FakeRuntime:
         self.calls: list[tuple[str, dict[str, str]]] = []
 
     def run(self, *, suite_path: str, run_profile_path: str) -> WorkflowResult:
-        self.calls.append(
-            ("run", {"suite_path": suite_path, "run_profile_path": run_profile_path})
-        )
+        self.calls.append(("run", {"suite_path": suite_path, "run_profile_path": run_profile_path}))
         return _workflow_result("run")
 
     def evaluate(
@@ -207,7 +205,9 @@ def test_cli_resolves_ids_from_conventional_directories(
         (
             "run-eval",
             {
-                "suite_path": str((tmp_path / "configs" / "suites" / "example_suite.yaml").resolve()),
+                "suite_path": str(
+                    (tmp_path / "configs" / "suites" / "example_suite.yaml").resolve()
+                ),
                 "run_profile_path": str(
                     (tmp_path / "configs" / "run_profiles" / "default.yaml").resolve()
                 ),
@@ -260,9 +260,7 @@ def _workflow_result(command: str) -> WorkflowResult:
                 evaluation_fingerprint=None if command == "run" else "b" * 64,
                 run_action=RunAction.REUSED,
                 evaluation_action=(
-                    EvaluationAction.SKIPPED
-                    if command == "run"
-                    else EvaluationAction.REUSED
+                    EvaluationAction.SKIPPED if command == "run" else EvaluationAction.REUSED
                 ),
                 run_status="success",
                 evaluation_status=None if command == "run" else "success",

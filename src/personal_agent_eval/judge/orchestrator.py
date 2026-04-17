@@ -127,9 +127,7 @@ class JudgeOrchestrator:
 
                 warnings.extend(normalized.warnings)
                 if attempt_index < max_retries:
-                    warnings.append(
-                        "Retrying iteration after invalid judge output."
-                    )
+                    warnings.append("Retrying iteration after invalid judge output.")
                     continue
                 return normalized
 
@@ -138,8 +136,7 @@ class JudgeOrchestrator:
             )
             if attempt_index < max_retries:
                 warnings.append(
-                    f"Retrying repetition {repetition_index} after "
-                    f"'{raw_result.status.value}'."
+                    f"Retrying repetition {repetition_index} after '{raw_result.status.value}'."
                 )
                 continue
 
@@ -287,9 +284,7 @@ def aggregate_judge_results(
 ) -> AggregatedJudgeResult:
     """Aggregate successful judge iterations with median scoring."""
     successful = [
-        result
-        for result in iteration_results
-        if result.status is JudgeIterationStatus.SUCCESS
+        result for result in iteration_results if result.status is JudgeIterationStatus.SUCCESS
     ]
     used_repetition_indices = [result.repetition_index for result in successful]
     excluded_repetition_indices = [
@@ -356,10 +351,7 @@ def _median_dimension(
     results: list[NormalizedJudgeIterationResult],
     field_name: str,
 ) -> float:
-    values = [
-        getattr(cast(JudgeDimensions, result.dimensions), field_name)
-        for result in results
-    ]
+    values = [getattr(cast(JudgeDimensions, result.dimensions), field_name) for result in results]
     return float(median(values))
 
 
@@ -384,7 +376,5 @@ def _collect_evidence_warnings(evidence: JudgeEvidence) -> list[str]:
         entries = getattr(evidence, field_name)
         non_empty_entries = [entry for entry in entries if entry.strip()]
         if not non_empty_entries:
-            warnings.append(
-                f"Evidence for dimension '{field_name}' was present but incomplete."
-            )
+            warnings.append(f"Evidence for dimension '{field_name}' was present but incomplete.")
     return warnings

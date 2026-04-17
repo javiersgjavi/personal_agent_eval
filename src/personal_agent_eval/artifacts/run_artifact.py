@@ -81,9 +81,7 @@ class RunRequestMetadata(ArtifactModel):
 
     requested_model: str
     gateway: str | None = None
-    execution_parameters: LlmExecutionParameters = Field(
-        default_factory=LlmExecutionParameters
-    )
+    execution_parameters: LlmExecutionParameters = Field(default_factory=LlmExecutionParameters)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

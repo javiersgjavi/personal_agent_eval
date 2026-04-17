@@ -143,8 +143,7 @@ def test_hybrid_aggregation_falls_back_to_judge_when_deterministic_signal_is_mis
     assert result.final_dimensions.task == 7.0
     assert result.dimension_resolutions.task.source_used == "judge"
     assert (
-        "Deterministic score missing for 'task'; judge score used as fallback."
-        in result.warnings
+        "Deterministic score missing for 'task'; judge score used as fallback." in result.warnings
     )
     assert "Excluded non-successful repetitions from aggregation: 2." in result.warnings
 

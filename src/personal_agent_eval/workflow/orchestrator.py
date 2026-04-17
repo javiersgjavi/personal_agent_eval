@@ -286,9 +286,7 @@ class WorkflowOrchestrator:
                 warnings=_run_warnings(run_artifact),
             )
 
-        evaluation_input = build_evaluation_fingerprint_input(
-            evaluation_profile=evaluation_profile
-        )
+        evaluation_input = build_evaluation_fingerprint_input(evaluation_profile=evaluation_profile)
         evaluation_fingerprint = evaluation_input.fingerprint
         self._ensure_evaluation_space(
             evaluation_fingerprint=evaluation_fingerprint,
@@ -358,7 +356,10 @@ class WorkflowOrchestrator:
                     warnings=_deduplicate(
                         [
                             *_run_warnings(run_artifact),
-                            f"Unable to recompute final evaluation result: {type(exc).__name__}: {exc}",
+                            (
+                                "Unable to recompute final evaluation result: "
+                                f"{type(exc).__name__}: {exc}"
+                            ),
                         ]
                     ),
                 )
@@ -412,7 +413,10 @@ class WorkflowOrchestrator:
                         [
                             *_run_warnings(run_artifact),
                             *judge_result.warnings,
-                            f"Unable to compute final evaluation result: {type(exc).__name__}: {exc}",
+                            (
+                                "Unable to compute final evaluation result: "
+                                f"{type(exc).__name__}: {exc}"
+                            ),
                         ]
                     ),
                 )
@@ -661,8 +665,7 @@ def _build_summary(
             result.evaluation_action is EvaluationAction.REUSED for result in results
         ),
         final_results_recomputed=sum(
-            result.evaluation_action is EvaluationAction.FINAL_RECOMPUTED
-            for result in results
+            result.evaluation_action is EvaluationAction.FINAL_RECOMPUTED for result in results
         ),
     )
 
@@ -683,8 +686,7 @@ def _combine_aggregated_judges(judge_results: list[AggregatedJudgeResult]) -> Ag
     judge_summaries: list[str] = []
     dimension_sources = []
     evidence = {
-        name: []
-        for name in ("task", "process", "autonomy", "closeness", "efficiency", "spark")
+        name: [] for name in ("task", "process", "autonomy", "closeness", "efficiency", "spark")
     }
 
     repetition_offset = 0

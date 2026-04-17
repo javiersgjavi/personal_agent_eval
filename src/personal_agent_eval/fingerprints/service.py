@@ -315,9 +315,7 @@ def _normalize_for_hash(value: Any) -> Any:
         return value.name
     if isinstance(value, Mapping):
         normalized = {
-            str(key): _normalize_for_hash(item)
-            for key, item in value.items()
-            if item is not None
+            str(key): _normalize_for_hash(item) for key, item in value.items() if item is not None
         }
         return {key: normalized[key] for key in sorted(normalized)}
     if isinstance(value, Sequence) and not isinstance(value, str | bytes | bytearray):

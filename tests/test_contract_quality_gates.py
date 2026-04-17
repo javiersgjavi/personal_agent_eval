@@ -241,8 +241,7 @@ def test_run_fingerprint_ignores_non_semantic_case_relocation_and_profile_naming
     assert original_input.payload == moved_input.payload
 
 
-def test_evaluation_fingerprint_ignores_non_semantic_reordering_but_changes_on_aggregation_change(
-) -> None:
+def test_evaluation_fingerprint_reorder_vs_aggregation_change() -> None:
     evaluation_profile = load_evaluation_profile(
         FIXTURES_ROOT / "configs" / "evaluation_profiles" / "default.yaml"
     )
@@ -377,12 +376,18 @@ def test_storage_layout_is_frozen_and_isolates_results_per_run_fingerprint(tmp_p
         / case_id
         / "final_result.json"
     )
-    assert storage.read_case_final_result(
-        evaluation_fingerprint, first_run_fingerprint, case_id
-    ).final_score == 7.0
-    assert storage.read_case_final_result(
-        evaluation_fingerprint, second_run_fingerprint, case_id
-    ).final_score == 8.5
+    assert (
+        storage.read_case_final_result(
+            evaluation_fingerprint, first_run_fingerprint, case_id
+        ).final_score
+        == 7.0
+    )
+    assert (
+        storage.read_case_final_result(
+            evaluation_fingerprint, second_run_fingerprint, case_id
+        ).final_score
+        == 8.5
+    )
 
 
 def _copy_case_fixture(*, original_case: Path, target_dir: Path) -> Path:

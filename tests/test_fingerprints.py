@@ -69,7 +69,9 @@ def test_run_fingerprint_is_stable_across_equivalent_case_paths(tmp_path: Path) 
 
 
 def test_run_fingerprint_changes_when_execution_settings_change() -> None:
-    test_config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
+    test_config = load_test_config(
+        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+    )
     run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "default.yaml")
     suite = load_suite_config(FIXTURES_ROOT / "configs" / "suites" / "example_suite.yaml")
     model_selection = suite.models[0]

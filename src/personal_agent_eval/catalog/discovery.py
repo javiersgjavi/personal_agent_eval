@@ -102,9 +102,7 @@ def expand_suite(root_path: str | Path, suite_id: str) -> list[CaseManifest]:
     include_tags = set(selection.include_tags)
     exclude_tags = set(selection.exclude_tags)
 
-    selected: dict[str, CaseManifest] = {
-        case_id: cases[case_id] for case_id in explicit_case_ids
-    }
+    selected: dict[str, CaseManifest] = {case_id: cases[case_id] for case_id in explicit_case_ids}
 
     for case_id, manifest in cases.items():
         if case_id in selected:
@@ -130,12 +128,9 @@ def _matches_any_tag(manifest: CaseManifest, tags: set[str]) -> bool:
     return bool(set(manifest.config.tags) & tags)
 
 
-def _validate_case_references(
-    *, cases: dict[str, CaseManifest], suite: SuiteManifest
-) -> None:
-    referenced_case_ids = (
-        set(suite.config.case_selection.include_case_ids)
-        | set(suite.config.case_selection.exclude_case_ids)
+def _validate_case_references(*, cases: dict[str, CaseManifest], suite: SuiteManifest) -> None:
+    referenced_case_ids = set(suite.config.case_selection.include_case_ids) | set(
+        suite.config.case_selection.exclude_case_ids
     )
     missing_case_ids = sorted(case_id for case_id in referenced_case_ids if case_id not in cases)
     if missing_case_ids:

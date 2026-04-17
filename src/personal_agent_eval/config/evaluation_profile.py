@@ -90,12 +90,7 @@ class FinalScoreWeights(ConfigModel):
     @model_validator(mode="after")
     def _validate_non_zero_sum(self) -> FinalScoreWeights:
         if (
-            self.task
-            + self.process
-            + self.autonomy
-            + self.closeness
-            + self.efficiency
-            + self.spark
+            self.task + self.process + self.autonomy + self.closeness + self.efficiency + self.spark
             <= 0
         ):
             raise ValueError("At least one final_score_weight must be greater than zero.")

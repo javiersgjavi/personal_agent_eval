@@ -12,13 +12,10 @@ def render_table(headers: Sequence[str], rows: Sequence[Sequence[str]]) -> str:
         for index, cell in enumerate(row):
             widths[index] = max(widths[index], len(cell))
 
-    header_line = "  ".join(
-        header.ljust(widths[index]) for index, header in enumerate(headers)
-    )
+    header_line = "  ".join(header.ljust(widths[index]) for index, header in enumerate(headers))
     divider_line = "  ".join("-" * width for width in widths)
     row_lines = [
-        "  ".join(cell.ljust(widths[index]) for index, cell in enumerate(row))
-        for row in rows
+        "  ".join(cell.ljust(widths[index]) for index, cell in enumerate(row)) for row in rows
     ]
     return "\n".join([header_line, divider_line, *row_lines])
 
@@ -36,4 +33,3 @@ def render_bar(label: str, value: float | None, *, width: int = 20) -> str:
 def join_sections(sections: Iterable[str]) -> str:
     """Join non-empty rendered sections with a blank line."""
     return "\n\n".join(section for section in sections if section.strip())
-

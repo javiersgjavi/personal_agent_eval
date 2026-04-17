@@ -155,10 +155,7 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
         is True
     )
     assert storage.read_evaluation_manifest(evaluation_fingerprint) == manifest
-    assert (
-        storage.read_evaluation_fingerprint_input(evaluation_fingerprint)
-        == fingerprint_input
-    )
+    assert storage.read_evaluation_fingerprint_input(evaluation_fingerprint) == fingerprint_input
     assert (
         storage.read_case_judge_result(
             evaluation_fingerprint,

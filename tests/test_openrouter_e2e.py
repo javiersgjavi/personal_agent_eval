@@ -22,9 +22,7 @@ DEFAULT_E2E_MODEL = "openai/gpt-4o-mini"
 
 def _require_openrouter_e2e_env() -> tuple[str, str]:
     if os.getenv(RUN_E2E_ENV_VAR) != "1":
-        pytest.skip(
-            f"Set {RUN_E2E_ENV_VAR}=1 to allow the real OpenRouter smoke test to run."
-        )
+        pytest.skip(f"Set {RUN_E2E_ENV_VAR}=1 to allow the real OpenRouter smoke test to run.")
 
     if not os.getenv("OPENROUTER_API_KEY"):
         pytest.skip("Set OPENROUTER_API_KEY to run the real OpenRouter smoke test.")
@@ -109,9 +107,7 @@ def test_openrouter_smoke_run_eval_executes_real_provider_and_judge_requests(
     assert judge_result.summary.strip()
     assert judge_result.raw_results
     assert judge_result.raw_results[0].parsed_response is not None
-    judge_contract = JudgeOutputContract.model_validate(
-        judge_result.raw_results[0].parsed_response
-    )
+    judge_contract = JudgeOutputContract.model_validate(judge_result.raw_results[0].parsed_response)
     assert judge_contract.summary.strip()
     assert judge_contract.dimensions.task is not None
 
@@ -170,9 +166,9 @@ def _build_workspace(tmp_path: Path, *, run_model: str, judge_model: str) -> Pat
     )
 
     evaluation_payload = yaml.safe_load(
-        (
-            workspace_root / "configs" / "evaluation_profiles" / "default.yaml"
-        ).read_text(encoding="utf-8")
+        (workspace_root / "configs" / "evaluation_profiles" / "default.yaml").read_text(
+            encoding="utf-8"
+        )
     )
     evaluation_payload["evaluation_profile_id"] = "openrouter_full_e2e"
     evaluation_payload["title"] = "OpenRouter full e2e profile"
@@ -190,9 +186,7 @@ def _build_workspace(tmp_path: Path, *, run_model: str, judge_model: str) -> Pat
             "repetitions": 1,
         }
     ]
-    (
-        workspace_root / "configs" / "evaluation_profiles" / "openrouter_full_e2e.yaml"
-    ).write_text(
+    (workspace_root / "configs" / "evaluation_profiles" / "openrouter_full_e2e.yaml").write_text(
         yaml.safe_dump(evaluation_payload, sort_keys=False),
         encoding="utf-8",
     )

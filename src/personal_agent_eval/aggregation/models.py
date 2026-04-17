@@ -44,9 +44,7 @@ class DimensionResolutions(ArtifactModel):
 class SecurityBlock(ArtifactModel):
     """Security status preserved on the final evaluation result."""
 
-    verdict: Literal["not_evaluated", "passed", "needs_review", "critical_fail"] = (
-        "not_evaluated"
-    )
+    verdict: Literal["not_evaluated", "passed", "needs_review", "critical_fail"] = "not_evaluated"
     warnings: list[str] = Field(default_factory=list)
 
 

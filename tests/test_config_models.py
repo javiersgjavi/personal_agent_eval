@@ -23,21 +23,18 @@ def test_load_test_config_normalizes_paths_and_defaults() -> None:
 
     assert config.case_id == "example_case"
     assert config.tags == ["llm_probe", "smoke"]
-    assert config.source_path == (
-        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
-    ).resolve()
+    assert (
+        config.source_path
+        == (FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml").resolve()
+    )
     assert config.input.messages[1].source is not None
-    assert config.input.messages[1].source.path == (
-        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "messages.yaml"
-    ).resolve()
+    assert (
+        config.input.messages[1].source.path
+        == (FIXTURES_ROOT / "configs" / "cases" / "example_case" / "messages.yaml").resolve()
+    )
     assert config.input.attachments == [
         (
-            FIXTURES_ROOT
-            / "configs"
-            / "cases"
-            / "example_case"
-            / "artifacts"
-            / "prompt.txt"
+            FIXTURES_ROOT / "configs" / "cases" / "example_case" / "artifacts" / "prompt.txt"
         ).resolve()
     ]
     assert config.deterministic_checks[0].declarative is not None
@@ -45,9 +42,12 @@ def test_load_test_config_normalizes_paths_and_defaults() -> None:
     assert config.deterministic_checks[0].dimensions == ["process"]
     assert config.deterministic_checks[1].python_hook is not None
     assert config.deterministic_checks[1].dimensions == ["task"]
-    assert config.deterministic_checks[1].python_hook.path == (
-        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "hooks" / "custom_check.py"
-    ).resolve()
+    assert (
+        config.deterministic_checks[1].python_hook.path
+        == (
+            FIXTURES_ROOT / "configs" / "cases" / "example_case" / "hooks" / "custom_check.py"
+        ).resolve()
+    )
 
 
 def test_load_suite_config_from_fixture() -> None:

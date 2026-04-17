@@ -80,9 +80,7 @@ def build_artifact(
 
 
 def test_evaluator_runs_standard_checks_from_test_config_fixture() -> None:
-    config = load_test_config(
-        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
-    )
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
     artifact = build_artifact()
 
     result = evaluate_test_config_deterministic_checks(config, artifact)
@@ -165,9 +163,7 @@ def test_evaluator_supports_standard_v1_checks_with_filesystem_paths(tmp_path: P
 
 
 def test_evaluator_records_failed_check_outputs() -> None:
-    config = load_test_config(
-        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
-    )
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
     artifact = build_artifact(final_output=None)
 
     result = evaluate_test_config_deterministic_checks(config, artifact)
@@ -232,9 +228,7 @@ def test_evaluator_supports_import_path_hooks(
 
 
 def test_evaluator_can_disable_local_python_hooks() -> None:
-    config = load_test_config(
-        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
-    )
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
     evaluator = DeterministicEvaluator(allow_local_python_hooks=False)
 
     result = evaluator.evaluate_test_config(config, build_artifact())
@@ -247,9 +241,7 @@ def test_evaluator_can_disable_local_python_hooks() -> None:
 
 
 def test_evaluate_deterministic_checks_accepts_explicit_list() -> None:
-    config = load_test_config(
-        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
-    )
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
 
     result = evaluate_deterministic_checks(
         config.deterministic_checks,
