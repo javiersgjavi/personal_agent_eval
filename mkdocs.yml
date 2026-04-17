@@ -1,0 +1,16 @@
+site_name: personal_agent_eval
+site_description: Evaluation framework for LLM and agent-style systems
+site_url: https://example.invalid/personal-agent-eval
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - Concepts:
+      - Configuration: configuration.md
+      - Run Artifacts: run_artifacts.md
+      - Judge Results: judge_results.md
+      - Hybrid Evaluation: hybrid_evaluation.md
+  - Examples:
+      - Minimal llm_probe: examples/minimal_llm_probe.md
+docs_dir: docs

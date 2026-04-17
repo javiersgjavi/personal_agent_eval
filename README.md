@@ -1,30 +1,78 @@
-# benchmark-openclaw-llm
+# personal_agent_eval
 
-Repository for the `personal_agent_eval` evaluation library.
+`personal_agent_eval` is a reusable evaluation library for LLM and agent-style systems.
+
+V1 focuses on `llm_probe` and provides:
+
+- YAML-driven case, suite, run-profile, and evaluation-profile configuration
+- canonical run artifacts
+- deterministic evaluation
+- judge orchestration
+- hybrid aggregation
+- a Python package under `src/personal_agent_eval/`
+- a CLI entrypoint named `pae`
+
+`openclaw` is part of the design, but it is a later runtime extension rather than a V1
+execution target.
 
 ## Status
 
-- Previous code and documentation are preserved under `archive/`
-- Internal planning documents live under `internal_docs/`
-- The new implementation has started with package bootstrap only
-- The canonical configuration format is planned around YAML
+Implemented in the current V1 codebase:
 
-## Current Direction
+- package bootstrap
+- canonical config loading and validation
+- case and suite discovery
+- canonical run artifact models
+- `llm_probe` runner
+- deterministic evaluation
+- judge orchestration
+- hybrid aggregation
 
-- reusable evaluation framework
-- `llm_probe` as the V1 implementation target
-- `openclaw` designed as a later extension
-- complete execution and evaluation artifacts
-- hybrid judging and incremental reuse
+Still pending in V1:
 
-## Python Bootstrap
+- fingerprints and reuse rules
+- storage layout
+- full CLI orchestration
+- reporting
+- final quality gates
 
-- Install the library in editable mode with `uv sync --group dev`
-- The initial public CLI entry point is `pae`
-- The package source layout lives under `src/personal_agent_eval/`
-- The current bootstrap scope only provides package import, package metadata, and CLI wiring for future domains
+## Install
+
+```bash
+uv sync --group dev
+```
+
+## Package Layout
+
+- source code: `src/personal_agent_eval/`
+- tests: `tests/`
+- public docs: `docs/`
 
 ## Public Docs
 
+- [Docs index](docs/index.md)
+- [Getting started](docs/getting_started.md)
 - [Configuration](docs/configuration.md)
 - [Run artifacts](docs/run_artifacts.md)
+- [Judge results](docs/judge_results.md)
+- [Hybrid evaluation](docs/hybrid_evaluation.md)
+- [Minimal llm_probe example](docs/examples/minimal_llm_probe.md)
+
+## Documentation Site
+
+The repository now includes an `mkdocs` configuration:
+
+```bash
+mkdocs serve
+```
+
+or, with `uv`:
+
+```bash
+uv run mkdocs serve
+```
+
+## Notes
+
+- historical benchmark material remains under `archive/` for reference only
+- internal planning lives under `internal_docs/` and is not part of the public library docs

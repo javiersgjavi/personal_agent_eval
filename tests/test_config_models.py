@@ -12,6 +12,7 @@ from personal_agent_eval.config import (
     load_suite_config,
     load_test_config,
 )
+from personal_agent_eval.config.test_config import FileExistsCheck
 
 FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "config"
 Loader = Callable[[Path], object]
@@ -30,7 +31,11 @@ def test_load_test_config_normalizes_paths_and_defaults() -> None:
     assert config.input.attachments == [
         (FIXTURES_ROOT / "cases" / "example_case" / "artifacts" / "prompt.txt").resolve()
     ]
+    assert config.deterministic_checks[0].declarative is not None
+    assert config.deterministic_checks[0].declarative.kind == "final_response_present"
+    assert config.deterministic_checks[0].dimensions == ["process"]
     assert config.deterministic_checks[1].python_hook is not None
+    assert config.deterministic_checks[1].dimensions == ["task"]
     assert config.deterministic_checks[1].python_hook.path == (
         FIXTURES_ROOT / "cases" / "example_case" / "hooks" / "custom_check.py"
     ).resolve()
@@ -58,6 +63,10 @@ def test_load_evaluation_profile_from_fixture() -> None:
     assert config.evaluation_profile_id == "default"
     assert config.anchors.enabled is True
     assert config.judge_runs[0].repetitions == 3
+    assert config.aggregation.method == "median"
+    assert config.final_aggregation.default_policy == "judge_only"
+    assert config.final_aggregation.dimensions.task.policy == "weighted"
+    assert config.final_aggregation.final_score_weights.task == 0.3
 
 
 @pytest.mark.parametrize(
@@ -186,6 +195,28 @@ def test_test_loader_applies_empty_defaults(tmp_path: Path) -> None:
     assert config.metadata == {}
 
 
+def test_evaluation_profile_rejects_incomplete_weighted_final_aggregation(tmp_path: Path) -> None:
+    path = tmp_path / "evaluation.yaml"
+    path.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "evaluation_profile_id: weighted_missing",
+                "title: Weighted Missing",
+                "final_aggregation:",
+                "  dimensions:",
+                "    task:",
+                "      policy: weighted",
+                "      judge_weight: 0.7",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="Weighted final aggregation requires"):
+        load_evaluation_profile(path)
+
+
 def test_test_loader_requires_message_content_or_source(tmp_path: Path) -> None:
     path = tmp_path / "test.yaml"
     path.write_text(
@@ -230,6 +261,63 @@ def test_test_loader_requires_hook_path_or_import(tmp_path: Path) -> None:
     )
 
     with pytest.raises(ConfigError, match="requires either 'import_path' or 'path'"):
+        load_test_config(path)
+
+
+def test_test_loader_resolves_declarative_check_paths(tmp_path: Path) -> None:
+    path = tmp_path / "test.yaml"
+    (tmp_path / "outputs").mkdir()
+    path.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "case_id: path_case",
+                "title: Path case",
+                "runner:",
+                "  type: llm_probe",
+                "input:",
+                "  messages: []",
+                "deterministic_checks:",
+                "  - check_id: output_file",
+                "    declarative:",
+                "      kind: file_exists",
+                "      path: outputs/result.txt",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    config = load_test_config(path)
+    declarative = config.deterministic_checks[0].declarative
+
+    assert isinstance(declarative, FileExistsCheck)
+    assert declarative.path == (tmp_path / "outputs" / "result.txt").resolve()
+
+
+def test_test_loader_requires_output_artifact_matcher(tmp_path: Path) -> None:
+    path = tmp_path / "test.yaml"
+    path.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "case_id: artifact_case",
+                "title: Artifact case",
+                "runner:",
+                "  type: llm_probe",
+                "input:",
+                "  messages: []",
+                "deterministic_checks:",
+                "  - check_id: missing_matcher",
+                "    declarative:",
+                "      kind: output_artifact_present",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="requires at least one matcher field"):
         load_test_config(path)
 
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     ConfigDict,
@@ -105,13 +105,93 @@ class Expectations(ConfigModel):
     soft_expectations: list[Expectation] = Field(default_factory=list)
 
 
-class DeclarativeCheck(ConfigModel):
-    """A deterministic declarative assertion."""
+class _ResolvedPathCheck(ConfigModel):
+    """Base model for declarative checks that resolve a local path."""
 
-    kind: Literal["contains_text", "matches_regex", "json_path_equals"]
-    target: Literal["final_output", "full_trace", "metadata"] = "final_output"
-    value: str
-    description: str | None = None
+    path: Path
+
+    @field_validator("path", mode="before")
+    @classmethod
+    def _coerce_path(cls, value: object) -> object:
+        if isinstance(value, str):
+            return Path(value)
+        return value
+
+    @field_validator("path")
+    @classmethod
+    def _resolve_path(cls, value: Path, info: ValidationInfo) -> Path:
+        base_path = info.context.get("base_path") if info.context else None
+        if base_path is None:
+            return value.expanduser().resolve()
+        return (base_path / value).expanduser().resolve()
+
+
+class FinalResponsePresentCheck(ConfigModel):
+    """Require a non-empty final response in the run trace."""
+
+    kind: Literal["final_response_present"]
+
+
+class ToolCallCountCheck(ConfigModel):
+    """Require an exact number of recorded tool calls."""
+
+    kind: Literal["tool_call_count"]
+    count: int = Field(ge=0)
+
+
+class FileExistsCheck(_ResolvedPathCheck):
+    """Require a file path to exist and be a regular file."""
+
+    kind: Literal["file_exists"]
+
+
+class FileContainsCheck(_ResolvedPathCheck):
+    """Require a file path to exist and contain the provided text."""
+
+    kind: Literal["file_contains"]
+    text: str
+
+
+class PathExistsCheck(_ResolvedPathCheck):
+    """Require a filesystem path to exist."""
+
+    kind: Literal["path_exists"]
+
+
+class StatusIsCheck(ConfigModel):
+    """Require a specific terminal run status."""
+
+    kind: Literal["status_is"]
+    status: Literal["success", "failed", "timed_out", "invalid", "provider_error"]
+
+
+class OutputArtifactPresentCheck(ConfigModel):
+    """Require a matching output artifact reference on the run artifact."""
+
+    kind: Literal["output_artifact_present"]
+    artifact_id: str | None = Field(default=None, pattern=ID_PATTERN)
+    artifact_type: str | None = Field(default=None, pattern=ID_PATTERN)
+    uri: str | None = None
+
+    @model_validator(mode="after")
+    def _validate_match_fields(self) -> OutputArtifactPresentCheck:
+        if self.artifact_id is None and self.artifact_type is None and self.uri is None:
+            raise ValueError(
+                "An output artifact presence check requires at least one matcher field."
+            )
+        return self
+
+
+type DeclarativeCheck = Annotated[
+    FinalResponsePresentCheck
+    | ToolCallCountCheck
+    | FileExistsCheck
+    | FileContainsCheck
+    | PathExistsCheck
+    | StatusIsCheck
+    | OutputArtifactPresentCheck,
+    Field(discriminator="kind"),
+]
 
 
 class PythonHook(ConfigModel):
@@ -152,6 +232,9 @@ class DeterministicCheck(ConfigModel):
 
     check_id: str = Field(pattern=ID_PATTERN)
     description: str | None = None
+    dimensions: list[
+        Literal["task", "process", "autonomy", "closeness", "efficiency", "spark"]
+    ] = Field(default_factory=list)
     declarative: DeclarativeCheck | None = None
     python_hook: PythonHook | None = None
 
@@ -166,6 +249,14 @@ class DeterministicCheck(ConfigModel):
                 "A deterministic check cannot define both 'declarative' and 'python_hook'."
             )
         return self
+
+    @field_validator("dimensions")
+    @classmethod
+    def _normalize_dimensions(
+        cls,
+        value: list[Literal["task", "process", "autonomy", "closeness", "efficiency", "spark"]],
+    ) -> list[Literal["task", "process", "autonomy", "closeness", "efficiency", "spark"]]:
+        return sorted(set(value))
 
 
 class TestConfig(ConfigModel):
