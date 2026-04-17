@@ -91,11 +91,15 @@ Evaluation spaces use this layout:
 evaluations/<evaluation_fingerprint>/
   manifest.json
   fingerprint_input.json
-  cases/
-    <case_id>/
-      judge.json
-      final_result.json
+  runs/
+    <run_fingerprint>/
+      cases/
+        <case_id>/
+          judge.json
+          final_result.json
 ```
 
-This keeps execution artifacts and evaluation artifacts clearly separated while preserving
-enough normalized fingerprint input to reproduce the same storage identity later.
+This keeps execution artifacts and evaluation artifacts clearly separated while also avoiding
+collisions across multiple models or multiple run fingerprints that share the same
+evaluation methodology. Storage still preserves enough normalized fingerprint input to
+reproduce the same storage identity later.

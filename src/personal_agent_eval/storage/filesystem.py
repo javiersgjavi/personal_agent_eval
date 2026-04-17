@@ -62,19 +62,37 @@ class FilesystemStorage:
         """Return the evaluation-space fingerprint payload path."""
         return self.evaluation_space_path(evaluation_fingerprint) / "fingerprint_input.json"
 
-    def case_judge_path(self, evaluation_fingerprint: str, case_id: str) -> Path:
-        """Return the stored judge artifact path for one case."""
+    def evaluation_run_space_path(
+        self,
+        evaluation_fingerprint: str,
+        run_fingerprint: str,
+    ) -> Path:
+        """Return the nested evaluation directory for one run fingerprint."""
+        return self.evaluation_space_path(evaluation_fingerprint) / "runs" / run_fingerprint
+
+    def case_judge_path_for_run(
+        self,
+        evaluation_fingerprint: str,
+        run_fingerprint: str,
+        case_id: str,
+    ) -> Path:
+        """Return the stored judge artifact path for one case within one run space."""
         return (
-            self.evaluation_space_path(evaluation_fingerprint)
+            self.evaluation_run_space_path(evaluation_fingerprint, run_fingerprint)
             / "cases"
             / case_id
             / "judge.json"
         )
 
-    def case_final_result_path(self, evaluation_fingerprint: str, case_id: str) -> Path:
-        """Return the stored final evaluation result path for one case."""
+    def case_final_result_path_for_run(
+        self,
+        evaluation_fingerprint: str,
+        run_fingerprint: str,
+        case_id: str,
+    ) -> Path:
+        """Return the stored final evaluation result path for one case within one run space."""
         return (
-            self.evaluation_space_path(evaluation_fingerprint)
+            self.evaluation_run_space_path(evaluation_fingerprint, run_fingerprint)
             / "cases"
             / case_id
             / "final_result.json"
@@ -171,45 +189,53 @@ class FilesystemStorage:
     def write_case_judge_result(
         self,
         evaluation_fingerprint: str,
+        run_fingerprint: str,
         case_id: str,
         result: AggregatedJudgeResult,
     ) -> Path:
         """Write one per-case aggregated judge result."""
         return self._write_model(
-            self.case_judge_path(evaluation_fingerprint, case_id),
+            self.case_judge_path_for_run(evaluation_fingerprint, run_fingerprint, case_id),
             result,
         )
 
     def read_case_judge_result(
         self,
         evaluation_fingerprint: str,
+        run_fingerprint: str,
         case_id: str,
     ) -> AggregatedJudgeResult:
         """Read one per-case aggregated judge result."""
         return self._read_model(
-            self.case_judge_path(evaluation_fingerprint, case_id),
+            self.case_judge_path_for_run(evaluation_fingerprint, run_fingerprint, case_id),
             AggregatedJudgeResult,
         )
 
     def write_case_final_result(
         self,
         evaluation_fingerprint: str,
+        run_fingerprint: str,
         result: FinalEvaluationResult,
     ) -> Path:
         """Write one per-case final evaluation result."""
         return self._write_model(
-            self.case_final_result_path(evaluation_fingerprint, result.case_id),
+            self.case_final_result_path_for_run(
+                evaluation_fingerprint,
+                run_fingerprint,
+                result.case_id,
+            ),
             result,
         )
 
     def read_case_final_result(
         self,
         evaluation_fingerprint: str,
+        run_fingerprint: str,
         case_id: str,
     ) -> FinalEvaluationResult:
         """Read one per-case final evaluation result."""
         return self._read_model(
-            self.case_final_result_path(evaluation_fingerprint, case_id),
+            self.case_final_result_path_for_run(evaluation_fingerprint, run_fingerprint, case_id),
             FinalEvaluationResult,
         )
 
@@ -221,13 +247,31 @@ class FilesystemStorage:
         """Return whether an evaluation fingerprint payload exists."""
         return self.evaluation_fingerprint_input_path(evaluation_fingerprint).is_file()
 
-    def has_case_judge_result(self, evaluation_fingerprint: str, case_id: str) -> bool:
+    def has_case_judge_result(
+        self,
+        evaluation_fingerprint: str,
+        run_fingerprint: str,
+        case_id: str,
+    ) -> bool:
         """Return whether a per-case judge result exists."""
-        return self.case_judge_path(evaluation_fingerprint, case_id).is_file()
+        return self.case_judge_path_for_run(
+            evaluation_fingerprint,
+            run_fingerprint,
+            case_id,
+        ).is_file()
 
-    def has_case_final_result(self, evaluation_fingerprint: str, case_id: str) -> bool:
+    def has_case_final_result(
+        self,
+        evaluation_fingerprint: str,
+        run_fingerprint: str,
+        case_id: str,
+    ) -> bool:
         """Return whether a per-case final result exists."""
-        return self.case_final_result_path(evaluation_fingerprint, case_id).is_file()
+        return self.case_final_result_path_for_run(
+            evaluation_fingerprint,
+            run_fingerprint,
+            case_id,
+        ).is_file()
 
     def _write_model(self, path: Path, model: ArtifactModel) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)

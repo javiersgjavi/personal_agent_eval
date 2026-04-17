@@ -9,7 +9,8 @@ It is designed around:
 - deterministic evaluation
 - judge-based semantic evaluation
 - hybrid final aggregation
-- future incremental reuse through fingerprints and storage
+- incremental reuse through fingerprints and storage
+- reporting from structured workflow results
 
 V1 is centered on `llm_probe`. The architecture already reserves space for a later
 `openclaw` runner.
@@ -25,6 +26,9 @@ The current implementation already includes:
 - deterministic evaluation
 - judge orchestration
 - hybrid aggregation
+- fingerprints and storage
+- workflow orchestration in `pae`
+- structured reporting
 
 ## Read This Next
 
@@ -33,4 +37,5 @@ The current implementation already includes:
 - [Run artifacts](run_artifacts.md)
 - [Judge results](judge_results.md)
 - [Hybrid evaluation](hybrid_evaluation.md)
+- [Reporting](reporting.md)
 - [Minimal llm_probe example](examples/minimal_llm_probe.md)

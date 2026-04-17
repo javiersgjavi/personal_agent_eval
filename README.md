@@ -27,13 +27,13 @@ Implemented in the current V1 codebase:
 - deterministic evaluation
 - judge orchestration
 - hybrid aggregation
+- fingerprints and reuse rules
+- filesystem storage
+- workflow orchestration in `pae`
+- reporting over structured workflow results
 
 Still pending in V1:
 
-- fingerprints and reuse rules
-- storage layout
-- full CLI orchestration
-- reporting
 - final quality gates
 
 ## Install
@@ -56,7 +56,20 @@ uv sync --group dev
 - [Run artifacts](docs/run_artifacts.md)
 - [Judge results](docs/judge_results.md)
 - [Hybrid evaluation](docs/hybrid_evaluation.md)
+- [Reporting](docs/reporting.md)
 - [Minimal llm_probe example](docs/examples/minimal_llm_probe.md)
+
+## CLI Commands
+
+V1 currently exposes:
+
+- `pae run`
+- `pae eval`
+- `pae run-eval`
+- `pae report`
+
+The CLI renders human-readable terminal reporting by default and also supports JSON output
+with `--output json`.
 
 ## Documentation Site
 

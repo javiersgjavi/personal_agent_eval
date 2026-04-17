@@ -55,11 +55,11 @@ def test_storage_derives_v1_paths() -> None:
     assert storage.evaluation_fingerprint_input_path("eval-fp") == Path(
         "/tmp/personal-agent-eval/evaluations/eval-fp/fingerprint_input.json"
     )
-    assert storage.case_judge_path("eval-fp", "example_case") == Path(
-        "/tmp/personal-agent-eval/evaluations/eval-fp/cases/example_case/judge.json"
+    assert storage.case_judge_path_for_run("eval-fp", "run-fp", "example_case") == Path(
+        "/tmp/personal-agent-eval/evaluations/eval-fp/runs/run-fp/cases/example_case/judge.json"
     )
-    assert storage.case_final_result_path("eval-fp", "example_case") == Path(
-        "/tmp/personal-agent-eval/evaluations/eval-fp/cases/example_case/final_result.json"
+    assert storage.case_final_result_path_for_run("eval-fp", "run-fp", "example_case") == Path(
+        "/tmp/personal-agent-eval/evaluations/eval-fp/runs/run-fp/cases/example_case/final_result.json"
     )
 
 
@@ -109,6 +109,7 @@ def test_storage_round_trips_run_space_files(tmp_path: Path) -> None:
 def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
     storage = FilesystemStorage(tmp_path)
     evaluation_fingerprint = "b" * 64
+    run_fingerprint = "a" * 64
 
     manifest = EvaluationStorageManifest(
         evaluation_fingerprint=evaluation_fingerprint,
@@ -129,26 +130,49 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
     storage.write_evaluation_fingerprint_input(fingerprint_input)
     storage.write_case_judge_result(
         evaluation_fingerprint,
+        run_fingerprint,
         final_result.case_id,
         judge_result,
     )
-    storage.write_case_final_result(evaluation_fingerprint, final_result)
+    storage.write_case_final_result(evaluation_fingerprint, run_fingerprint, final_result)
 
     assert storage.has_evaluation_manifest(evaluation_fingerprint) is True
     assert storage.has_evaluation_fingerprint_input(evaluation_fingerprint) is True
-    assert storage.has_case_judge_result(evaluation_fingerprint, final_result.case_id) is True
-    assert storage.has_case_final_result(evaluation_fingerprint, final_result.case_id) is True
+    assert (
+        storage.has_case_judge_result(
+            evaluation_fingerprint,
+            run_fingerprint,
+            final_result.case_id,
+        )
+        is True
+    )
+    assert (
+        storage.has_case_final_result(
+            evaluation_fingerprint,
+            run_fingerprint,
+            final_result.case_id,
+        )
+        is True
+    )
     assert storage.read_evaluation_manifest(evaluation_fingerprint) == manifest
     assert (
         storage.read_evaluation_fingerprint_input(evaluation_fingerprint)
         == fingerprint_input
     )
     assert (
-        storage.read_case_judge_result(evaluation_fingerprint, final_result.case_id)
+        storage.read_case_judge_result(
+            evaluation_fingerprint,
+            run_fingerprint,
+            final_result.case_id,
+        )
         == judge_result
     )
     assert (
-        storage.read_case_final_result(evaluation_fingerprint, final_result.case_id)
+        storage.read_case_final_result(
+            evaluation_fingerprint,
+            run_fingerprint,
+            final_result.case_id,
+        )
         == final_result
     )
 

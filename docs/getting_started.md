@@ -26,10 +26,57 @@ The intended V1 flow is:
 2. define a suite that selects those cases
 3. define a run profile for execution behavior
 4. define an evaluation profile for judges and hybrid aggregation
-5. execute the workflow through `pae` once CLI orchestration is complete
+5. execute the workflow through `pae`
 
-The execution model already exists in the library even though final CLI orchestration is
-still a later V1 step.
+V1 now exposes these orchestration commands:
+
+- `pae run`
+- `pae eval`
+- `pae run-eval`
+- `pae report`
+
+Minimal examples:
+
+```bash
+pae run \
+  --suite suites/example_suite.yaml \
+  --run-profile run_profiles/default.yaml
+
+pae eval \
+  --suite suites/example_suite.yaml \
+  --run-profile run_profiles/default.yaml \
+  --evaluation-profile evaluation_profiles/default.yaml
+
+pae run-eval \
+  --suite suites/example_suite.yaml \
+  --run-profile run_profiles/default.yaml \
+  --evaluation-profile evaluation_profiles/default.yaml
+
+pae report \
+  --suite suites/example_suite.yaml \
+  --run-profile run_profiles/default.yaml \
+  --evaluation-profile evaluation_profiles/default.yaml
+```
+
+The CLI now renders human-readable reporting by default and can also emit structured JSON
+with `--output json`.
+
+Example:
+
+```bash
+pae run-eval \
+  --suite suites/example_suite.yaml \
+  --run-profile run_profiles/default.yaml \
+  --evaluation-profile evaluation_profiles/default.yaml \
+  --output json
+```
+
+The reporting layer is a pure consumer of structured workflow results and can render:
+
+- per-model per-case tables
+- per-model summaries
+- JSON report payloads
+- basic ASCII charts
 
 ## Minimal Repository Shape
 
@@ -112,6 +159,9 @@ Hybrid aggregation produces the final evaluation result:
 }
 ```
 
+CLI orchestration already produces per-`model_id` and per-`case_id` workflow results, and the
+CLI can present them either as terminal reporting or as structured JSON.
+
 ## Important V1 Rules
 
 - `llm_probe` is the implemented runtime target
@@ -125,4 +175,5 @@ Hybrid aggregation produces the final evaluation result:
 - [Configuration](configuration.md)
 - [Judge results](judge_results.md)
 - [Hybrid evaluation](hybrid_evaluation.md)
+- [Reporting](reporting.md)
 - [Minimal llm_probe example](examples/minimal_llm_probe.md)
