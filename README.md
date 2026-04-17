@@ -42,10 +42,28 @@ Still pending in V1:
 uv sync --group dev
 ```
 
+## Running the CLI
+
+If you're working inside this repository, prefer running the CLI via `uv` so the entrypoint is
+resolved from the project environment:
+
+```bash
+uv run pae --help
+```
+
+If you have installed `personal_agent_eval` into an active virtualenv (or globally), you can
+also run:
+
+```bash
+pae --help
+```
+
 ## Package Layout
 
 - source code: `src/personal_agent_eval/`
 - tests: `tests/`
+- configs: `configs/`
+- generated artifacts: `outputs/`
 - public docs: `docs/`
 
 ## Public Docs
@@ -70,6 +88,21 @@ V1 currently exposes:
 
 The CLI renders human-readable terminal reporting by default and also supports JSON output
 with `--output json`.
+
+The config flags accept either explicit YAML paths or ids discovered from the conventional
+workspace directories. For example, these are equivalent:
+
+```bash
+uv run pae run-eval \
+  --suite configs/suites/example_suite.yaml \
+  --run-profile configs/run_profiles/default.yaml \
+  --evaluation-profile configs/evaluation_profiles/default.yaml
+
+uv run pae run-eval \
+  --suite example_suite \
+  --run-profile default \
+  --evaluation-profile default
+```
 
 ## Documentation Site
 

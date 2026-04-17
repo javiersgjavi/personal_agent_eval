@@ -25,9 +25,11 @@ FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "config"
 
 
 def test_hybrid_aggregation_keeps_sources_separate_and_computes_final_score() -> None:
-    test_config = load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml")
+    test_config = load_test_config(
+        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+    )
     evaluation_profile = load_evaluation_profile(
-        FIXTURES_ROOT / "evaluation_profiles" / "default.yaml"
+        FIXTURES_ROOT / "configs" / "evaluation_profiles" / "default.yaml"
     )
 
     deterministic_result = DeterministicEvaluationResult(
@@ -91,9 +93,11 @@ def test_hybrid_aggregation_keeps_sources_separate_and_computes_final_score() ->
 
 
 def test_hybrid_aggregation_falls_back_to_judge_when_deterministic_signal_is_missing() -> None:
-    test_config = load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml")
+    test_config = load_test_config(
+        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+    )
     evaluation_profile = load_evaluation_profile(
-        FIXTURES_ROOT / "evaluation_profiles" / "default.yaml"
+        FIXTURES_ROOT / "configs" / "evaluation_profiles" / "default.yaml"
     )
 
     deterministic_result = DeterministicEvaluationResult(
@@ -146,8 +150,12 @@ def test_hybrid_aggregation_falls_back_to_judge_when_deterministic_signal_is_mis
 
 
 def test_hybrid_aggregation_respects_deterministic_only_policy_with_judge_fallback() -> None:
-    test_config = load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml")
-    base_profile = load_evaluation_profile(FIXTURES_ROOT / "evaluation_profiles" / "default.yaml")
+    test_config = load_test_config(
+        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+    )
+    base_profile = load_evaluation_profile(
+        FIXTURES_ROOT / "configs" / "evaluation_profiles" / "default.yaml"
+    )
     evaluation_profile = base_profile.model_copy(
         update={
             "final_aggregation": base_profile.final_aggregation.model_copy(

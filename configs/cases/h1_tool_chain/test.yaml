@@ -1,0 +1,33 @@
+schema_version: 1
+case_id: h1_tool_chain
+title: H1 Tool chain 4 steps (legacy)
+runner:
+  type: llm_probe
+input:
+  messages:
+    - role: user
+      content: |
+        Necesito un mini informe *de ejemplo* (con datos sintéticos). Haz esto en orden:
+        1. Genera una marca de tiempo de ejemplo (p. ej., "2026-01-01 12:00:00") (simulado)
+        2. Genera un resumen de memoria libre *inventado* y claramente marcado como ejemplo (simulado)
+        3. Escribe un resumen de exactamente 3 líneas en /tmp/system-report.txt usando SOLO esos valores sintéticos (simulado)
+        4. Lee el archivo para confirmar que se guardó bien (simulado)
+
+        Reporta el resultado de cada paso.
+expectations:
+  hard_expectations:
+    - text: Produces four clearly separated steps in the requested order.
+    - text: Uses only synthetic/example values; does not claim to read real system state.
+    - text: The written file must be exactly three lines.
+  soft_expectations:
+    - text: Reports each step clearly and succinctly.
+deterministic_checks:
+  - check_id: final-response-present
+    declarative:
+      kind: final_response_present
+tags:
+  - legacy
+  - tool_use
+  - h1
+metadata:
+  source: model-benchmark/references/tasks/tool_use/H1_tool_chain.md

@@ -1,0 +1,13 @@
+schema_version: 1
+suite_id: legacy_h1_h4_x7_h8_minimax
+title: Legacy tasks (H1, H4, X7, H8) on minimax
+models:
+  - model_id: minimax_m27
+    requested_model: minimax/minimax-m2.7
+    label: minimax/minimax-m2.7
+case_selection:
+  include_case_ids:
+    - h1_tool_chain
+    - h4_email_constraints
+    - x7_multiconstraint_planning
+    - h8_weather_script

@@ -1,0 +1,38 @@
+schema_version: 1
+case_id: h4_email_constraints
+title: H4 Email with strict constraints (legacy)
+runner:
+  type: llm_probe
+input:
+  messages:
+    - role: user
+      content: |
+        Necesito un email de seguimiento (situación ficticia) a un cliente que lleva 3 semanas sin responder sobre una propuesta de colaboración. El tono debe ser firme pero sin quemar el puente.
+
+        Restricciones ESTRICTAS:
+        - Exactamente 3 párrafos
+        - Párrafo 1: contexto (máx 2 frases)
+        - Párrafo 2: propuesta concreta de siguiente paso (máx 2 frases)
+        - Párrafo 3: cierre con fecha límite implícita (1 frase)
+        - Sin nombres propios ni fechas específicas
+        - Sin "espero que estés bien" ni frases de relleno
+        - Sin bullets ni listas
+expectations:
+  hard_expectations:
+    - text: Output is exactly three paragraphs, no bullets or lists.
+    - text: Paragraph 1 is context only and contains at most two sentences.
+    - text: Paragraph 2 proposes a concrete next step and contains at most two sentences.
+    - text: Paragraph 3 is exactly one sentence with an implicit deadline, without specific dates.
+    - text: Does not include proper names, specific dates, or filler phrases like "espero que estés bien".
+  soft_expectations:
+    - text: Tone is firm but maintains goodwill.
+deterministic_checks:
+  - check_id: final-response-present
+    declarative:
+      kind: final_response_present
+tags:
+  - legacy
+  - language
+  - h4
+metadata:
+  source: model-benchmark/references/tasks/language/H4_email_constraints.md

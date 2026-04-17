@@ -1,0 +1,46 @@
+schema_version: 1
+case_id: x7_multiconstraint_planning
+title: X7 Multi-constraint planning (legacy)
+runner:
+  type: llm_probe
+input:
+  messages:
+    - role: user
+      content: |
+        Necesito que me ayudes a planificar la siguiente semana. Estas son mis
+        restricciones y compromisos:
+
+        COMPROMISOS FIJOS:
+        - Lunes: standup de equipo 10:30h (1h)
+        - Martes: reunión con un stakeholder externo 16:00h (2h)
+        - Miércoles: dentista 11:00h (1.5h)
+        - Viernes: entrega de informe mensual de Proyecto B (deadline 18:00h)
+
+        TAREAS PENDIENTES (urgentes):
+        - Preparar un one-pager de Proyecto B para la reunión del martes (estimado: 4h)
+        - Revisar y corregir prototipo de la app interna (estimado: 6h, pedido para el miércoles por la tarde)
+        - Preparar la reunión externa: recopilar contexto + ensayo de presentación (estimado: 3h)
+        - Escribir informe mensual de Proyecto B (estimado: 5h)
+
+        RESTRICCIONES PERSONALES:
+        - No trabajar más de 9h/día
+        - Necesito tener el lunes por la tarde libre (compromiso personal inamovible)
+        - El viernes antes de las 10:00h no puedo concentrarme (tengo el desayuno familiar semanal)
+expectations:
+  hard_expectations:
+    - text: Explicitly identifies the scheduling conflict around completing the 6h app-prototype task by Wednesday afternoon.
+    - text: Proposes a realistic plan that respects the listed fixed commitments and personal constraints.
+    - text: Proposes how to communicate the conflict/adjustment (trade-off) rather than assuming an impossible schedule.
+  soft_expectations:
+    - text: Plan is presented as a clear structured schedule (table or concise list) and stays reasonably brief.
+deterministic_checks:
+  - check_id: final-response-present
+    declarative:
+      kind: final_response_present
+tags:
+  - legacy
+  - reasoning
+  - extreme
+  - x7
+metadata:
+  source: model-benchmark/references/tasks/reasoning/X7_multiconstraint_planning.md

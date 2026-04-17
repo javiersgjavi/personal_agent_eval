@@ -20,9 +20,9 @@ def test_discover_cases_loads_manifests_from_workspace_root(tmp_path: Path) -> N
 
     assert list(cases) == ["alpha_case", "beta_case"]
     assert cases["alpha_case"].root_path == tmp_path.resolve()
-    assert cases["alpha_case"].case_path == (tmp_path / "cases" / "alpha_case").resolve()
+    assert cases["alpha_case"].case_path == (tmp_path / "configs" / "cases" / "alpha_case").resolve()
     assert cases["alpha_case"].test_path == (
-        tmp_path / "cases" / "alpha_case" / "test.yaml"
+        tmp_path / "configs" / "cases" / "alpha_case" / "test.yaml"
     ).resolve()
     assert cases["alpha_case"].config.case_id == "alpha_case"
     assert cases["alpha_case"].config.tags == ["regression"]
@@ -34,7 +34,9 @@ def test_discover_suites_loads_manifests_from_workspace_root(tmp_path: Path) -> 
     suites = discover_suites(tmp_path)
 
     assert list(suites) == ["smoke_suite"]
-    assert suites["smoke_suite"].suite_path == (tmp_path / "suites" / "smoke_suite.yaml").resolve()
+    assert suites["smoke_suite"].suite_path == (
+        tmp_path / "configs" / "suites" / "smoke_suite.yaml"
+    ).resolve()
     assert suites["smoke_suite"].config.case_selection.include_case_ids == ["alpha_case"]
 
 
@@ -114,7 +116,7 @@ def _write_case(
     directory: str | None = None,
     tags: list[str] | None = None,
 ) -> None:
-    case_directory = root_path / "cases" / (directory or case_id)
+    case_directory = root_path / "configs" / "cases" / (directory or case_id)
     case_directory.mkdir(parents=True, exist_ok=True)
 
     lines = [
@@ -142,7 +144,7 @@ def _write_suite(
     include_tags: list[str] | None = None,
     exclude_tags: list[str] | None = None,
 ) -> None:
-    suites_directory = root_path / "suites"
+    suites_directory = root_path / "configs" / "suites"
     suites_directory.mkdir(parents=True, exist_ok=True)
 
     lines = [

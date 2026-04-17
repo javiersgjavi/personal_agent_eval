@@ -27,12 +27,12 @@ class FilesystemStorage:
     @property
     def runs_root(self) -> Path:
         """Return the root directory for run spaces."""
-        return self.root / "runs"
+        return self.root / "outputs" / "runs"
 
     @property
     def evaluations_root(self) -> Path:
         """Return the root directory for evaluation spaces."""
-        return self.root / "evaluations"
+        return self.root / "outputs" / "evaluations"
 
     def run_space_path(self, run_fingerprint: str) -> Path:
         """Return the directory for one run fingerprint space."""

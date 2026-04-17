@@ -107,8 +107,8 @@ def test_quality_gate_pae_run_does_not_evaluate(tmp_path: Path) -> None:
     )
 
     result = workflow.run(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
     )
 
     assert result.command == "run"
@@ -116,7 +116,7 @@ def test_quality_gate_pae_run_does_not_evaluate(tmp_path: Path) -> None:
     assert result.summary.evaluations_executed == 0
     assert counters == {"run_calls": 2, "judge_calls": 0}
     assert all(item.evaluation_action is EvaluationAction.SKIPPED for item in result.results)
-    assert not (workspace_root / "evaluations").exists()
+    assert not (workspace_root / "outputs" / "evaluations").exists()
 
 
 def test_quality_gate_pae_eval_reuses_runs_when_available(tmp_path: Path) -> None:
@@ -127,8 +127,8 @@ def test_quality_gate_pae_eval_reuses_runs_when_available(tmp_path: Path) -> Non
         judge_client_factory=lambda: CountingJudgeClient({"run_calls": 0, "judge_calls": 0}),
     )
     bootstrap.run(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
     )
 
     workflow = WorkflowOrchestrator(
@@ -137,9 +137,9 @@ def test_quality_gate_pae_eval_reuses_runs_when_available(tmp_path: Path) -> Non
         judge_client_factory=lambda: CountingJudgeClient({"run_calls": 0, "judge_calls": 0}),
     )
     result = workflow.evaluate(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
-        evaluation_profile_path=workspace_root / "evaluation_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
     )
 
     assert result.command == "eval"
@@ -158,9 +158,9 @@ def test_quality_gate_run_eval_performs_only_missing_work(tmp_path: Path) -> Non
         judge_client_factory=lambda: CountingJudgeClient({"run_calls": 0, "judge_calls": 0}),
     )
     initial = workflow.run_eval(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
-        evaluation_profile_path=workspace_root / "evaluation_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
     )
 
     first = initial.results[0]
@@ -170,6 +170,7 @@ def test_quality_gate_run_eval_performs_only_missing_work(tmp_path: Path) -> Non
 
     (
         workspace_root
+        / "outputs"
         / "runs"
         / second.run_fingerprint
         / "cases"
@@ -178,6 +179,7 @@ def test_quality_gate_run_eval_performs_only_missing_work(tmp_path: Path) -> Non
     ).unlink()
     (
         workspace_root
+        / "outputs"
         / "evaluations"
         / first.evaluation_fingerprint
         / "runs"
@@ -194,9 +196,9 @@ def test_quality_gate_run_eval_performs_only_missing_work(tmp_path: Path) -> Non
         judge_client_factory=lambda: CountingJudgeClient(counters),
     )
     result = rerun_workflow.run_eval(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
-        evaluation_profile_path=workspace_root / "evaluation_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
     )
 
     assert counters == {"run_calls": 1, "judge_calls": 0}
@@ -232,9 +234,9 @@ def test_quality_gate_pae_report_does_not_execute_new_work_and_keeps_visibility(
         judge_client_factory=lambda: CountingJudgeClient({"run_calls": 0, "judge_calls": 0}),
     )
     bootstrap.run_eval(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
-        evaluation_profile_path=workspace_root / "evaluation_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
     )
 
     runtime = WorkflowOrchestrator(
@@ -246,11 +248,11 @@ def test_quality_gate_pae_report_does_not_execute_new_work_and_keeps_visibility(
         [
             "report",
             "--suite",
-            str(workspace_root / "suites" / "example_suite.yaml"),
+            str(workspace_root / "configs" / "suites" / "example_suite.yaml"),
             "--run-profile",
-            str(workspace_root / "run_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "run_profiles" / "default.yaml"),
             "--evaluation-profile",
-            str(workspace_root / "evaluation_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "evaluation_profiles" / "default.yaml"),
         ],
         runtime=runtime,
     )
@@ -280,11 +282,11 @@ def test_quality_gate_json_output_is_stable_and_per_model_per_case(
         [
             "run-eval",
             "--suite",
-            str(workspace_root / "suites" / "example_suite.yaml"),
+            str(workspace_root / "configs" / "suites" / "example_suite.yaml"),
             "--run-profile",
-            str(workspace_root / "run_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "run_profiles" / "default.yaml"),
             "--evaluation-profile",
-            str(workspace_root / "evaluation_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "evaluation_profiles" / "default.yaml"),
             "--output",
             "json",
         ],
@@ -322,11 +324,11 @@ def test_e2e_fresh_run_eval_from_empty_workspace(
         [
             "run-eval",
             "--suite",
-            str(workspace_root / "suites" / "example_suite.yaml"),
+            str(workspace_root / "configs" / "suites" / "example_suite.yaml"),
             "--run-profile",
-            str(workspace_root / "run_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "run_profiles" / "default.yaml"),
             "--evaluation-profile",
-            str(workspace_root / "evaluation_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "evaluation_profiles" / "default.yaml"),
             "--output",
             "json",
         ],
@@ -360,11 +362,11 @@ def test_e2e_second_run_eval_full_reuse(
         [
             "run-eval",
             "--suite",
-            str(workspace_root / "suites" / "example_suite.yaml"),
+            str(workspace_root / "configs" / "suites" / "example_suite.yaml"),
             "--run-profile",
-            str(workspace_root / "run_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "run_profiles" / "default.yaml"),
             "--evaluation-profile",
-            str(workspace_root / "evaluation_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "evaluation_profiles" / "default.yaml"),
             "--output",
             "json",
         ],
@@ -381,11 +383,11 @@ def test_e2e_second_run_eval_full_reuse(
         [
             "run-eval",
             "--suite",
-            str(workspace_root / "suites" / "example_suite.yaml"),
+            str(workspace_root / "configs" / "suites" / "example_suite.yaml"),
             "--run-profile",
-            str(workspace_root / "run_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "run_profiles" / "default.yaml"),
             "--evaluation-profile",
-            str(workspace_root / "evaluation_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "evaluation_profiles" / "default.yaml"),
             "--output",
             "json",
         ],
@@ -414,11 +416,11 @@ def test_e2e_same_run_different_evaluation_profile_re_evaluates_only(
         [
             "run-eval",
             "--suite",
-            str(workspace_root / "suites" / "example_suite.yaml"),
+            str(workspace_root / "configs" / "suites" / "example_suite.yaml"),
             "--run-profile",
-            str(workspace_root / "run_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "run_profiles" / "default.yaml"),
             "--evaluation-profile",
-            str(workspace_root / "evaluation_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "evaluation_profiles" / "default.yaml"),
             "--output",
             "json",
         ],
@@ -426,9 +428,11 @@ def test_e2e_same_run_different_evaluation_profile_re_evaluates_only(
     )
     capsys.readouterr()
 
-    alternate_eval = workspace_root / "evaluation_profiles" / "alternate.yaml"
+    alternate_eval = workspace_root / "configs" / "evaluation_profiles" / "alternate.yaml"
     alternate_payload = yaml.safe_load(
-        (workspace_root / "evaluation_profiles" / "default.yaml").read_text(encoding="utf-8")
+        (
+            workspace_root / "configs" / "evaluation_profiles" / "default.yaml"
+        ).read_text(encoding="utf-8")
     )
     alternate_payload["evaluation_profile_id"] = "alternate"
     alternate_payload["final_aggregation"]["dimensions"]["task"]["judge_weight"] = 0.9
@@ -448,9 +452,9 @@ def test_e2e_same_run_different_evaluation_profile_re_evaluates_only(
         [
             "eval",
             "--suite",
-            str(workspace_root / "suites" / "example_suite.yaml"),
+            str(workspace_root / "configs" / "suites" / "example_suite.yaml"),
             "--run-profile",
-            str(workspace_root / "run_profiles" / "default.yaml"),
+            str(workspace_root / "configs" / "run_profiles" / "default.yaml"),
             "--evaluation-profile",
             str(alternate_eval),
             "--output",
@@ -471,7 +475,7 @@ def _build_workspace(tmp_path: Path) -> Path:
     workspace_root = tmp_path / "workspace"
     shutil.copytree(fixture_root, workspace_root)
 
-    suite_path = workspace_root / "suites" / "example_suite.yaml"
+    suite_path = workspace_root / "configs" / "suites" / "example_suite.yaml"
     suite_payload = yaml.safe_load(suite_path.read_text(encoding="utf-8"))
     suite_payload["models"] = [
         {

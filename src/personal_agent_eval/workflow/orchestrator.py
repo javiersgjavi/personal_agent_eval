@@ -320,6 +320,7 @@ class WorkflowOrchestrator:
                 case_manifest.case_id,
             )
             evaluation_action = EvaluationAction.REUSED
+            evaluation_status = "success"
         elif self._storage.has_case_judge_result(
             evaluation_fingerprint,
             run_fingerprint,
@@ -335,18 +336,39 @@ class WorkflowOrchestrator:
                 run_fingerprint,
                 case_manifest.case_id,
             )
-            final_result = self._aggregate_final(
-                case_manifest=case_manifest,
-                evaluation_profile=evaluation_profile,
-                deterministic_result=deterministic_result,
-                judge_result=judge_result,
-            )
+            try:
+                final_result = self._aggregate_final(
+                    case_manifest=case_manifest,
+                    evaluation_profile=evaluation_profile,
+                    deterministic_result=deterministic_result,
+                    judge_result=judge_result,
+                )
+            except Exception as exc:
+                return WorkflowCaseResult(
+                    model_id=model.model_id,
+                    case_id=case_manifest.case_id,
+                    run_fingerprint=run_fingerprint,
+                    evaluation_fingerprint=evaluation_fingerprint,
+                    run_action=run_action,
+                    evaluation_action=EvaluationAction.FINAL_RECOMPUTED,
+                    run_status=run_artifact.status.value,
+                    evaluation_status="failed",
+                    final_score=None,
+                    final_dimensions=None,
+                    warnings=_deduplicate(
+                        [
+                            *_run_warnings(run_artifact),
+                            f"Unable to recompute final evaluation result: {type(exc).__name__}: {exc}",
+                        ]
+                    ),
+                )
             self._storage.write_case_final_result(
                 evaluation_fingerprint,
                 run_fingerprint,
                 final_result,
             )
             evaluation_action = EvaluationAction.FINAL_RECOMPUTED
+            evaluation_status = "success"
         else:
             logger.info(
                 "Executing judge pipeline for model '%s' case '%s' (%s/%s)",
@@ -361,24 +383,46 @@ class WorkflowOrchestrator:
                 run_artifact=run_artifact,
                 deterministic_result=deterministic_result,
             )
-            final_result = self._aggregate_final(
-                case_manifest=case_manifest,
-                evaluation_profile=evaluation_profile,
-                deterministic_result=deterministic_result,
-                judge_result=judge_result,
-            )
             self._storage.write_case_judge_result(
                 evaluation_fingerprint,
                 run_fingerprint,
                 case_manifest.case_id,
                 judge_result,
             )
+            try:
+                final_result = self._aggregate_final(
+                    case_manifest=case_manifest,
+                    evaluation_profile=evaluation_profile,
+                    deterministic_result=deterministic_result,
+                    judge_result=judge_result,
+                )
+            except Exception as exc:
+                return WorkflowCaseResult(
+                    model_id=model.model_id,
+                    case_id=case_manifest.case_id,
+                    run_fingerprint=run_fingerprint,
+                    evaluation_fingerprint=evaluation_fingerprint,
+                    run_action=run_action,
+                    evaluation_action=EvaluationAction.EXECUTED,
+                    run_status=run_artifact.status.value,
+                    evaluation_status="failed",
+                    final_score=None,
+                    final_dimensions=None,
+                    warnings=_deduplicate(
+                        [
+                            *_run_warnings(run_artifact),
+                            *judge_result.warnings,
+                            f"Unable to compute final evaluation result: {type(exc).__name__}: {exc}",
+                        ]
+                    ),
+                )
             self._storage.write_case_final_result(
                 evaluation_fingerprint,
                 run_fingerprint,
                 final_result,
             )
             evaluation_action = EvaluationAction.EXECUTED
+            evaluation_status = "success"
 
         return WorkflowCaseResult(
             model_id=model.model_id,
@@ -388,7 +432,7 @@ class WorkflowOrchestrator:
             run_action=run_action,
             evaluation_action=evaluation_action,
             run_status=run_artifact.status.value,
-            evaluation_status="success",
+            evaluation_status=evaluation_status,
             final_score=final_result.final_score,
             final_dimensions=final_result.final_dimensions,
             warnings=_deduplicate([*_run_warnings(run_artifact), *final_result.warnings]),
@@ -592,7 +636,10 @@ class WorkflowOrchestrator:
 def _workspace_root_from_suite_path(suite_path: Path | None) -> Path:
     if suite_path is None:
         return Path.cwd().resolve()
-    return suite_path.expanduser().resolve().parent.parent
+    resolved_suite = suite_path.expanduser().resolve()
+    if resolved_suite.parent.parent.name == "configs":
+        return resolved_suite.parent.parent.parent
+    return resolved_suite.parent.parent
 
 
 def _build_summary(

@@ -4,7 +4,7 @@ This example shows the smallest realistic V1 shape for one `llm_probe` case.
 
 ## Case
 
-`cases/example_case/test.yaml`
+`configs/cases/example_case/test.yaml`
 
 ```yaml
 schema_version: 1
@@ -38,7 +38,7 @@ metadata:
 
 ## Suite
 
-`suites/example_suite.yaml`
+`configs/suites/example_suite.yaml`
 
 ```yaml
 schema_version: 1
@@ -54,7 +54,7 @@ case_selection:
 
 ## Run Profile
 
-`run_profiles/default.yaml`
+`configs/run_profiles/default.yaml`
 
 ```yaml
 schema_version: 1
@@ -70,7 +70,7 @@ execution_policy:
 
 ## Evaluation Profile
 
-`evaluation_profiles/default.yaml`
+`configs/evaluation_profiles/default.yaml`
 
 ```yaml
 schema_version: 1

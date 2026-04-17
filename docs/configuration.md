@@ -6,7 +6,7 @@ normalized object.
 
 ## Test Configs
 
-- Path: `cases/<case_id>/test.yaml`
+- Path: `configs/cases/<case_id>/test.yaml`
 - Loader: `load_test_config(path)`
 - Purpose: define one evaluation case, including the runner selection, input messages,
   expectations, deterministic checks, tags, and metadata
@@ -56,7 +56,7 @@ and `outputs`.
 
 ## Suite Configs
 
-- Path: `suites/<suite_id>.yaml`
+- Path: `configs/suites/<suite_id>.yaml`
 - Loader: `load_suite_config(path)`
 - Purpose: group models with a case selection policy and suite-level metadata
 
@@ -65,8 +65,8 @@ or excluded.
 
 ## Discovery And Suite Expansion
 
-- Cases are discovered from a supplied workspace root under `cases/<case_id>/test.yaml`
-- Suites are discovered from a supplied workspace root under `suites/<suite_id>.yaml`
+- Cases are discovered from a supplied workspace root under `configs/cases/<case_id>/test.yaml`
+- Suites are discovered from a supplied workspace root under `configs/suites/<suite_id>.yaml`
 - Duplicate discovered `case_id` values are a hard error
 - Any suite reference to a missing `case_id` in `include_case_ids` or `exclude_case_ids`
   is a hard error
@@ -76,7 +76,7 @@ or excluded.
 
 ## Run Profiles
 
-- Path: `run_profiles/<profile_id>.yaml`
+- Path: `configs/run_profiles/<profile_id>.yaml`
 - Loader: `load_run_profile(path)`
 - Purpose: define execution-time defaults, model overrides, and execution policy settings
 
@@ -87,7 +87,7 @@ For V1 `llm_probe` runs, the runner resolves execution settings by merging:
 
 - `run_profile.runner_defaults`
 - `run_profile.model_overrides[model_id]`
-- case-level `runner:` fields from `cases/<case_id>/test.yaml`
+- case-level `runner:` fields from `configs/cases/<case_id>/test.yaml`
 
 Later values override earlier ones. The Step 5 runner currently consumes fields such as
 `temperature`, `top_p`, `max_tokens`, `seed`, `timeout_seconds`, `retries`, and
@@ -115,7 +115,7 @@ For optional manual smoke probing, the default cheap OpenRouter model is
 
 ## Evaluation Profiles
 
-- Path: `evaluation_profiles/<profile_id>.yaml`
+- Path: `configs/evaluation_profiles/<profile_id>.yaml`
 - Loader: `load_evaluation_profile(path)`
 - Purpose: define judges, judge runs, aggregation rules, hybrid final aggregation policy,
   anchors, and security policy

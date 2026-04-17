@@ -154,6 +154,11 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Generated evaluation outputs
+/outputs/
+/runs/
+/evaluations/
+
 # Internal planning documents
 /internal_docs/
 

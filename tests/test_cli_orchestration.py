@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import cast
 
 import pytest
@@ -93,9 +94,9 @@ def test_cli_routes_run_command_to_runtime_and_renders_text(
         [
             "run",
             "--suite",
-            "suites/example_suite.yaml",
+            "configs/suites/example_suite.yaml",
             "--run-profile",
-            "run_profiles/default.yaml",
+            "configs/run_profiles/default.yaml",
         ],
         runtime=cast(CliRuntime, runtime),
     )
@@ -105,8 +106,8 @@ def test_cli_routes_run_command_to_runtime_and_renders_text(
         (
             "run",
             {
-                "suite_path": "suites/example_suite.yaml",
-                "run_profile_path": "run_profiles/default.yaml",
+                "suite_path": "configs/suites/example_suite.yaml",
+                "run_profile_path": "configs/run_profiles/default.yaml",
             },
         )
     ]
@@ -124,11 +125,11 @@ def test_cli_routes_eval_command_to_runtime_and_renders_json(
         [
             "eval",
             "--suite",
-            "suites/example_suite.yaml",
+            "configs/suites/example_suite.yaml",
             "--run-profile",
-            "run_profiles/default.yaml",
+            "configs/run_profiles/default.yaml",
             "--evaluation-profile",
-            "evaluation_profiles/default.yaml",
+            "configs/evaluation_profiles/default.yaml",
             "--output",
             "json",
         ],
@@ -149,11 +150,11 @@ def test_cli_routes_report_command_to_runtime(capsys: pytest.CaptureFixture[str]
         [
             "report",
             "--suite",
-            "suites/example_suite.yaml",
+            "configs/suites/example_suite.yaml",
             "--run-profile",
-            "run_profiles/default.yaml",
+            "configs/run_profiles/default.yaml",
             "--evaluation-profile",
-            "evaluation_profiles/default.yaml",
+            "configs/evaluation_profiles/default.yaml",
         ],
         runtime=cast(CliRuntime, runtime),
     )
@@ -163,6 +164,85 @@ def test_cli_routes_report_command_to_runtime(capsys: pytest.CaptureFixture[str]
     output = capsys.readouterr().out
     assert "Model Summary" in output
     assert "example_case" in output
+
+
+def test_cli_resolves_ids_from_conventional_directories(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    runtime = FakeRuntime()
+    (tmp_path / "configs" / "suites").mkdir(parents=True)
+    (tmp_path / "configs" / "run_profiles").mkdir(parents=True)
+    (tmp_path / "configs" / "evaluation_profiles").mkdir(parents=True)
+    (tmp_path / "configs" / "suites" / "example_suite.yaml").write_text(
+        "suite_id: example_suite\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "configs" / "run_profiles" / "default.yaml").write_text(
+        "run_profile_id: default\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "configs" / "evaluation_profiles" / "judge.yaml").write_text(
+        "evaluation_profile_id: judge\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    exit_code = main(
+        [
+            "run-eval",
+            "--suite",
+            "example_suite",
+            "--run-profile",
+            "default",
+            "--evaluation-profile",
+            "judge",
+        ],
+        runtime=cast(CliRuntime, runtime),
+    )
+
+    assert exit_code == 0
+    assert runtime.calls == [
+        (
+            "run-eval",
+            {
+                "suite_path": str((tmp_path / "configs" / "suites" / "example_suite.yaml").resolve()),
+                "run_profile_path": str(
+                    (tmp_path / "configs" / "run_profiles" / "default.yaml").resolve()
+                ),
+                "evaluation_profile_path": str(
+                    (tmp_path / "configs" / "evaluation_profiles" / "judge.yaml").resolve()
+                ),
+            },
+        )
+    ]
+    assert "Case Results" in capsys.readouterr().out
+
+
+def test_cli_reports_clear_error_for_unknown_suite_id(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    runtime = FakeRuntime()
+    (tmp_path / "configs" / "suites").mkdir(parents=True)
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(
+            [
+                "run",
+                "--suite",
+                "missing_suite",
+                "--run-profile",
+                "default",
+            ],
+            runtime=cast(CliRuntime, runtime),
+        )
+
+    assert exc_info.value.code == 2
+    assert "Could not resolve suite 'missing_suite'" in capsys.readouterr().err
 
 
 def _workflow_result(command: str) -> WorkflowResult:

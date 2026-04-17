@@ -79,9 +79,11 @@ def _build_success_response(*, content: str = "Summary ready.") -> OpenRouterCha
 
 
 def _load_case_and_profile() -> tuple[CaseConfigModel, RunProfileConfig, ModelConfig]:
-    case_config = load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml")
-    run_profile = load_run_profile(FIXTURES_ROOT / "run_profiles" / "default.yaml")
-    suite_config = load_suite_config(FIXTURES_ROOT / "suites" / "example_suite.yaml")
+    case_config = load_test_config(
+        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+    )
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "default.yaml")
+    suite_config = load_suite_config(FIXTURES_ROOT / "configs" / "suites" / "example_suite.yaml")
     return case_config, run_profile, suite_config.models[0]
 
 
@@ -105,7 +107,16 @@ def test_llm_probe_runner_builds_success_artifact_from_case_profile_and_model() 
     assert artifact.request.execution_parameters.timeout_seconds == 30.0
     assert artifact.request.execution_parameters.retries == 5
     assert artifact.request.metadata["attachments"] == [
-        str((FIXTURES_ROOT / "cases" / "example_case" / "artifacts" / "prompt.txt").resolve())
+        str(
+            (
+                FIXTURES_ROOT
+                / "configs"
+                / "cases"
+                / "example_case"
+                / "artifacts"
+                / "prompt.txt"
+            ).resolve()
+        )
     ]
     assert artifact.provider.provider_name == "openai"
     assert artifact.provider.provider_model_id == "openai/gpt-example"

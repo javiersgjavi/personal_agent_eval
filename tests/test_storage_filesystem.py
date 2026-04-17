@@ -41,25 +41,25 @@ def test_storage_derives_v1_paths() -> None:
     storage = FilesystemStorage("/tmp/personal-agent-eval")
 
     assert storage.run_manifest_path("run-fp") == Path(
-        "/tmp/personal-agent-eval/runs/run-fp/manifest.json"
+        "/tmp/personal-agent-eval/outputs/runs/run-fp/manifest.json"
     )
     assert storage.run_fingerprint_input_path("run-fp") == Path(
-        "/tmp/personal-agent-eval/runs/run-fp/fingerprint_input.json"
+        "/tmp/personal-agent-eval/outputs/runs/run-fp/fingerprint_input.json"
     )
     assert storage.case_run_path("run-fp", "example_case") == Path(
-        "/tmp/personal-agent-eval/runs/run-fp/cases/example_case/run.json"
+        "/tmp/personal-agent-eval/outputs/runs/run-fp/cases/example_case/run.json"
     )
     assert storage.evaluation_manifest_path("eval-fp") == Path(
-        "/tmp/personal-agent-eval/evaluations/eval-fp/manifest.json"
+        "/tmp/personal-agent-eval/outputs/evaluations/eval-fp/manifest.json"
     )
     assert storage.evaluation_fingerprint_input_path("eval-fp") == Path(
-        "/tmp/personal-agent-eval/evaluations/eval-fp/fingerprint_input.json"
+        "/tmp/personal-agent-eval/outputs/evaluations/eval-fp/fingerprint_input.json"
     )
     assert storage.case_judge_path_for_run("eval-fp", "run-fp", "example_case") == Path(
-        "/tmp/personal-agent-eval/evaluations/eval-fp/runs/run-fp/cases/example_case/judge.json"
+        "/tmp/personal-agent-eval/outputs/evaluations/eval-fp/runs/run-fp/cases/example_case/judge.json"
     )
     assert storage.case_final_result_path_for_run("eval-fp", "run-fp", "example_case") == Path(
-        "/tmp/personal-agent-eval/evaluations/eval-fp/runs/run-fp/cases/example_case/final_result.json"
+        "/tmp/personal-agent-eval/outputs/evaluations/eval-fp/runs/run-fp/cases/example_case/final_result.json"
     )
 
 

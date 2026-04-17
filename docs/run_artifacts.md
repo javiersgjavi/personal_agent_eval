@@ -77,7 +77,7 @@ small manifest and the normalized fingerprint input payload used to derive that 
 Run spaces use this layout:
 
 ```text
-runs/<run_fingerprint>/
+outputs/runs/<run_fingerprint>/
   manifest.json
   fingerprint_input.json
   cases/
@@ -88,7 +88,7 @@ runs/<run_fingerprint>/
 Evaluation spaces use this layout:
 
 ```text
-evaluations/<evaluation_fingerprint>/
+outputs/evaluations/<evaluation_fingerprint>/
   manifest.json
   fingerprint_input.json
   runs/

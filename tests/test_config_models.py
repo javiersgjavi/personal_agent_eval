@@ -19,17 +19,26 @@ Loader = Callable[[Path], object]
 
 
 def test_load_test_config_normalizes_paths_and_defaults() -> None:
-    config = load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml")
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
 
     assert config.case_id == "example_case"
     assert config.tags == ["llm_probe", "smoke"]
-    assert config.source_path == (FIXTURES_ROOT / "cases" / "example_case" / "test.yaml").resolve()
+    assert config.source_path == (
+        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+    ).resolve()
     assert config.input.messages[1].source is not None
     assert config.input.messages[1].source.path == (
-        FIXTURES_ROOT / "cases" / "example_case" / "messages.yaml"
+        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "messages.yaml"
     ).resolve()
     assert config.input.attachments == [
-        (FIXTURES_ROOT / "cases" / "example_case" / "artifacts" / "prompt.txt").resolve()
+        (
+            FIXTURES_ROOT
+            / "configs"
+            / "cases"
+            / "example_case"
+            / "artifacts"
+            / "prompt.txt"
+        ).resolve()
     ]
     assert config.deterministic_checks[0].declarative is not None
     assert config.deterministic_checks[0].declarative.kind == "final_response_present"
@@ -37,12 +46,12 @@ def test_load_test_config_normalizes_paths_and_defaults() -> None:
     assert config.deterministic_checks[1].python_hook is not None
     assert config.deterministic_checks[1].dimensions == ["task"]
     assert config.deterministic_checks[1].python_hook.path == (
-        FIXTURES_ROOT / "cases" / "example_case" / "hooks" / "custom_check.py"
+        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "hooks" / "custom_check.py"
     ).resolve()
 
 
 def test_load_suite_config_from_fixture() -> None:
-    config = load_suite_config(FIXTURES_ROOT / "suites" / "example_suite.yaml")
+    config = load_suite_config(FIXTURES_ROOT / "configs" / "suites" / "example_suite.yaml")
 
     assert config.suite_id == "example_suite"
     assert config.case_selection.include_case_ids == ["example_case"]
@@ -50,7 +59,7 @@ def test_load_suite_config_from_fixture() -> None:
 
 
 def test_load_run_profile_from_fixture() -> None:
-    config = load_run_profile(FIXTURES_ROOT / "run_profiles" / "default.yaml")
+    config = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "default.yaml")
 
     assert config.run_profile_id == "default"
     assert config.execution_policy.max_concurrency == 2
@@ -58,7 +67,9 @@ def test_load_run_profile_from_fixture() -> None:
 
 
 def test_load_evaluation_profile_from_fixture() -> None:
-    config = load_evaluation_profile(FIXTURES_ROOT / "evaluation_profiles" / "default.yaml")
+    config = load_evaluation_profile(
+        FIXTURES_ROOT / "configs" / "evaluation_profiles" / "default.yaml"
+    )
 
     assert config.evaluation_profile_id == "default"
     assert config.anchors.enabled is True

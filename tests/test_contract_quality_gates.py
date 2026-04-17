@@ -54,7 +54,7 @@ from personal_agent_eval.judge.models import (
 from personal_agent_eval.storage import EvaluationStorageManifest, FilesystemStorage
 
 FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "config"
-CASE_FIXTURE = FIXTURES_ROOT / "cases" / "example_case" / "test.yaml"
+CASE_FIXTURE = FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
 
 
 def test_v1_test_config_normalization_contract_is_stable() -> None:
@@ -83,7 +83,7 @@ def test_v1_test_config_normalization_contract_is_stable() -> None:
 
 def test_v1_evaluation_profile_defaults_remain_frozen() -> None:
     evaluation_profile = load_evaluation_profile(
-        FIXTURES_ROOT / "evaluation_profiles" / "default.yaml"
+        FIXTURES_ROOT / "configs" / "evaluation_profiles" / "default.yaml"
     )
 
     assert evaluation_profile.schema_version == 1
@@ -174,7 +174,7 @@ def test_v1_final_evaluation_result_shape_remains_stable() -> None:
 def test_run_fingerprint_changes_on_semantic_message_or_attachment_changes(
     tmp_path: Path,
 ) -> None:
-    original_case = FIXTURES_ROOT / "cases" / "example_case"
+    original_case = FIXTURES_ROOT / "configs" / "cases" / "example_case"
     changed_case = _copy_case_fixture(
         original_case=original_case,
         target_dir=tmp_path / "changed_case",
@@ -191,8 +191,8 @@ def test_run_fingerprint_changes_on_semantic_message_or_attachment_changes(
 
     original_test = load_test_config(original_case / "test.yaml")
     changed_test = load_test_config(changed_case / "test.yaml")
-    run_profile = load_run_profile(FIXTURES_ROOT / "run_profiles" / "default.yaml")
-    suite = load_suite_config(FIXTURES_ROOT / "suites" / "example_suite.yaml")
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "default.yaml")
+    suite = load_suite_config(FIXTURES_ROOT / "configs" / "suites" / "example_suite.yaml")
     model_selection = suite.models[0]
 
     original_input = build_run_fingerprint_input(
@@ -212,18 +212,18 @@ def test_run_fingerprint_changes_on_semantic_message_or_attachment_changes(
 def test_run_fingerprint_ignores_non_semantic_case_relocation_and_profile_naming(
     tmp_path: Path,
 ) -> None:
-    original_case = FIXTURES_ROOT / "cases" / "example_case"
+    original_case = FIXTURES_ROOT / "configs" / "cases" / "example_case"
     moved_case = _copy_case_fixture(
         original_case=original_case,
         target_dir=tmp_path / "moved_case",
     )
     original_test = load_test_config(original_case / "test.yaml")
     moved_test = load_test_config(moved_case / "test.yaml")
-    run_profile = load_run_profile(FIXTURES_ROOT / "run_profiles" / "default.yaml")
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "default.yaml")
     renamed_profile = run_profile.model_copy(
         update={"run_profile_id": "renamed_profile", "title": "Renamed profile"}
     )
-    suite = load_suite_config(FIXTURES_ROOT / "suites" / "example_suite.yaml")
+    suite = load_suite_config(FIXTURES_ROOT / "configs" / "suites" / "example_suite.yaml")
     model_selection = suite.models[0]
 
     original_input = build_run_fingerprint_input(
@@ -244,7 +244,7 @@ def test_run_fingerprint_ignores_non_semantic_case_relocation_and_profile_naming
 def test_evaluation_fingerprint_ignores_non_semantic_reordering_but_changes_on_aggregation_change(
 ) -> None:
     evaluation_profile = load_evaluation_profile(
-        FIXTURES_ROOT / "evaluation_profiles" / "default.yaml"
+        FIXTURES_ROOT / "configs" / "evaluation_profiles" / "default.yaml"
     )
 
     reordered = evaluation_profile.model_copy(
@@ -355,6 +355,7 @@ def test_storage_layout_is_frozen_and_isolates_results_per_run_fingerprint(tmp_p
         evaluation_fingerprint, first_run_fingerprint, case_id
     ) == (
         tmp_path
+        / "outputs"
         / "evaluations"
         / evaluation_fingerprint
         / "runs"
@@ -367,6 +368,7 @@ def test_storage_layout_is_frozen_and_isolates_results_per_run_fingerprint(tmp_p
         evaluation_fingerprint, second_run_fingerprint, case_id
     ) == (
         tmp_path
+        / "outputs"
         / "evaluations"
         / evaluation_fingerprint
         / "runs"

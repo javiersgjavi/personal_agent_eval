@@ -121,7 +121,9 @@ def _valid_contract(
 
 
 def test_build_judge_messages_includes_case_artifact_and_deterministic_summary() -> None:
-    config = load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml")
+    config = load_test_config(
+        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+    )
 
     messages = build_judge_messages(
         judge_name="rubric_judge",
@@ -165,7 +167,9 @@ def test_orchestrator_records_successful_iteration_and_aggregation() -> None:
     result = orchestrator.evaluate(
         judge_name="rubric_judge",
         judge_model="openai/gpt-5-mini",
-        test_config=load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml"),
+        test_config=load_test_config(
+            FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+        ),
         run_artifact=_build_artifact(),
         repetitions=1,
     )
@@ -202,7 +206,9 @@ def test_orchestrator_retries_then_succeeds() -> None:
     result = orchestrator.evaluate(
         judge_name="rubric_judge",
         judge_model="openai/gpt-5-mini",
-        test_config=load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml"),
+        test_config=load_test_config(
+            FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+        ),
         run_artifact=_build_artifact(),
         repetitions=1,
         max_retries=1,
@@ -237,7 +243,9 @@ def test_orchestrator_retries_then_keeps_failed_repetition_visible() -> None:
     result = orchestrator.evaluate(
         judge_name="rubric_judge",
         judge_model="openai/gpt-5-mini",
-        test_config=load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml"),
+        test_config=load_test_config(
+            FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+        ),
         run_artifact=_build_artifact(),
         repetitions=1,
         max_retries=1,
@@ -268,7 +276,9 @@ def test_orchestrator_marks_structurally_invalid_output() -> None:
     result = orchestrator.evaluate(
         judge_name="rubric_judge",
         judge_model="openai/gpt-5-mini",
-        test_config=load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml"),
+        test_config=load_test_config(
+            FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+        ),
         run_artifact=_build_artifact(),
         repetitions=1,
     )
@@ -295,7 +305,9 @@ def test_orchestrator_keeps_success_with_incomplete_evidence_warning() -> None:
     result = orchestrator.evaluate(
         judge_name="rubric_judge",
         judge_model="openai/gpt-5-mini",
-        test_config=load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml"),
+        test_config=load_test_config(
+            FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+        ),
         run_artifact=_build_artifact(),
         repetitions=1,
     )
@@ -339,7 +351,9 @@ def test_orchestrator_aggregates_successful_iterations_only_with_median() -> Non
     result = orchestrator.evaluate(
         judge_name="rubric_judge",
         judge_model="openai/gpt-5-mini",
-        test_config=load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml"),
+        test_config=load_test_config(
+            FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
+        ),
         run_artifact=_build_artifact(),
         repetitions=4,
     )

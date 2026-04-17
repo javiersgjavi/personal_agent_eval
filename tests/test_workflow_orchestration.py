@@ -70,6 +70,21 @@ class FakeJudgeClient:
         )
 
 
+class AlwaysInvalidJudgeClient:
+    def run_once(self, invocation: Any) -> RawJudgeRunResult:
+        return RawJudgeRunResult(
+            raw_result_ref=invocation.raw_result_ref,
+            judge_name=invocation.judge_name,
+            judge_model=invocation.judge_model,
+            repetition_index=invocation.repetition_index,
+            attempt_index=invocation.attempt_index,
+            status=JudgeIterationStatus.SUCCESS,
+            request_messages=[dict(message) for message in invocation.messages],
+            response_content="not json",
+            parsed_response=None,
+        )
+
+
 def test_run_eval_executes_then_reuses_all(tmp_path: Path) -> None:
     workspace_root = _build_workspace(tmp_path)
     workflow = WorkflowOrchestrator(
@@ -79,14 +94,14 @@ def test_run_eval_executes_then_reuses_all(tmp_path: Path) -> None:
     )
 
     first = workflow.run_eval(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
-        evaluation_profile_path=workspace_root / "evaluation_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
     )
     second = workflow.run_eval(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
-        evaluation_profile_path=workspace_root / "evaluation_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
     )
 
     assert first.summary.model_case_pairs == 2
@@ -111,14 +126,15 @@ def test_eval_recomputes_only_missing_final_result(tmp_path: Path) -> None:
     )
 
     initial = workflow.run_eval(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
-        evaluation_profile_path=workspace_root / "evaluation_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
     )
     target = initial.results[0]
     assert target.evaluation_fingerprint is not None
     final_result_path = (
         workspace_root
+        / "outputs"
         / "evaluations"
         / target.evaluation_fingerprint
         / "runs"
@@ -130,9 +146,9 @@ def test_eval_recomputes_only_missing_final_result(tmp_path: Path) -> None:
     final_result_path.unlink()
 
     result = workflow.evaluate(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
-        evaluation_profile_path=workspace_root / "evaluation_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
     )
 
     recomputed = next(
@@ -159,14 +175,14 @@ def test_report_reads_existing_artifacts_without_reexecution(tmp_path: Path) -> 
     )
 
     workflow.run_eval(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
-        evaluation_profile_path=workspace_root / "evaluation_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
     )
     report = workflow.report(
-        suite_path=workspace_root / "suites" / "example_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "default.yaml",
-        evaluation_profile_path=workspace_root / "evaluation_profiles" / "default.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
     )
 
     assert report.command == "report"
@@ -177,12 +193,45 @@ def test_report_reads_existing_artifacts_without_reexecution(tmp_path: Path) -> 
     assert all(result.final_dimensions is not None for result in report.results)
 
 
+def test_run_eval_marks_evaluation_failed_when_judge_produces_no_successful_iterations(
+    tmp_path: Path,
+) -> None:
+    workspace_root = _build_workspace(tmp_path)
+    case_path = workspace_root / "configs" / "cases" / "example_case" / "test.yaml"
+    case_payload = yaml.safe_load(case_path.read_text(encoding="utf-8"))
+    case_payload["deterministic_checks"] = []
+    case_path.write_text(yaml.safe_dump(case_payload, sort_keys=False), encoding="utf-8")
+
+    eval_path = workspace_root / "configs" / "evaluation_profiles" / "default.yaml"
+    eval_payload = yaml.safe_load(eval_path.read_text(encoding="utf-8"))
+    eval_payload["final_aggregation"]["dimensions"] = {}
+    eval_path.write_text(yaml.safe_dump(eval_payload, sort_keys=False), encoding="utf-8")
+
+    workflow = WorkflowOrchestrator(
+        storage_root=workspace_root,
+        run_client_factory=FakeRunClient,
+        judge_client_factory=AlwaysInvalidJudgeClient,
+    )
+
+    result = workflow.run_eval(
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
+    )
+
+    assert result.summary.model_case_pairs == 2
+    assert result.summary.evaluations_executed == 2
+    assert all(item.evaluation_action is EvaluationAction.EXECUTED for item in result.results)
+    assert all(item.evaluation_status == "failed" for item in result.results)
+    assert all(item.final_score is None for item in result.results)
+
+
 def _build_workspace(tmp_path: Path) -> Path:
     fixture_root = Path(__file__).resolve().parent / "fixtures" / "config"
     workspace_root = tmp_path / "workspace"
     shutil.copytree(fixture_root, workspace_root)
 
-    suite_path = workspace_root / "suites" / "example_suite.yaml"
+    suite_path = workspace_root / "configs" / "suites" / "example_suite.yaml"
     suite_payload = yaml.safe_load(suite_path.read_text(encoding="utf-8"))
     suite_payload["models"] = [
         {

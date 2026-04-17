@@ -1,0 +1,34 @@
+schema_version: 1
+case_id: h8_weather_script
+title: H8 Weather script wttr.in (legacy)
+runner:
+  type: llm_probe
+input:
+  messages:
+    - role: user
+      content: |
+        Crea un script Python en /tmp/weather-example.py que:
+        1. Use la API de wttr.in para obtener el tiempo en una ubicación de ejemplo (por ejemplo, "Seville")
+        2. Imprima: temperatura actual, condición (soleado/nublado/etc.) y si va a llover mañana
+        3. Maneje errores de red (try/except)
+        4. Sea ejecutable directamente con `python3 /tmp/weather-example.py`
+
+        Después, describe qué salida esperas ver (ejemplo), sin afirmar datos meteorológicos reales.
+expectations:
+  hard_expectations:
+    - text: Produces a valid Python script at /tmp/weather-example.py that calls wttr.in for an example location.
+    - text: Handles network errors gracefully with try/except.
+    - text: Does not claim real current conditions; any shown output must be clearly marked as example/synthetic.
+  soft_expectations:
+    - text: Script is concise and readable; output is interpreted naturally (not only raw JSON).
+deterministic_checks:
+  - check_id: final-response-present
+    declarative:
+      kind: final_response_present
+tags:
+  - legacy
+  - coding
+  - tool_use
+  - h8
+metadata:
+  source: model-benchmark/references/tasks/coding/H8_weather_script.md

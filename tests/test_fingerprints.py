@@ -21,7 +21,7 @@ FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "config"
 
 
 def test_run_fingerprint_is_stable_across_equivalent_case_paths(tmp_path: Path) -> None:
-    original_case = FIXTURES_ROOT / "cases" / "example_case"
+    original_case = FIXTURES_ROOT / "configs" / "cases" / "example_case"
     copied_case = tmp_path / "copied_case"
     copied_case.mkdir(parents=True)
     (copied_case / "artifacts").mkdir()
@@ -48,8 +48,8 @@ def test_run_fingerprint_is_stable_across_equivalent_case_paths(tmp_path: Path) 
 
     original_test = load_test_config(original_case / "test.yaml")
     copied_test = load_test_config(copied_case / "test.yaml")
-    run_profile = load_run_profile(FIXTURES_ROOT / "run_profiles" / "default.yaml")
-    suite = load_suite_config(FIXTURES_ROOT / "suites" / "example_suite.yaml")
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "default.yaml")
+    suite = load_suite_config(FIXTURES_ROOT / "configs" / "suites" / "example_suite.yaml")
     model_selection = suite.models[0]
 
     original_input = build_run_fingerprint_input(
@@ -69,9 +69,9 @@ def test_run_fingerprint_is_stable_across_equivalent_case_paths(tmp_path: Path) 
 
 
 def test_run_fingerprint_changes_when_execution_settings_change() -> None:
-    test_config = load_test_config(FIXTURES_ROOT / "cases" / "example_case" / "test.yaml")
-    run_profile = load_run_profile(FIXTURES_ROOT / "run_profiles" / "default.yaml")
-    suite = load_suite_config(FIXTURES_ROOT / "suites" / "example_suite.yaml")
+    test_config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "default.yaml")
+    suite = load_suite_config(FIXTURES_ROOT / "configs" / "suites" / "example_suite.yaml")
     model_selection = suite.models[0]
 
     base_input = build_run_fingerprint_input(
@@ -93,7 +93,7 @@ def test_run_fingerprint_changes_when_execution_settings_change() -> None:
 
 def test_evaluation_fingerprint_ignores_profile_id_but_changes_on_semantic_changes() -> None:
     evaluation_profile = load_evaluation_profile(
-        FIXTURES_ROOT / "evaluation_profiles" / "default.yaml"
+        FIXTURES_ROOT / "configs" / "evaluation_profiles" / "default.yaml"
     )
 
     renamed_profile = evaluation_profile.model_copy(

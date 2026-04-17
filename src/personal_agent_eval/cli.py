@@ -6,6 +6,7 @@ import argparse
 import json
 import logging
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
@@ -48,6 +49,14 @@ class CliRuntime(Protocol):
         """Render reporting from previously stored artifacts."""
 
 
+@dataclass(frozen=True, slots=True)
+class ResolvedConfigReference:
+    """CLI argument plus canonical resolved path."""
+
+    cli_value: str
+    resolved_path: Path
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the root CLI parser and subcommands."""
     parser = argparse.ArgumentParser(
@@ -67,8 +76,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="command")
     run_parent = argparse.ArgumentParser(add_help=False)
-    run_parent.add_argument("--suite", required=True, help="Path to suite YAML.")
-    run_parent.add_argument("--run-profile", required=True, help="Path to run profile YAML.")
+    run_parent.add_argument(
+        "--suite",
+        required=True,
+        help="Suite path or suite_id discovered under configs/suites/.",
+    )
+    run_parent.add_argument(
+        "--run-profile",
+        required=True,
+        help="Run profile path or run_profile_id discovered under configs/run_profiles/.",
+    )
     run_parent.add_argument(
         "--output",
         default="text",
@@ -80,12 +97,20 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.set_defaults(command="run")
 
     eval_parent = argparse.ArgumentParser(add_help=False)
-    eval_parent.add_argument("--suite", required=True, help="Path to suite YAML.")
-    eval_parent.add_argument("--run-profile", required=True, help="Path to run profile YAML.")
+    eval_parent.add_argument(
+        "--suite",
+        required=True,
+        help="Suite path or suite_id discovered under configs/suites/.",
+    )
+    eval_parent.add_argument(
+        "--run-profile",
+        required=True,
+        help="Run profile path or run_profile_id discovered under configs/run_profiles/.",
+    )
     eval_parent.add_argument(
         "--evaluation-profile",
         required=True,
-        help="Path to evaluation profile YAML.",
+        help="Evaluation profile path or evaluation_profile_id discovered under configs/evaluation_profiles/.",
     )
     eval_parent.add_argument(
         "--output",
@@ -131,30 +156,59 @@ def main(argv: Sequence[str] | None = None, *, runtime: CliRuntime | None = None
         format="%(levelname)s %(message)s",
     )
 
-    resolved_runtime = runtime or build_default_runtime(parsed_args.suite)
+    try:
+        suite_reference = resolve_config_reference(
+            parsed_args.suite,
+            config_kind="suite",
+            search_root=Path.cwd(),
+            conventional_directory="configs/suites",
+        )
+        workspace_root = workspace_root_from_config_path(suite_reference.resolved_path)
+        run_profile_reference = resolve_config_reference(
+            parsed_args.run_profile,
+            config_kind="run profile",
+            search_root=workspace_root,
+            conventional_directory="configs/run_profiles",
+        )
+        evaluation_profile_reference = None
+        if hasattr(parsed_args, "evaluation_profile"):
+            evaluation_profile_reference = resolve_config_reference(
+                parsed_args.evaluation_profile,
+                config_kind="evaluation profile",
+                search_root=workspace_root,
+                conventional_directory="configs/evaluation_profiles",
+            )
+    except ValueError as exc:
+        parser.error(str(exc))
+        return 2
+
+    resolved_runtime = runtime or build_default_runtime(suite_reference.resolved_path)
 
     if parsed_args.command == "run":
         result = resolved_runtime.run(
-            suite_path=parsed_args.suite,
-            run_profile_path=parsed_args.run_profile,
+            suite_path=suite_reference.cli_value,
+            run_profile_path=run_profile_reference.cli_value,
         )
     elif parsed_args.command == "eval":
+        assert evaluation_profile_reference is not None
         result = resolved_runtime.evaluate(
-            suite_path=parsed_args.suite,
-            run_profile_path=parsed_args.run_profile,
-            evaluation_profile_path=parsed_args.evaluation_profile,
+            suite_path=suite_reference.cli_value,
+            run_profile_path=run_profile_reference.cli_value,
+            evaluation_profile_path=evaluation_profile_reference.cli_value,
         )
     elif parsed_args.command == "run-eval":
+        assert evaluation_profile_reference is not None
         result = resolved_runtime.run_eval(
-            suite_path=parsed_args.suite,
-            run_profile_path=parsed_args.run_profile,
-            evaluation_profile_path=parsed_args.evaluation_profile,
+            suite_path=suite_reference.cli_value,
+            run_profile_path=run_profile_reference.cli_value,
+            evaluation_profile_path=evaluation_profile_reference.cli_value,
         )
     elif parsed_args.command == "report":
+        assert evaluation_profile_reference is not None
         result = resolved_runtime.report(
-            suite_path=parsed_args.suite,
-            run_profile_path=parsed_args.run_profile,
-            evaluation_profile_path=parsed_args.evaluation_profile,
+            suite_path=suite_reference.cli_value,
+            run_profile_path=run_profile_reference.cli_value,
+            evaluation_profile_path=evaluation_profile_reference.cli_value,
         )
     else:
         parser.error(f"Unsupported command '{parsed_args.command}'.")
@@ -170,8 +224,61 @@ def main(argv: Sequence[str] | None = None, *, runtime: CliRuntime | None = None
 
 def build_default_runtime(suite_path: str | Path) -> WorkflowOrchestrator:
     """Build the default filesystem-backed workflow runtime."""
-    suite_root = Path(suite_path).expanduser().resolve().parent.parent
+    suite_root = workspace_root_from_config_path(Path(suite_path).expanduser().resolve())
     return WorkflowOrchestrator(storage_root=suite_root)
+
+
+def workspace_root_from_config_path(config_path: Path) -> Path:
+    """Return the workspace root for a config path under configs/."""
+    resolved_path = config_path.expanduser().resolve()
+    if resolved_path.parent.parent.name == "configs":
+        return resolved_path.parent.parent.parent
+    return resolved_path.parent.parent
+
+
+def resolve_config_reference(
+    value: str | Path,
+    *,
+    config_kind: str,
+    search_root: Path,
+    conventional_directory: str,
+) -> ResolvedConfigReference:
+    """Resolve either an explicit YAML path or an id under a conventional directory."""
+    raw_value = str(value)
+    candidate_path = Path(raw_value).expanduser()
+
+    if _looks_like_explicit_path(raw_value):
+        return ResolvedConfigReference(
+            cli_value=raw_value,
+            resolved_path=candidate_path.resolve(),
+        )
+
+    matches = [
+        (search_root / conventional_directory / f"{raw_value}{suffix}").resolve()
+        for suffix in (".yaml", ".yml")
+        if (search_root / conventional_directory / f"{raw_value}{suffix}").exists()
+    ]
+    if len(matches) == 1:
+        return ResolvedConfigReference(cli_value=str(matches[0]), resolved_path=matches[0])
+    if len(matches) > 1:
+        raise ValueError(
+            f"Ambiguous {config_kind} id '{raw_value}': found multiple matches under "
+            f"'{search_root / conventional_directory}'. Use an explicit path."
+        )
+    raise ValueError(
+        f"Could not resolve {config_kind} '{raw_value}' under "
+        f"'{search_root / conventional_directory}'. Pass an explicit path or create "
+        f"'{conventional_directory}/{raw_value}.yaml'."
+    )
+
+
+def _looks_like_explicit_path(value: str) -> bool:
+    return (
+        "/" in value
+        or "\\" in value
+        or value.startswith(".")
+        or Path(value).suffix.lower() in {".yaml", ".yml"}
+    )
 
 
 def run() -> int:

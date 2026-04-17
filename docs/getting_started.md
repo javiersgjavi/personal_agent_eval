@@ -6,10 +6,10 @@ This page shows the minimal mental model for running V1 of `personal_agent_eval`
 
 V1 uses four YAML file types:
 
-1. `cases/<case_id>/test.yaml`
-2. `suites/<suite_id>.yaml`
-3. `run_profiles/<profile_id>.yaml`
-4. `evaluation_profiles/<profile_id>.yaml`
+1. `configs/cases/<case_id>/test.yaml`
+2. `configs/suites/<suite_id>.yaml`
+3. `configs/run_profiles/<profile_id>.yaml`
+4. `configs/evaluation_profiles/<profile_id>.yaml`
 
 They answer four different questions:
 
@@ -35,27 +35,75 @@ V1 now exposes these orchestration commands:
 - `pae run-eval`
 - `pae report`
 
+When working inside this repository, prefer running the CLI via `uv`:
+
+```bash
+uv run pae --help
+```
+
+If you installed `personal_agent_eval` into an active virtualenv (or globally), you can also run:
+
+```bash
+pae --help
+```
+
+The CLI accepts either explicit YAML paths or config ids for:
+
+- `--suite`
+- `--run-profile`
+- `--evaluation-profile`
+
+When an id is provided, the CLI resolves it automatically under the conventional workspace
+directories:
+
+- `configs/suites/<suite_id>.yaml`
+- `configs/run_profiles/<run_profile_id>.yaml`
+- `configs/evaluation_profiles/<evaluation_profile_id>.yaml`
+
 Minimal examples:
 
 ```bash
-pae run \
-  --suite suites/example_suite.yaml \
-  --run-profile run_profiles/default.yaml
+uv run pae run \
+  --suite configs/suites/example_suite.yaml \
+  --run-profile configs/run_profiles/default.yaml
 
-pae eval \
-  --suite suites/example_suite.yaml \
-  --run-profile run_profiles/default.yaml \
-  --evaluation-profile evaluation_profiles/default.yaml
+uv run pae eval \
+  --suite configs/suites/example_suite.yaml \
+  --run-profile configs/run_profiles/default.yaml \
+  --evaluation-profile configs/evaluation_profiles/default.yaml
 
-pae run-eval \
-  --suite suites/example_suite.yaml \
-  --run-profile run_profiles/default.yaml \
-  --evaluation-profile evaluation_profiles/default.yaml
+uv run pae run-eval \
+  --suite configs/suites/example_suite.yaml \
+  --run-profile configs/run_profiles/default.yaml \
+  --evaluation-profile configs/evaluation_profiles/default.yaml
 
-pae report \
-  --suite suites/example_suite.yaml \
-  --run-profile run_profiles/default.yaml \
-  --evaluation-profile evaluation_profiles/default.yaml
+uv run pae report \
+  --suite configs/suites/example_suite.yaml \
+  --run-profile configs/run_profiles/default.yaml \
+  --evaluation-profile configs/evaluation_profiles/default.yaml
+```
+
+Equivalent id-based commands:
+
+```bash
+uv run pae run \
+  --suite example_suite \
+  --run-profile default
+
+uv run pae eval \
+  --suite example_suite \
+  --run-profile default \
+  --evaluation-profile default
+
+uv run pae run-eval \
+  --suite example_suite \
+  --run-profile default \
+  --evaluation-profile default
+
+uv run pae report \
+  --suite example_suite \
+  --run-profile default \
+  --evaluation-profile default
 ```
 
 The CLI now renders human-readable reporting by default and can also emit structured JSON
@@ -64,10 +112,10 @@ with `--output json`.
 Example:
 
 ```bash
-pae run-eval \
-  --suite suites/example_suite.yaml \
-  --run-profile run_profiles/default.yaml \
-  --evaluation-profile evaluation_profiles/default.yaml \
+uv run pae run-eval \
+  --suite configs/suites/example_suite.yaml \
+  --run-profile configs/run_profiles/default.yaml \
+  --evaluation-profile configs/evaluation_profiles/default.yaml \
   --output json
 ```
 
@@ -81,15 +129,16 @@ The reporting layer is a pure consumer of structured workflow results and can re
 ## Minimal Repository Shape
 
 ```text
-cases/
-  example_case/
-    test.yaml
-suites/
-  example_suite.yaml
-run_profiles/
-  default.yaml
-evaluation_profiles/
-  default.yaml
+configs/
+  cases/
+    example_case/
+      test.yaml
+  suites/
+    example_suite.yaml
+  run_profiles/
+    default.yaml
+  evaluation_profiles/
+    default.yaml
 ```
 
 ## Minimal Output Mental Model

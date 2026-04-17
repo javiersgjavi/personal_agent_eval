@@ -43,7 +43,7 @@ def discover_cases(root_path: str | Path) -> dict[str, CaseManifest]:
     resolved_root = Path(root_path).expanduser().resolve()
     manifests_by_id: dict[str, CaseManifest] = {}
 
-    for test_path in sorted((resolved_root / "cases").glob("*/test.yaml")):
+    for test_path in sorted((resolved_root / "configs" / "cases").glob("*/test.yaml")):
         config = load_test_config(test_path)
         manifest = CaseManifest(
             root_path=resolved_root,
@@ -68,7 +68,7 @@ def discover_suites(root_path: str | Path) -> dict[str, SuiteManifest]:
     resolved_root = Path(root_path).expanduser().resolve()
     manifests_by_id: dict[str, SuiteManifest] = {}
 
-    for suite_path in sorted((resolved_root / "suites").glob("*.yaml")):
+    for suite_path in sorted((resolved_root / "configs" / "suites").glob("*.yaml")):
         config = load_suite_config(suite_path)
         manifest = SuiteManifest(
             root_path=resolved_root,

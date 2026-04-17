@@ -1,0 +1,12 @@
+schema_version: 1
+run_profile_id: openrouter_minimax_smoke
+title: OpenRouter minimax smoke profile (legacy tasks)
+runner_defaults:
+  temperature: 0
+  timeout_seconds: 90
+  max_tokens: 512
+  retries: 0
+execution_policy:
+  max_concurrency: 1
+  fail_fast: true
+  stop_on_runner_error: true

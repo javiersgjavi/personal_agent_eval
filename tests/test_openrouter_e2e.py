@@ -47,10 +47,10 @@ def test_openrouter_smoke_run_eval_executes_real_provider_and_judge_requests(
 
     workflow = WorkflowOrchestrator(storage_root=workspace_root)
     result = workflow.run_eval(
-        suite_path=workspace_root / "suites" / "openrouter_full_e2e_suite.yaml",
-        run_profile_path=workspace_root / "run_profiles" / "openrouter_full_e2e.yaml",
+        suite_path=workspace_root / "configs" / "suites" / "openrouter_full_e2e_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "openrouter_full_e2e.yaml",
         evaluation_profile_path=(
-            workspace_root / "evaluation_profiles" / "openrouter_full_e2e.yaml"
+            workspace_root / "configs" / "evaluation_profiles" / "openrouter_full_e2e.yaml"
         ),
     )
 
@@ -131,7 +131,7 @@ def _build_workspace(tmp_path: Path, *, run_model: str, judge_model: str) -> Pat
     shutil.copytree(FIXTURE_ROOT, workspace_root)
 
     suite_payload = yaml.safe_load(
-        (workspace_root / "suites" / "example_suite.yaml").read_text(encoding="utf-8")
+        (workspace_root / "configs" / "suites" / "example_suite.yaml").read_text(encoding="utf-8")
     )
     suite_payload["suite_id"] = "openrouter_full_e2e_suite"
     suite_payload["title"] = "OpenRouter full e2e suite"
@@ -142,13 +142,13 @@ def _build_workspace(tmp_path: Path, *, run_model: str, judge_model: str) -> Pat
             "label": "OpenRouter e2e model",
         }
     ]
-    (workspace_root / "suites" / "openrouter_full_e2e_suite.yaml").write_text(
+    (workspace_root / "configs" / "suites" / "openrouter_full_e2e_suite.yaml").write_text(
         yaml.safe_dump(suite_payload, sort_keys=False),
         encoding="utf-8",
     )
 
     run_profile_payload = yaml.safe_load(
-        (workspace_root / "run_profiles" / "default.yaml").read_text(encoding="utf-8")
+        (workspace_root / "configs" / "run_profiles" / "default.yaml").read_text(encoding="utf-8")
     )
     run_profile_payload["run_profile_id"] = "openrouter_full_e2e"
     run_profile_payload["title"] = "OpenRouter full e2e profile"
@@ -164,13 +164,15 @@ def _build_workspace(tmp_path: Path, *, run_model: str, judge_model: str) -> Pat
         "fail_fast": True,
         "stop_on_runner_error": True,
     }
-    (workspace_root / "run_profiles" / "openrouter_full_e2e.yaml").write_text(
+    (workspace_root / "configs" / "run_profiles" / "openrouter_full_e2e.yaml").write_text(
         yaml.safe_dump(run_profile_payload, sort_keys=False),
         encoding="utf-8",
     )
 
     evaluation_payload = yaml.safe_load(
-        (workspace_root / "evaluation_profiles" / "default.yaml").read_text(encoding="utf-8")
+        (
+            workspace_root / "configs" / "evaluation_profiles" / "default.yaml"
+        ).read_text(encoding="utf-8")
     )
     evaluation_payload["evaluation_profile_id"] = "openrouter_full_e2e"
     evaluation_payload["title"] = "OpenRouter full e2e profile"
@@ -188,7 +190,9 @@ def _build_workspace(tmp_path: Path, *, run_model: str, judge_model: str) -> Pat
             "repetitions": 1,
         }
     ]
-    (workspace_root / "evaluation_profiles" / "openrouter_full_e2e.yaml").write_text(
+    (
+        workspace_root / "configs" / "evaluation_profiles" / "openrouter_full_e2e.yaml"
+    ).write_text(
         yaml.safe_dump(evaluation_payload, sort_keys=False),
         encoding="utf-8",
     )
