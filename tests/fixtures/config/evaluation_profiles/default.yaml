@@ -1,0 +1,23 @@
+schema_version: 1
+evaluation_profile_id: default
+title: Default evaluation profile
+judges:
+  - judge_id: rubric_judge
+    type: llm_probe
+    model: gpt-judge
+judge_runs:
+  - judge_run_id: rubric_judge_primary
+    judge_id: rubric_judge
+    repetitions: 3
+aggregation:
+  method: mean
+  pass_threshold: 0.8
+anchors:
+  enabled: true
+  references:
+    - anchor_id: pass_anchor
+      label: Pass
+      text: The answer meets the bar.
+security_policy:
+  allow_local_python_hooks: false
+  network_access: deny

@@ -1,0 +1,4 @@
+- role: system
+  content: You are a precise assistant.
+- role: user
+  content: Summarize the attached context.

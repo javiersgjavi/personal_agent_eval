@@ -1,0 +1,14 @@
+schema_version: 1
+suite_id: example_suite
+title: Example suite
+models:
+  - model_id: baseline_model
+    provider: openai
+    model_name: gpt-example
+case_selection:
+  include_case_ids:
+    - example_case
+  include_tags:
+    - smoke
+metadata:
+  owner: qa

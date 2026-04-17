@@ -1,0 +1,39 @@
+schema_version: 1
+case_id: example_case
+title: Example case
+runner:
+  type: llm_probe
+  temperature: 0
+input:
+  messages:
+    - role: system
+      content: You are a careful evaluator.
+    - role: user
+      source:
+        path: messages.yaml
+        format: yaml
+  attachments:
+    - artifacts/prompt.txt
+  context:
+    locale: en-US
+expectations:
+  hard_expectations:
+    - text: Mentions the main point
+  soft_expectations:
+    - text: Uses concise wording
+      weight: 0.5
+deterministic_checks:
+  - check_id: final-output-contains
+    declarative:
+      kind: contains_text
+      value: summary
+  - check_id: local-python-hook
+    python_hook:
+      path: hooks/custom_check.py
+      callable_name: check_output
+tags:
+  - smoke
+  - llm_probe
+  - smoke
+metadata:
+  owner: qa

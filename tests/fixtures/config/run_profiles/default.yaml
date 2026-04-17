@@ -1,0 +1,11 @@
+schema_version: 1
+run_profile_id: default
+title: Default run profile
+runner_defaults:
+  timeout_seconds: 30
+model_overrides:
+  baseline_model:
+    temperature: 0
+execution_policy:
+  max_concurrency: 2
+  fail_fast: true
