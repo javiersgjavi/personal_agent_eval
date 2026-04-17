@@ -23,3 +23,8 @@ Repository for the `personal_agent_eval` evaluation library.
 - The initial public CLI entry point is `pae`
 - The package source layout lives under `src/personal_agent_eval/`
 - The current bootstrap scope only provides package import, package metadata, and CLI wiring for future domains
+
+## Public Docs
+
+- [Configuration](docs/configuration.md)
+- [Run artifacts](docs/run_artifacts.md)

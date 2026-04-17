@@ -24,6 +24,17 @@ Any relative file references resolve relative to the `test.yaml` file.
 Suites declare which models participate in a run and which cases or tags should be included
 or excluded.
 
+## Discovery And Suite Expansion
+
+- Cases are discovered from a supplied workspace root under `cases/<case_id>/test.yaml`
+- Suites are discovered from a supplied workspace root under `suites/<suite_id>.yaml`
+- Duplicate discovered `case_id` values are a hard error
+- Any suite reference to a missing `case_id` in `include_case_ids` or `exclude_case_ids`
+  is a hard error
+- `include_case_ids` has priority over tag filters and exclude lists
+- Tag-based selection matches when a case has any requested tag
+- Expanded suite case lists are deterministic and sorted by `case_id`
+
 ## Run Profiles
 
 - Path: `run_profiles/<profile_id>.yaml`
@@ -41,3 +52,8 @@ implement runner logic themselves; they only define validated configuration.
 
 Evaluation profiles describe how scoring should be configured without implementing judge
 execution, fingerprinting, or artifact storage.
+
+## Related Docs
+
+- [Run Artifacts](run_artifacts.md): canonical JSON-serializable schema for recorded runner
+  executions
