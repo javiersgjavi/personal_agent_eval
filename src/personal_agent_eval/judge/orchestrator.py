@@ -267,8 +267,8 @@ def build_judge_messages(
             "You are a strict evaluation judge. Return only valid JSON with the exact top-level "
             "keys `dimensions`, `summary`, and `evidence`. `dimensions` must contain the six "
             "dimension scores `task`, `process`, `autonomy`, `closeness`, `efficiency`, and "
-            "`spark`. `evidence` must contain those same six keys with arrays of strings. Do not "
-            "wrap the JSON in markdown."
+            "`spark`. `summary` must be a single concise string. `evidence` must contain those "
+            "same six keys with arrays of strings. Do not wrap the JSON in markdown."
         ),
     }
     user_message = {

@@ -15,6 +15,22 @@ V1 test configs support explicit input sections, full message sequences, inline 
 external message references, declarative deterministic checks, and Python hook references.
 Any relative file references resolve relative to the `test.yaml` file.
 
+### Attachments
+
+V1 `test.yaml` inputs may include `input.attachments`, which is a list of file paths resolved
+relative to the `test.yaml` file.
+
+For `llm_probe` runs, attachments are treated as deterministic input context:
+
+- The runner reads the attachment file bytes and injects the decoded text into the initial
+  prompt as additional `user` messages.
+- These injected messages appear in the run trace and contribute to the run fingerprint.
+- The run artifact also records the original attachment paths in request metadata.
+
+This means `attachments` are not "agent-chosen reads" in V1 `llm_probe`. If a case expects the
+model to use an attachment, it should rely on this automatic injection rather than on a tool
+read step.
+
 Deterministic checks are independent from judge evaluation. `expectations.hard_expectations`
 remain natural-language requirements for judge-based scoring, while `deterministic_checks`
 run directly against the canonical `RunArtifact`.

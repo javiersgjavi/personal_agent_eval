@@ -126,6 +126,10 @@ def run_llm_probe_case(
 
     try:
         resolved_messages = _resolve_messages(case_config.input.messages)
+        resolved_messages = _inject_attachments(
+            resolved_messages=resolved_messages,
+            attachments=case_config.input.attachments,
+        )
     except OSError as exc:
         return _build_terminal_artifact(
             identity=_build_identity(
@@ -553,6 +557,45 @@ def _resolve_messages(messages: list[Message]) -> list[ResolvedInputMessage]:
             continue
         resolved.extend(_load_source_messages(message))
     return resolved
+
+
+def _inject_attachments(
+    *,
+    resolved_messages: list[ResolvedInputMessage],
+    attachments: list[Path],
+) -> list[ResolvedInputMessage]:
+    if not attachments:
+        return resolved_messages
+
+    rendered: list[ResolvedInputMessage] = []
+    for path in attachments:
+        raw_bytes = path.read_bytes()
+        rendered.append(
+            ResolvedInputMessage(
+                role="user",
+                content=(
+                    f"Attached context file: {path.name}\n\n"
+                    f"--- BEGIN ATTACHMENT {path.name} ---\n"
+                    f"{raw_bytes.decode('utf-8', errors='replace')}\n"
+                    f"--- END ATTACHMENT {path.name} ---"
+                ),
+                metadata={
+                    "attachment": {
+                        "name": path.name,
+                        "byte_size": len(raw_bytes),
+                    }
+                },
+            )
+        )
+
+    insertion_index = 0
+    for index, message in enumerate(resolved_messages):
+        if message.role != "system":
+            insertion_index = index
+            break
+        insertion_index = index + 1
+
+    return resolved_messages[:insertion_index] + rendered + resolved_messages[insertion_index:]
 
 
 def _load_source_messages(message: Message) -> list[ResolvedInputMessage]:

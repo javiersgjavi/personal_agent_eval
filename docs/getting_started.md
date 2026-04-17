@@ -170,6 +170,37 @@ CLI can present them either as terminal reporting or as structured JSON.
 - judge output and deterministic output stay separate from the final hybrid result
 - the judge is the default prevailing source unless aggregation config says otherwise
 
+## Optional Real OpenRouter Smoke Test
+
+The repository includes one real OpenRouter smoke test for the full `run-eval` path. It
+covers:
+
+- real `llm_probe` execution against OpenRouter
+- real judge execution against OpenRouter
+- final hybrid aggregation and persisted artifacts
+
+It is gated so normal local runs and CI do not spend tokens by accident.
+
+Required environment variables:
+
+- `OPENROUTER_API_KEY`: real OpenRouter API key
+- `PERSONAL_AGENT_EVAL_RUN_OPENROUTER_E2E=1`: explicit opt-in switch
+
+Optional environment variable:
+
+- `PERSONAL_AGENT_EVAL_OPENROUTER_E2E_RUN_MODEL`: override the run model
+- `PERSONAL_AGENT_EVAL_OPENROUTER_E2E_JUDGE_MODEL`: override the judge model
+
+If those optional overrides are omitted, both default to `openai/gpt-4o-mini`.
+
+Example:
+
+```bash
+PERSONAL_AGENT_EVAL_RUN_OPENROUTER_E2E=1 \
+OPENROUTER_API_KEY=... \
+uv run pytest tests/test_openrouter_e2e.py -m openrouter_e2e
+```
+
 ## Next Reading
 
 - [Configuration](configuration.md)

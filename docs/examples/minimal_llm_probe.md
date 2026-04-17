@@ -16,6 +16,8 @@ input:
   messages:
     - role: user
       content: Say hello in one sentence.
+  attachments:
+    - artifacts/context.txt
 expectations:
   hard_expectations:
     - text: The answer should contain a greeting.
@@ -132,5 +134,7 @@ After execution and evaluation, the library should be able to express something 
 ## Notes
 
 - V1 runtime work is centered on `llm_probe`
+- `input.attachments` are injected into the initial prompt for `llm_probe` runs as additional
+  `user` messages (they are not tool-driven reads).
 - final CLI orchestration is still a later V1 step
 - this example is meant to explain the shape of the library, not a fully frozen CLI command
