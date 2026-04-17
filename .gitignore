@@ -154,6 +154,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Internal planning documents
+/internal_docs/
+
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -205,3 +208,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Internal and historical repository content
+/.codex
+/.cursor/
+/archive/
+/internal_docs/
+/model-benchmark/
