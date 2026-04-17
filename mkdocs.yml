@@ -1,8 +1,49 @@
 site_name: personal_agent_eval
 site_description: Evaluation framework for LLM and agent-style systems
-site_url: https://example.invalid/personal-agent-eval
+# site_url is injected by CI via MKDOCS_SITE_URL env var.
+# Override locally with: MKDOCS_SITE_URL=http://localhost:8000 uv run mkdocs serve
+site_url: !ENV [MKDOCS_SITE_URL, 'http://localhost:8000']
+
+repo_url: !ENV [MKDOCS_REPO_URL, '']
+repo_name: !ENV [MKDOCS_REPO_NAME, '']
+edit_uri: edit/main/docs/
+
 theme:
   name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
 nav:
   - Home: index.md
   - Getting Started: getting_started.md
@@ -14,4 +55,5 @@ nav:
       - Reporting: reporting.md
   - Examples:
       - Minimal llm_probe: examples/minimal_llm_probe.md
+
 docs_dir: docs

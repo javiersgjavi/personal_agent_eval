@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Only one concurrent run per branch; new pushes cancel in-progress runs.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Job 1: lint + unit tests ───────────────────────────────────────────────
+  test:
+    name: Lint & test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Lint – ruff check
+        run: uv run ruff check src tests
+
+      - name: Lint – ruff format
+        run: uv run ruff format --check src tests
+
+      - name: Unit tests (no network)
+        # The openrouter_e2e marker requires real API keys and network access;
+        # it is gated out here and can be run manually or in a separate workflow.
+        run: uv run pytest -m "not openrouter_e2e" -q --tb=short
+
+  # ── Job 2: deploy docs to GitHub Pages ────────────────────────────────────
+  # Runs only on pushes to main (not on PRs) and only when tests pass.
+  deploy-docs:
+    name: Deploy documentation
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: write   # needed to push to the gh-pages branch
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history lets mkdocs-material show "last updated" dates.
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install docs dependencies
+        run: uv sync --group docs
+
+      - name: Configure git for gh-deploy
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Build and deploy docs
+        env:
+          MKDOCS_SITE_URL: "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          MKDOCS_REPO_URL: "https://github.com/${{ github.repository }}"
+          MKDOCS_REPO_NAME: "${{ github.repository }}"
+        run: uv run mkdocs gh-deploy --force --no-history
