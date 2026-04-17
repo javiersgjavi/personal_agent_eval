@@ -67,3 +67,35 @@ the run artifact or the judge result. That final result keeps:
 
 This makes it possible to inspect what deterministic evaluation produced, what the judge
 produced, and what the final configured hybrid policy actually used.
+
+## Storage Layout
+
+V1 stores runs and evaluations in separate deterministic filesystem spaces. Storage does not
+redefine fingerprint semantics; it consumes precomputed fingerprints and persists both a
+small manifest and the normalized fingerprint input payload used to derive that fingerprint.
+
+Run spaces use this layout:
+
+```text
+runs/<run_fingerprint>/
+  manifest.json
+  fingerprint_input.json
+  cases/
+    <case_id>/
+      run.json
+```
+
+Evaluation spaces use this layout:
+
+```text
+evaluations/<evaluation_fingerprint>/
+  manifest.json
+  fingerprint_input.json
+  cases/
+    <case_id>/
+      judge.json
+      final_result.json
+```
+
+This keeps execution artifacts and evaluation artifacts clearly separated while preserving
+enough normalized fingerprint input to reproduce the same storage identity later.

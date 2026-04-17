@@ -146,6 +146,20 @@ dimension explicitly overrides the policy. Weighted dimensions must define both
 `judge_weight` and `deterministic_weight`. If deterministic scoring is missing for a
 dimension, the final aggregator falls back to the judge score and emits a warning.
 
+## Fingerprint Semantics
+
+Fingerprints are computed from normalized semantic payloads, not from raw YAML text.
+
+- `run_fingerprint`
+  - includes only inputs that affect the raw execution trace
+  - excludes non-semantic noise such as config ids, titles, and accidental absolute paths
+- `evaluation_fingerprint`
+  - includes only inputs that affect judge behavior and final aggregation behavior
+  - excludes non-semantic noise such as profile ids or titles
+
+This means equivalent configurations can reproduce the same fingerprint even if files move
+or ids change, as long as the semantic inputs remain the same.
+
 ## Related Docs
 
 - [Run Artifacts](run_artifacts.md): canonical JSON-serializable schema for recorded runner
