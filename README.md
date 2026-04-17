@@ -34,7 +34,7 @@ Implemented in the current V1 codebase:
 
 Still pending in V1:
 
-- final quality gates
+- no remaining mandatory implementation steps in the current V1 plan
 
 ## Install
 
