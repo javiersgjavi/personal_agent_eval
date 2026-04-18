@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import ConfigDict, Field, ValidationError, model_validator
+from pydantic import ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from personal_agent_eval.config._base import (
     ID_PATTERN,
@@ -141,6 +141,37 @@ class EvaluationProfileConfig(ConfigModel):
     anchors: AnchorsConfig = Field(default_factory=AnchorsConfig)
     security_policy: SecurityPolicy = Field(default_factory=SecurityPolicy)
     metadata: dict[str, Any] = Field(default_factory=dict)
+    judge_system_prompt: str | None = Field(
+        default=None,
+        description="Optional judge system message. Multiline YAML string; lines are joined with "
+        "spaces. Mutually exclusive with judge_system_prompt_path.",
+    )
+    judge_system_prompt_path: str | None = Field(
+        default=None,
+        description="Optional path to a UTF-8 text file, relative to this profile's YAML file. "
+        "Mutually exclusive with judge_system_prompt. Recommended shared location: "
+        "'prompts/judge_system_default.txt' relative to this YAML.",
+    )
+
+    @field_validator("judge_system_prompt", "judge_system_prompt_path", mode="before")
+    @classmethod
+    def _empty_prompt_fields_to_none(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    @model_validator(mode="after")
+    def _validate_judge_system_prompt_fields(self) -> EvaluationProfileConfig:
+        has_inline = self.judge_system_prompt is not None and self.judge_system_prompt.strip() != ""
+        has_path = (
+            self.judge_system_prompt_path is not None
+            and self.judge_system_prompt_path.strip() != ""
+        )
+        if has_inline and has_path:
+            raise ValueError(
+                "Specify only one of 'judge_system_prompt' or 'judge_system_prompt_path'."
+            )
+        return self
 
 
 def load_evaluation_profile(path: str | Path) -> EvaluationProfileConfig:

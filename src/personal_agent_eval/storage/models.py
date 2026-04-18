@@ -31,6 +31,8 @@ class EvaluationStorageManifest(ArtifactModel):
     evaluation_profile_id: str = Field(min_length=1)
     aggregation_method: str = Field(min_length=1)
     default_dimension_policy: str = Field(min_length=1)
+    judge_system_prompt_source: str = Field(min_length=1)
+    judge_system_prompt: str = Field(min_length=1)
 
 
 class RunIterationRecord(ArtifactModel):

@@ -45,6 +45,7 @@ class JudgeOrchestrator:
         test_config: TestConfig,
         run_artifact: RunArtifact,
         repetitions: int,
+        system_prompt: str,
         deterministic_summary: Mapping[str, Any] | None = None,
         max_retries: int = 0,
         timeout_seconds: float | None = None,
@@ -61,6 +62,7 @@ class JudgeOrchestrator:
             test_config=test_config,
             run_artifact=run_artifact,
             deterministic_summary=deterministic_summary,
+            system_prompt=system_prompt,
         )
 
         raw_results: list[RawJudgeRunResult] = []
@@ -231,6 +233,7 @@ def build_judge_messages(
     judge_model: str,
     test_config: TestConfig,
     run_artifact: RunArtifact,
+    system_prompt: str,
     deterministic_summary: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, str], ...]:
     """Build the strict JSON prompt contract for one judge."""
@@ -261,16 +264,7 @@ def build_judge_messages(
 
     system_message = {
         "role": "system",
-        "content": (
-            "You are a strict evaluation judge. Return only valid JSON with the exact top-level "
-            "keys `dimensions`, `summary`, and `evidence`. `dimensions` must contain the six "
-            "dimension scores `task`, `process`, `autonomy`, `closeness`, `efficiency`, and "
-            "`spark`. `summary` must be a single concise string. `evidence` must contain those "
-            "same six keys with arrays of strings. Do not wrap the JSON in markdown. "
-            "Identity fields that would reveal which subject model produced the run are omitted "
-            "from the run artifact; do not infer or discuss that identity—evaluate only the trace "
-            "and outputs shown."
-        ),
+        "content": system_prompt,
     }
     user_message = {
         "role": "user",

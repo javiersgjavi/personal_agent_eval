@@ -7,13 +7,14 @@ from typing import Any
 
 import yaml
 
-from personal_agent_eval.config import load_run_profile
+from personal_agent_eval.config import load_evaluation_profile, load_run_profile
 from personal_agent_eval.domains.llm_probe.openrouter import (
     OpenRouterAssistantMessage,
     OpenRouterChatResponse,
 )
 from personal_agent_eval.fingerprints import build_run_profile_fingerprint
 from personal_agent_eval.judge.models import JudgeIterationStatus, RawJudgeRunResult
+from personal_agent_eval.judge.system_prompt import resolve_judge_system_prompt_details
 from personal_agent_eval.storage import FilesystemStorage
 from personal_agent_eval.workflow import EvaluationAction, RunAction, WorkflowOrchestrator
 
@@ -118,6 +119,42 @@ def test_run_eval_executes_then_reuses_all(tmp_path: Path) -> None:
     assert second.summary.evaluations_reused == 2
     assert all(result.run_action is RunAction.REUSED for result in second.results)
     assert all(result.evaluation_action is EvaluationAction.REUSED for result in second.results)
+
+
+def test_run_eval_persists_resolved_judge_prompt_in_evaluation_manifest(tmp_path: Path) -> None:
+    workspace_root = _build_workspace(tmp_path)
+    workflow = WorkflowOrchestrator(
+        storage_root=workspace_root,
+        run_client_factory=FakeRunClient,
+        judge_client_factory=FakeJudgeClient,
+    )
+
+    result = workflow.run_eval(
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
+    )
+
+    evaluation_fingerprint = result.results[0].evaluation_fingerprint
+    assert evaluation_fingerprint is not None
+    run_profile_fingerprint = build_run_profile_fingerprint(
+        run_profile=load_run_profile(workspace_root / "configs" / "run_profiles" / "default.yaml")
+    )
+    evaluation_profile = load_evaluation_profile(
+        workspace_root / "configs" / "evaluation_profiles" / "default.yaml"
+    )
+    expected_prompt = resolve_judge_system_prompt_details(evaluation_profile)
+    storage = FilesystemStorage(workspace_root)
+
+    manifest = storage.read_evaluation_manifest(
+        "example_suite",
+        run_profile_fingerprint,
+        "default",
+        evaluation_fingerprint,
+    )
+
+    assert manifest.judge_system_prompt_source == expected_prompt["source"]
+    assert manifest.judge_system_prompt == expected_prompt["text"]
 
 
 def test_eval_recomputes_only_missing_final_result(tmp_path: Path) -> None:

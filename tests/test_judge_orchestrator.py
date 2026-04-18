@@ -15,6 +15,7 @@ from personal_agent_eval.artifacts.run_artifact import (
     MessageTraceEvent,
     TraceEvent,
 )
+from personal_agent_eval.config import load_evaluation_profile
 from personal_agent_eval.config.test_config import load_test_config
 from personal_agent_eval.judge import (
     JudgeIterationStatus,
@@ -22,8 +23,13 @@ from personal_agent_eval.judge import (
     RawJudgeRunResult,
     build_judge_messages,
 )
+from personal_agent_eval.judge.system_prompt import resolve_judge_system_prompt_text
 
 FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "config"
+_FIXTURE_EVAL_PROFILE = load_evaluation_profile(
+    FIXTURES_ROOT / "configs" / "evaluation_profiles" / "default.yaml"
+)
+_FIXTURE_JUDGE_SYSTEM_PROMPT = resolve_judge_system_prompt_text(_FIXTURE_EVAL_PROFILE)
 
 
 @dataclass
@@ -128,6 +134,7 @@ def test_build_judge_messages_includes_case_artifact_and_deterministic_summary()
         judge_model="openai/gpt-5-mini",
         test_config=config,
         run_artifact=_build_artifact(),
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
         deterministic_summary={"passed": True, "failed_checks": 0},
     )
 
@@ -180,6 +187,7 @@ def test_build_judge_messages_omits_subject_model_identity_from_run_artifact() -
         judge_model="openai/gpt-5-mini",
         test_config=config,
         run_artifact=artifact,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
         deterministic_summary=None,
     )
     payload = json.loads(messages[1]["content"])
@@ -215,6 +223,7 @@ def test_orchestrator_records_successful_iteration_and_aggregation() -> None:
         ),
         run_artifact=_build_artifact(),
         repetitions=1,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
     )
 
     assert result.successful_iterations == 1
@@ -254,6 +263,7 @@ def test_orchestrator_retries_then_succeeds() -> None:
         ),
         run_artifact=_build_artifact(),
         repetitions=1,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
         max_retries=1,
     )
 
@@ -291,6 +301,7 @@ def test_orchestrator_retries_then_keeps_failed_repetition_visible() -> None:
         ),
         run_artifact=_build_artifact(),
         repetitions=1,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
         max_retries=1,
     )
 
@@ -324,6 +335,7 @@ def test_orchestrator_marks_structurally_invalid_output() -> None:
         ),
         run_artifact=_build_artifact(),
         repetitions=1,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
     )
 
     assert result.iteration_results[0].status is JudgeIterationStatus.INVALID_OUTPUT
@@ -353,6 +365,7 @@ def test_orchestrator_keeps_success_with_incomplete_evidence_warning() -> None:
         ),
         run_artifact=_build_artifact(),
         repetitions=1,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
     )
 
     assert result.iteration_results[0].status is JudgeIterationStatus.SUCCESS
@@ -399,6 +412,7 @@ def test_orchestrator_aggregates_successful_iterations_only_with_median() -> Non
         ),
         run_artifact=_build_artifact(),
         repetitions=4,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
     )
 
     assert result.successful_iterations == 3

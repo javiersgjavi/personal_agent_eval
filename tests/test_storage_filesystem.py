@@ -196,6 +196,8 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
         evaluation_profile_id=evaluation_profile_id,
         aggregation_method="median",
         default_dimension_policy="judge_only",
+        judge_system_prompt_source="path:prompts/judge_system_default.txt",
+        judge_system_prompt="You are a strict evaluation judge.",
     )
     fingerprint_input = EvaluationFingerprintInput(
         fingerprint=evaluation_fingerprint,

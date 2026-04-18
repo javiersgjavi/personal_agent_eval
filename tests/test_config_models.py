@@ -81,6 +81,22 @@ def test_load_evaluation_profile_from_fixture() -> None:
     assert config.final_aggregation.final_score_weights.task == 0.3
 
 
+def test_evaluation_profile_rejects_inline_and_path_system_prompt_together(tmp_path: Path) -> None:
+    path = tmp_path / "conflict.yaml"
+    path.write_text(
+        """schema_version: 1
+evaluation_profile_id: conflict_prompt
+title: Conflict
+judge_system_prompt: "inline text"
+judge_system_prompt_path: prompts/x.txt
+""",
+        encoding="utf-8",
+    )
+    with pytest.raises(ConfigError) as exc_info:
+        load_evaluation_profile(path)
+    assert "only one" in str(exc_info.value).lower()
+
+
 @pytest.mark.parametrize(
     ("payload", "loader"),
     [

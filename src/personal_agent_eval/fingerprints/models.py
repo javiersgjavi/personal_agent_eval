@@ -95,6 +95,7 @@ class EvaluationFingerprintPayload(ArtifactModel):
     final_aggregation: dict[str, Any] = Field(default_factory=dict)
     anchors: dict[str, Any] = Field(default_factory=dict)
     security_policy: dict[str, Any] = Field(default_factory=dict)
+    judge_system_prompt: dict[str, Any] = Field(default_factory=dict)
 
 
 class EvaluationFingerprintInput(FingerprintInputBase):

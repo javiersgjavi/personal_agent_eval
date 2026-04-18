@@ -27,6 +27,7 @@ from personal_agent_eval.fingerprints.models import (
     RunFingerprintInput,
     RunFingerprintPayload,
 )
+from personal_agent_eval.judge.system_prompt import judge_system_prompt_fingerprint_material
 
 
 def build_run_fingerprint_input(
@@ -115,6 +116,9 @@ def build_evaluation_fingerprint_input(
         },
         security_policy=_normalize_for_hash(
             evaluation_profile.security_policy.model_dump(mode="json")
+        ),
+        judge_system_prompt=_normalize_for_hash(
+            judge_system_prompt_fingerprint_material(evaluation_profile)
         ),
     )
     fingerprint = _sha256_json(payload.to_json_dict())

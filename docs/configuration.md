@@ -375,6 +375,8 @@ policy, calibration anchors, and security policy.
 | `anchors` | `AnchorsConfig` | no | see below | Calibration anchor examples for the judge prompt |
 | `security_policy` | `SecurityPolicy` | no | see below | Execution security controls |
 | `metadata` | mapping | no | `{}` | Arbitrary annotation bag |
+| `judge_system_prompt` | string (multiline) | no | — | Optional judge **system** message. Non-empty lines are joined with spaces. Mutually exclusive with `judge_system_prompt_path`. |
+| `judge_system_prompt_path` | string (path) | no | — | Optional path to a UTF-8 `.txt` file, **relative to this YAML file**. Same semantics as `judge_system_prompt`. Mutually exclusive with `judge_system_prompt`. Recommended shared location: `prompts/judge_system_default.txt`. |
 
 ### `judges` — `JudgeConfig`
 

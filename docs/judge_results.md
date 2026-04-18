@@ -10,6 +10,30 @@ for example `request.requested_model`, `request.metadata.model_selection`, `prov
 is unchanged. Free-form text inside assistant messages could still mention a model name; only
 structured metadata is stripped.
 
+## Default system prompt
+
+The judge **system** message (instructions to return JSON with `dimensions`, `summary`, and
+`evidence`) is resolved in this order:
+
+1. **`judge_system_prompt`** in the evaluation profile YAML (multiline string; lines joined with spaces), or
+2. **`judge_system_prompt_path`** in the same YAML (path to a UTF-8 `.txt` file, relative to that YAML), or
+3. Otherwise, if the profile is loaded from disk, the shared default file
+   **`prompts/judge_system_default.txt` relative to that YAML**.
+
+Recommended project layout:
+
+- `configs/evaluation_profiles/<profile_id>.yaml`
+- `configs/evaluation_profiles/prompts/judge_system_default.txt`
+
+In this repository, profiles also set `judge_system_prompt_path: prompts/judge_system_default.txt`
+explicitly so the source is visible to the user inside the YAML itself. The evaluation fingerprint
+includes a hash of the resolved prompt text, so changing the prompt or the referenced file changes
+the evaluation campaign identity.
+
+The top-level evaluation `manifest.json` also stores the exact resolved `judge_system_prompt`
+string that was sent to the judge, plus its source descriptor, so each evaluation campaign keeps a
+human-readable record of the prompt that was actually used.
+
 ## Two Layers
 
 V1 keeps two judge result layers:

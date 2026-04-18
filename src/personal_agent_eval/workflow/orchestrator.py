@@ -36,6 +36,10 @@ from personal_agent_eval.judge.models import (
     JudgeEvidence,
     JudgeIterationStatus,
 )
+from personal_agent_eval.judge.system_prompt import (
+    resolve_judge_system_prompt_details,
+    resolve_judge_system_prompt_text,
+)
 from personal_agent_eval.storage import (
     EvaluationStorageManifest,
     FilesystemStorage,
@@ -756,6 +760,7 @@ class WorkflowOrchestrator:
         evaluation_input: Any,
     ) -> None:
         evaluation_fingerprint = evaluation_input.fingerprint
+        judge_system_prompt = resolve_judge_system_prompt_details(evaluation_profile)
         if not self._storage.has_evaluation_manifest(
             suite_id,
             run_profile_fingerprint,
@@ -771,6 +776,8 @@ class WorkflowOrchestrator:
                     evaluation_profile_id=evaluation_profile.evaluation_profile_id,
                     aggregation_method=evaluation_profile.aggregation.method,
                     default_dimension_policy=evaluation_profile.final_aggregation.default_policy,
+                    judge_system_prompt_source=judge_system_prompt["source"],
+                    judge_system_prompt=judge_system_prompt["text"],
                 )
             )
         if not self._storage.has_evaluation_fingerprint_input(
@@ -831,6 +838,7 @@ class WorkflowOrchestrator:
         judge_lookup = {judge.judge_id: judge for judge in evaluation_profile.judges}
         judge_client = self._judge_client_factory()
         orchestrator = JudgeOrchestrator(judge_client)
+        judge_system_prompt = resolve_judge_system_prompt_text(evaluation_profile)
         individual_results: list[AggregatedJudgeResult] = []
 
         for judge_run in evaluation_profile.judge_runs:
@@ -855,6 +863,7 @@ class WorkflowOrchestrator:
                     repetitions=judge_run.repetitions,
                     deterministic_summary=deterministic_result.summary.model_dump(mode="json"),
                     max_retries=5,
+                    system_prompt=judge_system_prompt,
                 )
             )
 
