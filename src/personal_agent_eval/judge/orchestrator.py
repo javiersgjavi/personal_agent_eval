@@ -21,6 +21,7 @@ from personal_agent_eval.judge.models import (
     RawJudgeRunResult,
 )
 from personal_agent_eval.judge.openrouter import JudgeInvocation
+from personal_agent_eval.judge.subject_redaction import redact_run_artifact_for_judge
 
 
 class JudgeClient(Protocol):
@@ -254,7 +255,7 @@ def build_judge_messages(
             "spark",
         ],
         "case_context": case_payload,
-        "run_artifact": run_artifact.to_json_dict(),
+        "run_artifact": redact_run_artifact_for_judge(run_artifact),
         "deterministic_summary": deterministic_payload,
     }
 
@@ -265,7 +266,10 @@ def build_judge_messages(
             "keys `dimensions`, `summary`, and `evidence`. `dimensions` must contain the six "
             "dimension scores `task`, `process`, `autonomy`, `closeness`, `efficiency`, and "
             "`spark`. `summary` must be a single concise string. `evidence` must contain those "
-            "same six keys with arrays of strings. Do not wrap the JSON in markdown."
+            "same six keys with arrays of strings. Do not wrap the JSON in markdown. "
+            "Identity fields that would reveal which subject model produced the run are omitted "
+            "from the run artifact; do not infer or discuss that identity—evaluate only the trace "
+            "and outputs shown."
         ),
     }
     user_message = {

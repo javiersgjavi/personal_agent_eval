@@ -146,6 +146,51 @@ def test_build_judge_messages_includes_case_artifact_and_deterministic_summary()
     assert payload["case_context"]["case_id"] == "example_case"
     assert payload["run_artifact"]["identity"]["run_id"] == "run-judge-001"
     assert payload["deterministic_summary"] == {"passed": True, "failed_checks": 0}
+    req = payload["run_artifact"]["request"]
+    assert "requested_model" not in req
+    assert "runner_metadata" not in payload["run_artifact"]
+
+
+def test_build_judge_messages_omits_subject_model_identity_from_run_artifact() -> None:
+    artifact = _build_artifact()
+    artifact = artifact.model_copy(
+        update={
+            "request": RunRequestMetadata(
+                requested_model="openai/gpt-5-mini",
+                metadata={
+                    "model_selection": {"model_id": "secret-model", "provider": "openai"},
+                    "attachments": ["/tmp/x.txt"],
+                },
+            ),
+            "provider": artifact.provider.model_copy(
+                update={
+                    "provider_model_id": "openai/gpt-secret",
+                    "metadata": {"model": "leak"},
+                }
+            ),
+            "runner_metadata": {"model_id": "suite-model-id"},
+            "usage": artifact.usage.model_copy(
+                update={"raw_provider_usage": {"prompt_tokens": 1, "model": "leak-model"}}
+            ),
+        }
+    )
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
+    messages = build_judge_messages(
+        judge_name="rubric_judge",
+        judge_model="openai/gpt-5-mini",
+        test_config=config,
+        run_artifact=artifact,
+        deterministic_summary=None,
+    )
+    payload = json.loads(messages[1]["content"])
+    ra = payload["run_artifact"]
+    assert "requested_model" not in ra["request"]
+    assert "model_selection" not in ra["request"].get("metadata", {})
+    assert "attachments" in ra["request"]["metadata"]
+    assert ra["provider"].get("provider_model_id") is None
+    assert "model" not in (ra["provider"].get("metadata") or {})
+    assert "runner_metadata" not in ra
+    assert "model" not in (ra["usage"].get("raw_provider_usage") or {})
 
 
 def test_orchestrator_records_successful_iteration_and_aggregation() -> None:

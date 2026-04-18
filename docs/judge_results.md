@@ -3,6 +3,13 @@
 Judge orchestration consumes an existing `RunArtifact` and produces a separate evaluation
 surface. It does not mutate the run artifact.
 
+When building the judge prompt, the framework embeds a **copy** of the run artifact from which
+**structured subject-model identity is omitted** (keys removed, not replaced with placeholders):
+for example `request.requested_model`, `request.metadata.model_selection`, `provider.provider_model_id`,
+`runner_metadata`, and provider-usage fields that echo a model id. The canonical artifact on disk
+is unchanged. Free-form text inside assistant messages could still mention a model name; only
+structured metadata is stripped.
+
 ## Two Layers
 
 V1 keeps two judge result layers:
