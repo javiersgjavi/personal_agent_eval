@@ -7,11 +7,14 @@ from typing import Any
 
 import yaml
 
+from personal_agent_eval.config import load_run_profile
 from personal_agent_eval.domains.llm_probe.openrouter import (
     OpenRouterAssistantMessage,
     OpenRouterChatResponse,
 )
+from personal_agent_eval.fingerprints import build_run_profile_fingerprint
 from personal_agent_eval.judge.models import JudgeIterationStatus, RawJudgeRunResult
+from personal_agent_eval.storage import FilesystemStorage
 from personal_agent_eval.workflow import EvaluationAction, RunAction, WorkflowOrchestrator
 
 
@@ -132,16 +135,18 @@ def test_eval_recomputes_only_missing_final_result(tmp_path: Path) -> None:
     )
     target = initial.results[0]
     assert target.evaluation_fingerprint is not None
-    final_result_path = (
-        workspace_root
-        / "outputs"
-        / "evaluations"
-        / target.evaluation_fingerprint
-        / "runs"
-        / target.run_fingerprint
-        / "cases"
-        / target.case_id
-        / "final_result.json"
+    storage = FilesystemStorage(workspace_root)
+    run_profile_fingerprint = build_run_profile_fingerprint(
+        run_profile=load_run_profile(workspace_root / "configs" / "run_profiles" / "default.yaml")
+    )
+    final_result_path = storage.case_final_result_path(
+        "example_suite",
+        run_profile_fingerprint,
+        "default",
+        target.evaluation_fingerprint,
+        target.model_id,
+        target.case_id,
+        0,
     )
     final_result_path.unlink()
 

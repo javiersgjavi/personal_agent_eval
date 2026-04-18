@@ -85,7 +85,7 @@ class OpenRouterChatResponse:
     response_id: str | None = None
     finish_reason: str | None = None
     native_finish_reason: str | None = None
-    usage: dict[str, int | None] = field(default_factory=dict)
+    usage: dict[str, Any] = field(default_factory=dict)
     raw_usage: dict[str, Any] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -375,7 +375,7 @@ def _parse_tool_arguments(raw_arguments: object) -> dict[str, Any] | None:
     return None
 
 
-def _normalize_usage(payload: object) -> dict[str, int | None]:
+def _normalize_usage(payload: object) -> dict[str, int | float | None]:
     if not isinstance(payload, Mapping):
         return {}
     payload_mapping = cast(Mapping[str, Any], payload)
@@ -385,11 +385,18 @@ def _normalize_usage(payload: object) -> dict[str, int | None]:
     total_tokens = _coerce_optional_int(payload_mapping.get("total_tokens"))
     reasoning_tokens = _coerce_optional_int(payload_mapping.get("reasoning_tokens"))
     cached_tokens = None
+    cache_write_tokens = None
 
     prompt_details = payload_mapping.get("prompt_tokens_details")
     if isinstance(prompt_details, Mapping):
         prompt_details_mapping = cast(Mapping[str, Any], prompt_details)
         cached_tokens = _coerce_optional_int(prompt_details_mapping.get("cached_tokens"))
+        cache_write_tokens = _coerce_optional_int(prompt_details_mapping.get("cache_write_tokens"))
+
+    completion_details = payload_mapping.get("completion_tokens_details")
+    if reasoning_tokens is None and isinstance(completion_details, Mapping):
+        completion_details_mapping = cast(Mapping[str, Any], completion_details)
+        reasoning_tokens = _coerce_optional_int(completion_details_mapping.get("reasoning_tokens"))
 
     return {
         "input_tokens": prompt_tokens,
@@ -397,6 +404,8 @@ def _normalize_usage(payload: object) -> dict[str, int | None]:
         "total_tokens": total_tokens,
         "reasoning_tokens": reasoning_tokens,
         "cached_input_tokens": cached_tokens,
+        "cache_write_tokens": cache_write_tokens,
+        "cost": _coerce_optional_float(payload_mapping.get("cost")),
     }
 
 
@@ -494,6 +503,21 @@ def _coerce_optional_int(value: object) -> int | None:
     if isinstance(value, str):
         try:
             return int(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _coerce_optional_float(value: object) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return float(value)
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
         except ValueError:
             return None
     return None

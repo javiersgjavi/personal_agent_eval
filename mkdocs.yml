@@ -34,7 +34,11 @@ theme:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -48,7 +52,8 @@ nav:
   - Home: index.md
   - Getting Started: getting_started.md
   - Concepts:
-      - Configuration: configuration.md
+      - Config Model: config_model.md
+      - Configuration Reference: configuration.md
       - Run Artifacts: run_artifacts.md
       - Judge Results: judge_results.md
       - Hybrid Evaluation: hybrid_evaluation.md

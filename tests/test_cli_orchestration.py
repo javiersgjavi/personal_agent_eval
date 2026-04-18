@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import cast
 
@@ -217,6 +218,52 @@ def test_cli_resolves_ids_from_conventional_directories(
             },
         )
     ]
+    assert "Case Results" in capsys.readouterr().out
+
+
+def test_cli_loads_openrouter_api_key_from_workspace_dotenv(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    runtime = FakeRuntime()
+    (tmp_path / "configs" / "suites").mkdir(parents=True)
+    (tmp_path / "configs" / "run_profiles").mkdir(parents=True)
+    (tmp_path / "configs" / "evaluation_profiles").mkdir(parents=True)
+    (tmp_path / "configs" / "suites" / "example_suite.yaml").write_text(
+        "suite_id: example_suite\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "configs" / "run_profiles" / "default.yaml").write_text(
+        "run_profile_id: default\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "configs" / "evaluation_profiles" / "judge.yaml").write_text(
+        "evaluation_profile_id: judge\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".env").write_text(
+        "OPENROUTER_API_KEY=test-from-dotenv\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+
+    exit_code = main(
+        [
+            "run-eval",
+            "--suite",
+            "example_suite",
+            "--run-profile",
+            "default",
+            "--evaluation-profile",
+            "judge",
+        ],
+        runtime=cast(CliRuntime, runtime),
+    )
+
+    assert exit_code == 0
+    assert os.environ["OPENROUTER_API_KEY"] == "test-from-dotenv"
     assert "Case Results" in capsys.readouterr().out
 
 

@@ -61,7 +61,7 @@ class RawJudgeRunResult(ArtifactModel):
     response_id: str | None = None
     finish_reason: str | None = None
     native_finish_reason: str | None = None
-    usage: dict[str, int | None] = Field(default_factory=dict)
+    usage: dict[str, Any] = Field(default_factory=dict)
     error_code: str | None = None
     error_message: str | None = None
     warnings: list[str] = Field(default_factory=list)

@@ -10,21 +10,65 @@ from personal_agent_eval.artifacts.run_artifact import ArtifactModel
 
 
 class RunStorageManifest(ArtifactModel):
-    """Top-level manifest for one run fingerprint space."""
+    """Top-level manifest for one suite/run-profile campaign."""
 
     schema_version: Literal[1] = 1
-    run_fingerprint: str = Field(min_length=1)
-    runner_type: str = Field(min_length=1)
     suite_id: str = Field(min_length=1)
     run_profile_id: str = Field(min_length=1)
-    model_id: str = Field(min_length=1)
+    run_profile_fingerprint: str = Field(min_length=1)
+    runner_type: str = Field(min_length=1)
+    run_repetitions: int = Field(ge=1)
 
 
 class EvaluationStorageManifest(ArtifactModel):
-    """Top-level manifest for one evaluation fingerprint space."""
+    """Top-level manifest for one suite/run/evaluation campaign."""
 
     schema_version: Literal[1] = 1
+    suite_id: str = Field(min_length=1)
+    run_profile_id: str = Field(min_length=1)
+    run_profile_fingerprint: str = Field(min_length=1)
     evaluation_fingerprint: str = Field(min_length=1)
     evaluation_profile_id: str = Field(min_length=1)
     aggregation_method: str = Field(min_length=1)
     default_dimension_policy: str = Field(min_length=1)
+
+
+class RunIterationRecord(ArtifactModel):
+    """Stored identity for one run repetition."""
+
+    repetition_index: int = Field(ge=0)
+    run_fingerprint: str = Field(min_length=1)
+
+
+class RunCaseStorageManifest(ArtifactModel):
+    """Per-model per-case run manifest within one campaign."""
+
+    schema_version: Literal[1] = 1
+    suite_id: str = Field(min_length=1)
+    run_profile_id: str = Field(min_length=1)
+    run_profile_fingerprint: str = Field(min_length=1)
+    model_id: str = Field(min_length=1)
+    case_id: str = Field(min_length=1)
+    iterations: list[RunIterationRecord] = Field(default_factory=list)
+
+
+class EvaluationIterationRecord(ArtifactModel):
+    """Stored identity for one evaluation repetition."""
+
+    repetition_index: int = Field(ge=0)
+    run_fingerprint: str = Field(min_length=1)
+    evaluation_fingerprint: str = Field(min_length=1)
+
+
+class EvaluationCaseStorageManifest(ArtifactModel):
+    """Per-model per-case evaluation manifest within one campaign."""
+
+    schema_version: Literal[1] = 1
+    suite_id: str = Field(min_length=1)
+    run_profile_id: str = Field(min_length=1)
+    run_profile_fingerprint: str = Field(min_length=1)
+    evaluation_profile_id: str = Field(min_length=1)
+    evaluation_fingerprint: str = Field(min_length=1)
+    model_id: str = Field(min_length=1)
+    case_id: str = Field(min_length=1)
+    iterations: list[EvaluationIterationRecord] = Field(default_factory=list)

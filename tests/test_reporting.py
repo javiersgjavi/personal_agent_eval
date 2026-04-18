@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import pytest
+
 from personal_agent_eval.aggregation.models import DimensionScores
 from personal_agent_eval.reporting import WorkflowReporter
 from personal_agent_eval.workflow import (
     EvaluationAction,
     RunAction,
+    UsageSummary,
     WorkflowCaseResult,
     WorkflowResult,
     WorkflowSummary,
@@ -32,12 +35,16 @@ def test_build_report_groups_by_model_and_summarizes_scores() -> None:
     assert minimax_summary.evaluation_executed == 2
     assert minimax_summary.average_final_score == 7.0
     assert minimax_summary.average_dimensions.task == 7.5
+    assert minimax_summary.total_usage.input_tokens == 280
+    assert minimax_summary.total_usage.output_tokens == 90
+    assert minimax_summary.total_usage.cost_usd == pytest.approx(0.008)
 
     gpt_summary = next(
         summary for summary in report.model_summaries if summary.model_id == "openai/gpt-5.4"
     )
     assert gpt_summary.case_count == 1
     assert gpt_summary.average_final_score == 8.2
+    assert gpt_summary.total_usage.input_tokens == 220
     assert gpt_summary.warning_count == 0
 
 
@@ -51,6 +58,7 @@ def test_render_cli_contains_tables_and_ascii_charts() -> None:
     assert "minimax/minimax-m2.7" in output
     assert "openai/gpt-5.4" in output
     assert "task" in output
+    assert "COST_USD" in output
     assert "#" in output
 
 
@@ -94,6 +102,12 @@ def _workflow_result_fixture() -> WorkflowResult:
                     efficiency=6.8,
                     spark=6.0,
                 ),
+                usage=UsageSummary(
+                    input_tokens=120,
+                    output_tokens=40,
+                    total_tokens=160,
+                    cost_usd=0.005,
+                ),
                 warnings=["Judge iteration 2 failed and was excluded."],
             ),
             WorkflowCaseResult(
@@ -114,6 +128,12 @@ def _workflow_result_fixture() -> WorkflowResult:
                     efficiency=6.0,
                     spark=5.5,
                 ),
+                usage=UsageSummary(
+                    input_tokens=160,
+                    output_tokens=50,
+                    total_tokens=210,
+                    cost_usd=0.003,
+                ),
                 warnings=[],
             ),
             WorkflowCaseResult(
@@ -133,6 +153,12 @@ def _workflow_result_fixture() -> WorkflowResult:
                     closeness=7.4,
                     efficiency=7.8,
                     spark=7.2,
+                ),
+                usage=UsageSummary(
+                    input_tokens=220,
+                    output_tokens=80,
+                    total_tokens=300,
+                    cost_usd=0.0075,
                 ),
                 warnings=[],
             ),

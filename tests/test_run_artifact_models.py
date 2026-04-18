@@ -88,8 +88,10 @@ def build_success_artifact() -> RunArtifact:
                 total_tokens=168,
                 reasoning_tokens=16,
                 cached_input_tokens=8,
+                cache_write_tokens=5,
             ),
-            raw_provider_usage={"prompt_tokens": 120, "completion_tokens": 48},
+            cost_usd=0.002345,
+            raw_provider_usage={"prompt_tokens": 120, "completion_tokens": 48, "cost": "0.002345"},
         ),
         trace=[
             MessageTraceEvent(
@@ -150,9 +152,12 @@ def test_run_artifact_serializes_to_json_ready_dict() -> None:
     assert payload["provider"]["finish_reason"] == "stop"
     assert payload["provider"]["native_finish_reason"] == "end_turn"
     assert payload["usage"]["normalized"]["total_tokens"] == 168
+    assert payload["usage"]["normalized"]["cache_write_tokens"] == 5
+    assert payload["usage"]["cost_usd"] == 0.002345
     assert payload["usage"]["raw_provider_usage"] == {
         "prompt_tokens": 120,
         "completion_tokens": 48,
+        "cost": "0.002345",
     }
     assert payload["trace"][1]["event_type"] == "tool_call"
     assert payload["trace"][1]["call_id"] == "call_1"

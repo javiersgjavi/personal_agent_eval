@@ -19,6 +19,7 @@ class ExecutionPolicy(ConfigModel):
     """Execution policy controls for a run profile."""
 
     max_concurrency: int = Field(default=1, ge=1)
+    run_repetitions: int = Field(default=1, ge=1)
     fail_fast: bool = False
     stop_on_runner_error: bool = True
 

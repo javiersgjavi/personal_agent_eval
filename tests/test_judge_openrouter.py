@@ -74,7 +74,13 @@ def test_openrouter_judge_client_builds_raw_success_result() -> None:
                 response_id="resp-judge-1",
                 finish_reason="stop",
                 native_finish_reason="stop",
-                usage={"input_tokens": 40, "output_tokens": 20, "total_tokens": 60},
+                usage={
+                    "input_tokens": 40,
+                    "output_tokens": 20,
+                    "total_tokens": 60,
+                    "cache_write_tokens": 11,
+                    "cost": 0.00125,
+                },
             )
         ]
     )
@@ -103,6 +109,7 @@ def test_openrouter_judge_client_builds_raw_success_result() -> None:
     assert raw_result.request_id == "req-judge-1"
     assert raw_result.response_id == "resp-judge-1"
     assert raw_result.provider_model_id == "openai/gpt-5-mini-2026-04-01"
+    assert raw_result.usage["cost"] == 0.00125
     assert raw_result.parsed_response is not None
     assert raw_result.parsed_response["summary"] == "Strong result."
 

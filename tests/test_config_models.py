@@ -63,6 +63,7 @@ def test_load_run_profile_from_fixture() -> None:
 
     assert config.run_profile_id == "default"
     assert config.execution_policy.max_concurrency == 2
+    assert config.execution_policy.run_repetitions == 1
     assert config.execution_policy.fail_fast is True
 
 

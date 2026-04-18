@@ -11,6 +11,7 @@ from personal_agent_eval.reporting.text import join_sections, render_bar, render
 from personal_agent_eval.workflow import (
     EvaluationAction,
     RunAction,
+    UsageSummary,
     WorkflowCaseResult,
     WorkflowResult,
 )
@@ -66,6 +67,9 @@ class WorkflowReporter:
                 case.run_action.value,
                 case.evaluation_action.value,
                 f"{case.final_score:.2f}" if case.final_score is not None else "n/a",
+                str(case.usage.input_tokens),
+                str(case.usage.output_tokens),
+                self._format_cost(case.usage.cost_usd),
                 str(len(case.warnings)),
             ]
             for case in sorted(
@@ -76,7 +80,20 @@ class WorkflowReporter:
         return join_sections(
             [
                 "Case Results",
-                render_table(["MODEL", "CASE", "RUN", "EVAL", "SCORE", "WARNINGS"], rows),
+                render_table(
+                    [
+                        "MODEL",
+                        "CASE",
+                        "RUN",
+                        "EVAL",
+                        "SCORE",
+                        "IN_TOK",
+                        "OUT_TOK",
+                        "COST_USD",
+                        "WARNINGS",
+                    ],
+                    rows,
+                ),
             ]
         )
 
@@ -93,6 +110,9 @@ class WorkflowReporter:
                 str(summary.evaluation_reused),
                 str(summary.evaluation_executed),
                 str(summary.evaluation_skipped),
+                str(summary.total_usage.input_tokens),
+                str(summary.total_usage.output_tokens),
+                self._format_cost(summary.total_usage.cost_usd),
                 str(summary.warning_count),
             ]
             for summary in report.model_summaries
@@ -111,6 +131,9 @@ class WorkflowReporter:
                         "EVALS_REUSED",
                         "EVALS_EXECUTED",
                         "EVALS_SKIPPED",
+                        "IN_TOK",
+                        "OUT_TOK",
+                        "COST_USD",
                         "WARNINGS",
                     ],
                     rows,
@@ -190,6 +213,7 @@ class WorkflowReporter:
                     for name, values in dimension_values.items()
                 }
             ),
+            total_usage=self._sum_usage(case_results),
             warning_count=sum(len(case.warnings) for case in case_results),
         )
 
@@ -207,3 +231,17 @@ class WorkflowReporter:
 
     def _format_optional_score(self, value: float | None) -> str:
         return f"{value:.2f}" if value is not None else "n/a"
+
+    def _format_cost(self, value: float) -> str:
+        return f"{value:.6f}"
+
+    def _sum_usage(self, case_results: list[WorkflowCaseResult]) -> UsageSummary:
+        return UsageSummary(
+            input_tokens=sum(case.usage.input_tokens for case in case_results),
+            output_tokens=sum(case.usage.output_tokens for case in case_results),
+            total_tokens=sum(case.usage.total_tokens for case in case_results),
+            reasoning_tokens=sum(case.usage.reasoning_tokens for case in case_results),
+            cached_input_tokens=sum(case.usage.cached_input_tokens for case in case_results),
+            cache_write_tokens=sum(case.usage.cache_write_tokens for case in case_results),
+            cost_usd=sum(case.usage.cost_usd for case in case_results),
+        )

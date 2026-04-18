@@ -126,6 +126,17 @@ The reporting layer is a pure consumer of structured workflow results and can re
 - JSON report payloads
 - basic ASCII charts
 
+Execution artifacts are stored under suite-scoped campaign directories. For example, runs now
+land under paths like:
+
+```text
+outputs/runs/suit_<suite_id>/run_profile_<run_profile_fingerprint_short6>/<model_id>/<case_id>/run_1.json
+```
+
+If `execution_policy.run_repetitions` is greater than `1`, the workflow stores `run_1.json`,
+`run_2.json`, and so on in that same case directory and then aggregates those repetitions back
+into one case-level workflow result in the CLI/reporting layer.
+
 ## Minimal Repository Shape
 
 ```text
@@ -252,6 +263,7 @@ uv run pytest tests/test_openrouter_e2e.py -m openrouter_e2e
 
 ## Next Reading
 
+- [Config Model](config_model.md) — how the four YAML types relate and where artifacts land
 - [Configuration](configuration.md)
 - [Judge results](judge_results.md)
 - [Hybrid evaluation](hybrid_evaluation.md)

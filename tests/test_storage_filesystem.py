@@ -39,40 +39,87 @@ from personal_agent_eval.storage import (
 
 def test_storage_derives_v1_paths() -> None:
     storage = FilesystemStorage("/tmp/personal-agent-eval")
+    suite_id = "example_suite"
+    run_profile_fingerprint = "a" * 64
+    evaluation_profile_id = "judge_default"
+    evaluation_fingerprint = "b" * 64
+    model_name = "example/model"
 
-    assert storage.run_manifest_path("run-fp") == Path(
-        "/tmp/personal-agent-eval/outputs/runs/run-fp/manifest.json"
+    assert storage.run_manifest_path(suite_id, run_profile_fingerprint) == Path(
+        "/tmp/personal-agent-eval/outputs/runs/suit_example_suite/run_profile_aaaaaa/manifest.json"
     )
-    assert storage.run_fingerprint_input_path("run-fp") == Path(
-        "/tmp/personal-agent-eval/outputs/runs/run-fp/fingerprint_input.json"
+    assert storage.case_run_path(
+        suite_id,
+        run_profile_fingerprint,
+        model_name,
+        "example_case",
+        0,
+    ) == Path(
+        "/tmp/personal-agent-eval/outputs/runs/suit_example_suite/run_profile_aaaaaa/example_model/example_case/run_1.json"
     )
-    assert storage.case_run_path("run-fp", "example_case") == Path(
-        "/tmp/personal-agent-eval/outputs/runs/run-fp/cases/example_case/run.json"
+    assert storage.case_run_fingerprint_input_path(
+        suite_id,
+        run_profile_fingerprint,
+        model_name,
+        "example_case",
+        1,
+    ) == Path(
+        "/tmp/personal-agent-eval/outputs/runs/suit_example_suite/run_profile_aaaaaa/example_model/example_case/run_2.fingerprint_input.json"
     )
-    assert storage.evaluation_manifest_path("eval-fp") == Path(
-        "/tmp/personal-agent-eval/outputs/evaluations/eval-fp/manifest.json"
+    assert storage.evaluation_manifest_path(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        evaluation_fingerprint,
+    ) == Path(
+        "/tmp/personal-agent-eval/outputs/evaluations/suit_example_suite/evaluation_profile_aaaaaa/eval_profile_judge_default_bbbbbb/manifest.json"
     )
-    assert storage.evaluation_fingerprint_input_path("eval-fp") == Path(
-        "/tmp/personal-agent-eval/outputs/evaluations/eval-fp/fingerprint_input.json"
+    assert storage.evaluation_fingerprint_input_path(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        evaluation_fingerprint,
+    ) == Path(
+        "/tmp/personal-agent-eval/outputs/evaluations/suit_example_suite/evaluation_profile_aaaaaa/eval_profile_judge_default_bbbbbb/fingerprint_input.json"
     )
-    assert storage.case_judge_path_for_run("eval-fp", "run-fp", "example_case") == Path(
-        "/tmp/personal-agent-eval/outputs/evaluations/eval-fp/runs/run-fp/cases/example_case/judge.json"
+    assert storage.case_judge_path(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        evaluation_fingerprint,
+        model_name,
+        "example_case",
+        0,
+    ) == Path(
+        "/tmp/personal-agent-eval/outputs/evaluations/suit_example_suite/evaluation_profile_aaaaaa/eval_profile_judge_default_bbbbbb/example_model/example_case/judge_1.json"
     )
-    assert storage.case_final_result_path_for_run("eval-fp", "run-fp", "example_case") == Path(
-        "/tmp/personal-agent-eval/outputs/evaluations/eval-fp/runs/run-fp/cases/example_case/final_result.json"
+    assert storage.case_final_result_path(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        evaluation_fingerprint,
+        model_name,
+        "example_case",
+        1,
+    ) == Path(
+        "/tmp/personal-agent-eval/outputs/evaluations/suit_example_suite/evaluation_profile_aaaaaa/eval_profile_judge_default_bbbbbb/example_model/example_case/final_result_2.json"
     )
 
 
 def test_storage_round_trips_run_space_files(tmp_path: Path) -> None:
     storage = FilesystemStorage(tmp_path)
+    suite_id = "example_suite"
+    run_profile_id = "default"
+    run_profile_fingerprint = "d" * 64
     run_fingerprint = "a" * 64
+    model_name = "minimax/minimax-m2.7"
 
     manifest = RunStorageManifest(
-        run_fingerprint=run_fingerprint,
+        suite_id=suite_id,
+        run_profile_id=run_profile_id,
+        run_profile_fingerprint=run_profile_fingerprint,
         runner_type="llm_probe",
-        suite_id="example_suite",
-        run_profile_id="default",
-        model_id="minimax/minimax-m2.7",
+        run_repetitions=2,
     )
     fingerprint_input = RunFingerprintInput(
         fingerprint=run_fingerprint,
@@ -86,8 +133,8 @@ def test_storage_round_trips_run_space_files(tmp_path: Path) -> None:
             schema_version=1,
             run_id="run_001",
             case_id="example_case",
-            suite_id="example_suite",
-            run_profile_id="default",
+            suite_id=suite_id,
+            run_profile_id=run_profile_id,
             runner_type="llm_probe",
         ),
         status=RunStatus.SUCCESS,
@@ -95,25 +142,58 @@ def test_storage_round_trips_run_space_files(tmp_path: Path) -> None:
     )
 
     storage.write_run_manifest(manifest)
-    storage.write_run_fingerprint_input(fingerprint_input)
-    storage.write_case_run(run_fingerprint, run_artifact)
+    storage.write_case_run(
+        suite_id=suite_id,
+        run_profile_id=run_profile_id,
+        run_profile_fingerprint=run_profile_fingerprint,
+        model_id=model_name,
+        repetition_index=0,
+        run_fingerprint=run_fingerprint,
+        artifact=run_artifact,
+        fingerprint_input=fingerprint_input,
+    )
 
-    assert storage.has_run_manifest(run_fingerprint) is True
-    assert storage.has_run_fingerprint_input(run_fingerprint) is True
-    assert storage.has_case_run(run_fingerprint, "example_case") is True
-    assert storage.read_run_manifest(run_fingerprint) == manifest
-    assert storage.read_run_fingerprint_input(run_fingerprint) == fingerprint_input
-    assert storage.read_case_run(run_fingerprint, "example_case") == run_artifact
+    assert storage.has_run_manifest(suite_id, run_profile_fingerprint) is True
+    assert (
+        storage.has_case_run(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model_name,
+            case_id="example_case",
+            repetition_index=0,
+            run_fingerprint=run_fingerprint,
+        )
+        is True
+    )
+    assert storage.read_run_manifest(suite_id, run_profile_fingerprint) == manifest
+    assert (
+        storage.read_case_run(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model_name,
+            case_id="example_case",
+            repetition_index=0,
+        )
+        == run_artifact
+    )
 
 
 def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
     storage = FilesystemStorage(tmp_path)
+    suite_id = "example_suite"
+    run_profile_id = "default"
+    run_profile_fingerprint = "d" * 64
+    evaluation_profile_id = "judge_default"
     evaluation_fingerprint = "b" * 64
     run_fingerprint = "a" * 64
+    model_name = "minimax/minimax-m2.7"
 
     manifest = EvaluationStorageManifest(
+        suite_id=suite_id,
+        run_profile_id=run_profile_id,
+        run_profile_fingerprint=run_profile_fingerprint,
         evaluation_fingerprint=evaluation_fingerprint,
-        evaluation_profile_id="default",
+        evaluation_profile_id=evaluation_profile_id,
         aggregation_method="median",
         default_dimension_policy="judge_only",
     )
@@ -127,48 +207,110 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
     final_result = _build_final_result()
 
     storage.write_evaluation_manifest(manifest)
-    storage.write_evaluation_fingerprint_input(fingerprint_input)
-    storage.write_case_judge_result(
-        evaluation_fingerprint,
-        run_fingerprint,
-        final_result.case_id,
-        judge_result,
+    storage.write_evaluation_fingerprint_input(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        fingerprint_input,
     )
-    storage.write_case_final_result(evaluation_fingerprint, run_fingerprint, final_result)
+    storage.write_case_judge_result(
+        suite_id=suite_id,
+        run_profile_id=run_profile_id,
+        run_profile_fingerprint=run_profile_fingerprint,
+        evaluation_profile_id=evaluation_profile_id,
+        evaluation_fingerprint=evaluation_fingerprint,
+        model_id=model_name,
+        case_id=final_result.case_id,
+        repetition_index=0,
+        run_fingerprint=run_fingerprint,
+        result=judge_result,
+    )
+    storage.write_case_final_result(
+        suite_id=suite_id,
+        run_profile_id=run_profile_id,
+        run_profile_fingerprint=run_profile_fingerprint,
+        evaluation_profile_id=evaluation_profile_id,
+        evaluation_fingerprint=evaluation_fingerprint,
+        model_id=model_name,
+        repetition_index=0,
+        run_fingerprint=run_fingerprint,
+        result=final_result,
+    )
 
-    assert storage.has_evaluation_manifest(evaluation_fingerprint) is True
-    assert storage.has_evaluation_fingerprint_input(evaluation_fingerprint) is True
+    assert (
+        storage.has_evaluation_manifest(
+            suite_id,
+            run_profile_fingerprint,
+            evaluation_profile_id,
+            evaluation_fingerprint,
+        )
+        is True
+    )
+    assert (
+        storage.has_evaluation_fingerprint_input(
+            suite_id,
+            run_profile_fingerprint,
+            evaluation_profile_id,
+            evaluation_fingerprint,
+        )
+        is True
+    )
     assert (
         storage.has_case_judge_result(
-            evaluation_fingerprint,
-            run_fingerprint,
-            final_result.case_id,
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=model_name,
+            case_id=final_result.case_id,
+            repetition_index=0,
+            run_fingerprint=run_fingerprint,
         )
         is True
     )
     assert (
         storage.has_case_final_result(
-            evaluation_fingerprint,
-            run_fingerprint,
-            final_result.case_id,
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=model_name,
+            case_id=final_result.case_id,
+            repetition_index=0,
+            run_fingerprint=run_fingerprint,
         )
         is True
     )
-    assert storage.read_evaluation_manifest(evaluation_fingerprint) == manifest
-    assert storage.read_evaluation_fingerprint_input(evaluation_fingerprint) == fingerprint_input
+    assert (
+        storage.read_evaluation_manifest(
+            suite_id,
+            run_profile_fingerprint,
+            evaluation_profile_id,
+            evaluation_fingerprint,
+        )
+        == manifest
+    )
     assert (
         storage.read_case_judge_result(
-            evaluation_fingerprint,
-            run_fingerprint,
-            final_result.case_id,
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=model_name,
+            case_id=final_result.case_id,
+            repetition_index=0,
         )
         == judge_result
     )
     assert (
         storage.read_case_final_result(
-            evaluation_fingerprint,
-            run_fingerprint,
-            final_result.case_id,
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=model_name,
+            case_id=final_result.case_id,
+            repetition_index=0,
         )
         == final_result
     )
@@ -176,17 +318,41 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
 
 def test_storage_rejects_mismatched_fingerprint_input_kind(tmp_path: Path) -> None:
     storage = FilesystemStorage(tmp_path)
+    suite_id = "example_suite"
+    run_profile_id = "default"
+    run_profile_fingerprint = "d" * 64
     record = EvaluationFingerprintInput(
         fingerprint="c" * 64,
         payload=EvaluationFingerprintPayload(),
     )
+    artifact = RunArtifact(
+        identity=RunArtifactIdentity(
+            schema_version=1,
+            run_id="run_001",
+            case_id="example_case",
+            suite_id=suite_id,
+            run_profile_id=run_profile_id,
+            runner_type="llm_probe",
+        ),
+        status=RunStatus.SUCCESS,
+        request=RunRequestMetadata(requested_model="minimax/minimax-m2.7"),
+    )
 
     try:
-        storage.write_run_fingerprint_input(cast(RunFingerprintInput, record))
+        storage.write_case_run(
+            suite_id=suite_id,
+            run_profile_id=run_profile_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id="example_model",
+            repetition_index=0,
+            run_fingerprint="a" * 64,
+            artifact=artifact,
+            fingerprint_input=cast(RunFingerprintInput, record),
+        )
     except ValueError as exc:
         assert "RunFingerprintInput" in str(exc)
     else:
-        raise AssertionError("Expected write_run_fingerprint_input() to reject mismatched kind.")
+        raise AssertionError("Expected write_case_run() to reject mismatched kind.")
 
 
 def _build_judge_result() -> AggregatedJudgeResult:

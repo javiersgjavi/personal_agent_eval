@@ -11,6 +11,7 @@ from personal_agent_eval.fingerprints.models import (
 from personal_agent_eval.fingerprints.service import (
     build_evaluation_fingerprint_input,
     build_run_fingerprint_input,
+    build_run_profile_fingerprint,
     decide_reuse,
     is_evaluation_reusable,
     is_run_reusable,
@@ -25,6 +26,7 @@ __all__ = [
     "RunFingerprintInput",
     "build_evaluation_fingerprint_input",
     "build_run_fingerprint_input",
+    "build_run_profile_fingerprint",
     "decide_reuse",
     "is_evaluation_reusable",
     "is_run_reusable",

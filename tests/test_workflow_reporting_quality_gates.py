@@ -9,11 +9,14 @@ import pytest
 import yaml
 
 from personal_agent_eval.cli import main
+from personal_agent_eval.config import load_run_profile
 from personal_agent_eval.domains.llm_probe.openrouter import (
     OpenRouterAssistantMessage,
     OpenRouterChatResponse,
 )
+from personal_agent_eval.fingerprints import build_run_profile_fingerprint
 from personal_agent_eval.judge.models import JudgeIterationStatus, RawJudgeRunResult
+from personal_agent_eval.storage import FilesystemStorage
 from personal_agent_eval.workflow import EvaluationAction, RunAction, WorkflowOrchestrator
 
 
@@ -150,6 +153,47 @@ def test_quality_gate_pae_eval_reuses_runs_when_available(tmp_path: Path) -> Non
     assert all(item.evaluation_action is EvaluationAction.EXECUTED for item in result.results)
 
 
+def test_quality_gate_run_repetitions_aggregate_case_results(tmp_path: Path) -> None:
+    workspace_root = _build_workspace(tmp_path)
+    run_profile_path = workspace_root / "configs" / "run_profiles" / "default.yaml"
+    run_profile_payload = yaml.safe_load(run_profile_path.read_text(encoding="utf-8"))
+    run_profile_payload["execution_policy"]["run_repetitions"] = 3
+    run_profile_path.write_text(
+        yaml.safe_dump(run_profile_payload, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    evaluation_profile_path = workspace_root / "configs" / "evaluation_profiles" / "default.yaml"
+    evaluation_profile_payload = yaml.safe_load(evaluation_profile_path.read_text(encoding="utf-8"))
+    evaluation_profile_payload["judge_runs"][0]["repetitions"] = 1
+    evaluation_profile_path.write_text(
+        yaml.safe_dump(evaluation_profile_payload, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    counters = {"run_calls": 0, "judge_calls": 0}
+    workflow = WorkflowOrchestrator(
+        storage_root=workspace_root,
+        run_client_factory=lambda: CountingRunClient(counters),
+        judge_client_factory=lambda: CountingJudgeClient(counters),
+    )
+    result = workflow.run_eval(
+        suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
+        run_profile_path=run_profile_path,
+        evaluation_profile_path=evaluation_profile_path,
+    )
+
+    assert counters == {"run_calls": 6, "judge_calls": 6}
+    assert result.summary.model_case_pairs == 2
+    assert result.summary.runs_executed == 2
+    assert result.summary.evaluations_executed == 2
+    assert all(item.final_score is not None for item in result.results)
+    assert all(
+        any("Aggregated 3 run repetitions" in warning for warning in item.warnings)
+        for item in result.results
+    )
+
+
 def test_quality_gate_run_eval_performs_only_missing_work(tmp_path: Path) -> None:
     workspace_root = _build_workspace(tmp_path)
     workflow = WorkflowOrchestrator(
@@ -168,25 +212,25 @@ def test_quality_gate_run_eval_performs_only_missing_work(tmp_path: Path) -> Non
     assert first.evaluation_fingerprint is not None
     assert second.evaluation_fingerprint is not None
 
-    (
-        workspace_root
-        / "outputs"
-        / "runs"
-        / second.run_fingerprint
-        / "cases"
-        / second.case_id
-        / "run.json"
+    storage = FilesystemStorage(workspace_root)
+    run_profile_fingerprint = build_run_profile_fingerprint(
+        run_profile=load_run_profile(workspace_root / "configs" / "run_profiles" / "default.yaml")
+    )
+    storage.case_run_path(
+        "example_suite",
+        run_profile_fingerprint,
+        second.model_id,
+        second.case_id,
+        0,
     ).unlink()
-    (
-        workspace_root
-        / "outputs"
-        / "evaluations"
-        / first.evaluation_fingerprint
-        / "runs"
-        / first.run_fingerprint
-        / "cases"
-        / first.case_id
-        / "final_result.json"
+    storage.case_final_result_path(
+        "example_suite",
+        run_profile_fingerprint,
+        "default",
+        first.evaluation_fingerprint,
+        first.model_id,
+        first.case_id,
+        0,
     ).unlink()
 
     counters = {"run_calls": 0, "judge_calls": 0}
@@ -221,6 +265,76 @@ def test_quality_gate_run_eval_performs_only_missing_work(tmp_path: Path) -> Non
     assert recomputed.evaluation_action is EvaluationAction.FINAL_RECOMPUTED
     assert rerun.run_action is RunAction.EXECUTED
     assert rerun.evaluation_action is EvaluationAction.REUSED
+
+
+def test_quality_gate_adding_model_to_suite_executes_only_new_model(tmp_path: Path) -> None:
+    workspace_root = _build_workspace(tmp_path)
+    suite_path = workspace_root / "configs" / "suites" / "example_suite.yaml"
+    suite_payload = yaml.safe_load(suite_path.read_text(encoding="utf-8"))
+    suite_payload["models"] = [suite_payload["models"][0]]
+    suite_path.write_text(yaml.safe_dump(suite_payload, sort_keys=False), encoding="utf-8")
+
+    bootstrap_counters = {"run_calls": 0, "judge_calls": 0}
+    bootstrap = WorkflowOrchestrator(
+        storage_root=workspace_root,
+        run_client_factory=lambda: CountingRunClient(bootstrap_counters),
+        judge_client_factory=lambda: CountingJudgeClient(bootstrap_counters),
+    )
+    initial = bootstrap.run_eval(
+        suite_path=suite_path,
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
+    )
+
+    assert bootstrap_counters == {"run_calls": 1, "judge_calls": 3}
+    assert {item.model_id for item in initial.results} == {"baseline_model"}
+
+    suite_payload["models"].append(
+        {
+            "model_id": "cheap_model",
+            "provider": "minimax",
+            "model_name": "minimax-m2.7",
+        }
+    )
+    suite_path.write_text(yaml.safe_dump(suite_payload, sort_keys=False), encoding="utf-8")
+
+    counters = {"run_calls": 0, "judge_calls": 0}
+    workflow = WorkflowOrchestrator(
+        storage_root=workspace_root,
+        run_client_factory=lambda: CountingRunClient(counters),
+        judge_client_factory=lambda: CountingJudgeClient(counters),
+    )
+    result = workflow.run_eval(
+        suite_path=suite_path,
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "default.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
+    )
+
+    assert counters == {"run_calls": 1, "judge_calls": 3}
+    assert result.summary.model_case_pairs == 2
+    assert result.summary.runs_executed == 1
+    assert result.summary.runs_reused == 1
+    assert result.summary.evaluations_executed == 1
+    assert result.summary.evaluations_reused == 1
+
+    reused = next(item for item in result.results if item.model_id == "baseline_model")
+    added = next(item for item in result.results if item.model_id == "cheap_model")
+    assert reused.run_action is RunAction.REUSED
+    assert reused.evaluation_action is EvaluationAction.REUSED
+    assert added.run_action is RunAction.EXECUTED
+    assert added.evaluation_action is EvaluationAction.EXECUTED
+
+    run_profile_fingerprint = build_run_profile_fingerprint(
+        run_profile=load_run_profile(workspace_root / "configs" / "run_profiles" / "default.yaml")
+    )
+    storage = FilesystemStorage(workspace_root)
+    assert storage.case_run_path(
+        "example_suite",
+        run_profile_fingerprint,
+        "cheap_model",
+        added.case_id,
+        0,
+    ).exists()
 
 
 def test_quality_gate_pae_report_does_not_execute_new_work_and_keeps_visibility(

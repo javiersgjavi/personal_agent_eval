@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from statistics import median
+from statistics import mean, median
 from typing import Any, Protocol
 from uuid import uuid4
 
 from personal_agent_eval.aggregation import HybridAggregator
-from personal_agent_eval.aggregation.models import FinalEvaluationResult
+from personal_agent_eval.aggregation.models import DimensionScores, FinalEvaluationResult
 from personal_agent_eval.artifacts import RunArtifact
 from personal_agent_eval.catalog.discovery import CaseManifest, expand_suite
 from personal_agent_eval.config import (
@@ -27,6 +27,7 @@ from personal_agent_eval.domains.llm_probe import OpenRouterClient, run_llm_prob
 from personal_agent_eval.fingerprints import (
     build_evaluation_fingerprint_input,
     build_run_fingerprint_input,
+    build_run_profile_fingerprint,
 )
 from personal_agent_eval.judge import JudgeOrchestrator, OpenRouterJudgeClient
 from personal_agent_eval.judge.models import (
@@ -43,6 +44,7 @@ from personal_agent_eval.storage import (
 from personal_agent_eval.workflow.models import (
     EvaluationAction,
     RunAction,
+    UsageSummary,
     WorkflowCaseResult,
     WorkflowResult,
     WorkflowSummary,
@@ -136,24 +138,21 @@ class WorkflowOrchestrator:
         evaluation_profile = load_evaluation_profile(evaluation_profile_path)
         workspace_root = _workspace_root_from_suite_path(suite_config.source_path)
         case_manifests = expand_suite(workspace_root, suite_config.suite_id)
+        run_profile_fingerprint = build_run_profile_fingerprint(run_profile=run_profile)
 
         logger.info("Loading stored report for suite '%s'", suite_config.suite_id)
         results: list[WorkflowCaseResult] = []
+        evaluation_input = build_evaluation_fingerprint_input(evaluation_profile=evaluation_profile)
         for model in suite_config.models:
             for case_manifest in case_manifests:
-                run_input = build_run_fingerprint_input(
-                    test_config=case_manifest.config,
-                    run_profile=run_profile,
-                    model_selection=model,
-                )
-                evaluation_input = build_evaluation_fingerprint_input(
-                    evaluation_profile=evaluation_profile
-                )
                 results.append(
                     self._report_model_case(
                         model=model,
                         case_manifest=case_manifest,
-                        run_fingerprint=run_input.fingerprint,
+                        suite_id=suite_config.suite_id,
+                        run_profile=run_profile,
+                        evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+                        run_profile_fingerprint=run_profile_fingerprint,
                         evaluation_fingerprint=evaluation_input.fingerprint,
                     )
                 )
@@ -187,6 +186,7 @@ class WorkflowOrchestrator:
             if evaluation_profile_path is not None
             else None
         )
+        run_profile_fingerprint = build_run_profile_fingerprint(run_profile=run_profile)
         workspace_root = _workspace_root_from_suite_path(suite_config.source_path)
         case_manifests = expand_suite(workspace_root, suite_config.suite_id)
 
@@ -202,6 +202,7 @@ class WorkflowOrchestrator:
                     command=command,
                     suite_config=suite_config,
                     run_profile=run_profile,
+                    run_profile_fingerprint=run_profile_fingerprint,
                     evaluation_profile=evaluation_profile,
                     case_manifest=case_manifest,
                     model=model,
@@ -231,40 +232,94 @@ class WorkflowOrchestrator:
         command: str,
         suite_config: SuiteConfig,
         run_profile: RunProfileConfig,
+        run_profile_fingerprint: str,
         evaluation_profile: EvaluationProfileConfig | None,
         case_manifest: CaseManifest,
         model: ModelConfig,
+    ) -> WorkflowCaseResult:
+        repetition_indexes = list(_run_repetition_indexes(run_profile))
+        case_results = [
+            self._process_model_case_repetition(
+                command=command,
+                suite_config=suite_config,
+                run_profile=run_profile,
+                run_profile_fingerprint=run_profile_fingerprint,
+                evaluation_profile=evaluation_profile,
+                case_manifest=case_manifest,
+                model=model,
+                repetition_index=repetition_index,
+                repetition_count=len(repetition_indexes),
+            )
+            for repetition_index in repetition_indexes
+        ]
+        if len(case_results) == 1:
+            return case_results[0]
+        return _aggregate_case_repetition_results(
+            model_id=model.model_id,
+            case_id=case_manifest.case_id,
+            case_results=case_results,
+        )
+
+    def _process_model_case_repetition(
+        self,
+        *,
+        command: str,
+        suite_config: SuiteConfig,
+        run_profile: RunProfileConfig,
+        run_profile_fingerprint: str,
+        evaluation_profile: EvaluationProfileConfig | None,
+        case_manifest: CaseManifest,
+        model: ModelConfig,
+        repetition_index: int,
+        repetition_count: int,
     ) -> WorkflowCaseResult:
         run_input = build_run_fingerprint_input(
             test_config=case_manifest.config,
             run_profile=run_profile,
             model_selection=model,
+            repetition_index=(None if repetition_count == 1 else repetition_index),
         )
         run_fingerprint = run_input.fingerprint
         self._ensure_run_space(
-            run_fingerprint=run_fingerprint,
             suite_id=suite_config.suite_id,
             run_profile=run_profile,
+            run_profile_fingerprint=run_profile_fingerprint,
             model=model,
             runner_type=case_manifest.config.runner.type,
-            run_input=run_input,
         )
 
-        if self._storage.has_case_run(run_fingerprint, case_manifest.case_id):
+        if self._storage.has_case_run(
+            suite_id=suite_config.suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model.model_id,
+            case_id=case_manifest.case_id,
+            repetition_index=repetition_index,
+            run_fingerprint=run_fingerprint,
+        ):
             logger.info(
-                "Reusing run for model '%s' case '%s' (%s)",
+                "Reusing run for model '%s' case '%s' (%s, repetition %d/%d)",
                 model.model_id,
                 case_manifest.case_id,
                 run_fingerprint,
+                repetition_index + 1,
+                repetition_count,
             )
             run_action = RunAction.REUSED
-            run_artifact = self._storage.read_case_run(run_fingerprint, case_manifest.case_id)
+            run_artifact = self._storage.read_case_run(
+                suite_id=suite_config.suite_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                model_id=model.model_id,
+                case_id=case_manifest.case_id,
+                repetition_index=repetition_index,
+            )
         else:
             logger.info(
-                "Executing run for model '%s' case '%s' (%s)",
+                "Executing run for model '%s' case '%s' (%s, repetition %d/%d)",
                 model.model_id,
                 case_manifest.case_id,
                 run_fingerprint,
+                repetition_index + 1,
+                repetition_count,
             )
             run_action = RunAction.EXECUTED
             run_artifact = self._execute_run(
@@ -273,7 +328,16 @@ class WorkflowOrchestrator:
                 run_profile=run_profile,
                 model=model,
             )
-            self._storage.write_case_run(run_fingerprint, run_artifact)
+            self._storage.write_case_run(
+                suite_id=suite_config.suite_id,
+                run_profile_id=run_profile.run_profile_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                model_id=model.model_id,
+                repetition_index=repetition_index,
+                run_fingerprint=run_fingerprint,
+                artifact=run_artifact,
+                fingerprint_input=run_input,
+            )
 
         if command == "run" or evaluation_profile is None:
             return WorkflowCaseResult(
@@ -283,13 +347,16 @@ class WorkflowOrchestrator:
                 run_action=run_action,
                 run_status=run_artifact.status.value,
                 evaluation_action=EvaluationAction.SKIPPED,
+                usage=_usage_from_run_artifact(run_artifact),
                 warnings=_run_warnings(run_artifact),
             )
 
         evaluation_input = build_evaluation_fingerprint_input(evaluation_profile=evaluation_profile)
         evaluation_fingerprint = evaluation_input.fingerprint
         self._ensure_evaluation_space(
-            evaluation_fingerprint=evaluation_fingerprint,
+            suite_id=suite_config.suite_id,
+            run_profile=run_profile,
+            run_profile_fingerprint=run_profile_fingerprint,
             evaluation_profile=evaluation_profile,
             evaluation_input=evaluation_input,
         )
@@ -299,11 +366,17 @@ class WorkflowOrchestrator:
             case_manifest=case_manifest,
             run_artifact=run_artifact,
         )
+        judge_usage = UsageSummary()
 
         if self._storage.has_case_final_result(
-            evaluation_fingerprint,
-            run_fingerprint,
-            case_manifest.case_id,
+            suite_id=suite_config.suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=model.model_id,
+            case_id=case_manifest.case_id,
+            repetition_index=repetition_index,
+            run_fingerprint=run_fingerprint,
         ):
             logger.info(
                 "Reusing final evaluation for model '%s' case '%s' (%s/%s)",
@@ -313,16 +386,45 @@ class WorkflowOrchestrator:
                 run_fingerprint,
             )
             final_result = self._storage.read_case_final_result(
-                evaluation_fingerprint,
-                run_fingerprint,
-                case_manifest.case_id,
+                suite_id=suite_config.suite_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+                evaluation_fingerprint=evaluation_fingerprint,
+                model_id=model.model_id,
+                case_id=case_manifest.case_id,
+                repetition_index=repetition_index,
             )
+            if self._storage.has_case_judge_result(
+                suite_id=suite_config.suite_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+                evaluation_fingerprint=evaluation_fingerprint,
+                model_id=model.model_id,
+                case_id=case_manifest.case_id,
+                repetition_index=repetition_index,
+                run_fingerprint=run_fingerprint,
+            ):
+                judge_result = self._storage.read_case_judge_result(
+                    suite_id=suite_config.suite_id,
+                    run_profile_fingerprint=run_profile_fingerprint,
+                    evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+                    evaluation_fingerprint=evaluation_fingerprint,
+                    model_id=model.model_id,
+                    case_id=case_manifest.case_id,
+                    repetition_index=repetition_index,
+                )
+                judge_usage = _usage_from_judge_result(judge_result)
             evaluation_action = EvaluationAction.REUSED
             evaluation_status = "success"
         elif self._storage.has_case_judge_result(
-            evaluation_fingerprint,
-            run_fingerprint,
-            case_manifest.case_id,
+            suite_id=suite_config.suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=model.model_id,
+            case_id=case_manifest.case_id,
+            repetition_index=repetition_index,
+            run_fingerprint=run_fingerprint,
         ):
             logger.info(
                 "Recomputing final result for model '%s' case '%s' from stored judge result",
@@ -330,9 +432,13 @@ class WorkflowOrchestrator:
                 case_manifest.case_id,
             )
             judge_result = self._storage.read_case_judge_result(
-                evaluation_fingerprint,
-                run_fingerprint,
-                case_manifest.case_id,
+                suite_id=suite_config.suite_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+                evaluation_fingerprint=evaluation_fingerprint,
+                model_id=model.model_id,
+                case_id=case_manifest.case_id,
+                repetition_index=repetition_index,
             )
             try:
                 final_result = self._aggregate_final(
@@ -353,6 +459,10 @@ class WorkflowOrchestrator:
                     evaluation_status="failed",
                     final_score=None,
                     final_dimensions=None,
+                    usage=_combine_usage(
+                        _usage_from_run_artifact(run_artifact),
+                        _usage_from_judge_result(judge_result),
+                    ),
                     warnings=_deduplicate(
                         [
                             *_run_warnings(run_artifact),
@@ -364,10 +474,17 @@ class WorkflowOrchestrator:
                     ),
                 )
             self._storage.write_case_final_result(
-                evaluation_fingerprint,
-                run_fingerprint,
-                final_result,
+                suite_id=suite_config.suite_id,
+                run_profile_id=run_profile.run_profile_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+                evaluation_fingerprint=evaluation_fingerprint,
+                model_id=model.model_id,
+                repetition_index=repetition_index,
+                run_fingerprint=run_fingerprint,
+                result=final_result,
             )
+            judge_usage = _usage_from_judge_result(judge_result)
             evaluation_action = EvaluationAction.FINAL_RECOMPUTED
             evaluation_status = "success"
         else:
@@ -385,10 +502,16 @@ class WorkflowOrchestrator:
                 deterministic_result=deterministic_result,
             )
             self._storage.write_case_judge_result(
-                evaluation_fingerprint,
-                run_fingerprint,
-                case_manifest.case_id,
-                judge_result,
+                suite_id=suite_config.suite_id,
+                run_profile_id=run_profile.run_profile_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+                evaluation_fingerprint=evaluation_fingerprint,
+                model_id=model.model_id,
+                case_id=case_manifest.case_id,
+                repetition_index=repetition_index,
+                run_fingerprint=run_fingerprint,
+                result=judge_result,
             )
             try:
                 final_result = self._aggregate_final(
@@ -409,6 +532,10 @@ class WorkflowOrchestrator:
                     evaluation_status="failed",
                     final_score=None,
                     final_dimensions=None,
+                    usage=_combine_usage(
+                        _usage_from_run_artifact(run_artifact),
+                        _usage_from_judge_result(judge_result),
+                    ),
                     warnings=_deduplicate(
                         [
                             *_run_warnings(run_artifact),
@@ -421,10 +548,17 @@ class WorkflowOrchestrator:
                     ),
                 )
             self._storage.write_case_final_result(
-                evaluation_fingerprint,
-                run_fingerprint,
-                final_result,
+                suite_id=suite_config.suite_id,
+                run_profile_id=run_profile.run_profile_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+                evaluation_fingerprint=evaluation_fingerprint,
+                model_id=model.model_id,
+                repetition_index=repetition_index,
+                run_fingerprint=run_fingerprint,
+                result=final_result,
             )
+            judge_usage = _usage_from_judge_result(judge_result)
             evaluation_action = EvaluationAction.EXECUTED
             evaluation_status = "success"
 
@@ -439,18 +573,70 @@ class WorkflowOrchestrator:
             evaluation_status=evaluation_status,
             final_score=final_result.final_score,
             final_dimensions=final_result.final_dimensions,
+            usage=_combine_usage(_usage_from_run_artifact(run_artifact), judge_usage),
             warnings=_deduplicate([*_run_warnings(run_artifact), *final_result.warnings]),
         )
 
     def _report_model_case(
         self,
         *,
+        suite_id: str,
         model: ModelConfig,
         case_manifest: CaseManifest,
-        run_fingerprint: str,
+        run_profile: RunProfileConfig,
+        evaluation_profile_id: str,
+        run_profile_fingerprint: str,
         evaluation_fingerprint: str,
     ) -> WorkflowCaseResult:
-        if not self._storage.has_case_run(run_fingerprint, case_manifest.case_id):
+        repetition_indexes = list(_run_repetition_indexes(run_profile))
+        case_results = []
+        for repetition_index in repetition_indexes:
+            run_input = build_run_fingerprint_input(
+                test_config=case_manifest.config,
+                run_profile=run_profile,
+                model_selection=model,
+                repetition_index=(None if len(repetition_indexes) == 1 else repetition_index),
+            )
+            case_results.append(
+                self._report_model_case_repetition(
+                    suite_id=suite_id,
+                    model=model,
+                    case_manifest=case_manifest,
+                    evaluation_profile_id=evaluation_profile_id,
+                    run_profile_fingerprint=run_profile_fingerprint,
+                    run_fingerprint=run_input.fingerprint,
+                    evaluation_fingerprint=evaluation_fingerprint,
+                    repetition_index=repetition_index,
+                )
+            )
+        if len(case_results) == 1:
+            return case_results[0]
+        return _aggregate_case_repetition_results(
+            model_id=model.model_id,
+            case_id=case_manifest.case_id,
+            case_results=case_results,
+        )
+
+    def _report_model_case_repetition(
+        self,
+        *,
+        suite_id: str,
+        model: ModelConfig,
+        case_manifest: CaseManifest,
+        evaluation_profile_id: str,
+        run_profile_fingerprint: str,
+        run_fingerprint: str,
+        evaluation_fingerprint: str,
+        repetition_index: int,
+    ) -> WorkflowCaseResult:
+        if not self._storage.has_case_run(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model.model_id,
+            case_id=case_manifest.case_id,
+            repetition_index=repetition_index,
+            run_fingerprint=run_fingerprint,
+        ):
             return WorkflowCaseResult(
                 model_id=model.model_id,
                 case_id=case_manifest.case_id,
@@ -460,14 +646,26 @@ class WorkflowOrchestrator:
                 evaluation_action=EvaluationAction.SKIPPED,
                 run_status="missing",
                 evaluation_status="missing",
+                usage=UsageSummary(),
                 warnings=["Run artifact is missing for this model/case pair."],
             )
 
-        run_artifact = self._storage.read_case_run(run_fingerprint, case_manifest.case_id)
+        run_artifact = self._storage.read_case_run(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model.model_id,
+            case_id=case_manifest.case_id,
+            repetition_index=repetition_index,
+        )
         if not self._storage.has_case_final_result(
-            evaluation_fingerprint,
-            run_fingerprint,
-            case_manifest.case_id,
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=model.model_id,
+            case_id=case_manifest.case_id,
+            repetition_index=repetition_index,
+            run_fingerprint=run_fingerprint,
         ):
             return WorkflowCaseResult(
                 model_id=model.model_id,
@@ -478,13 +676,40 @@ class WorkflowOrchestrator:
                 evaluation_action=EvaluationAction.SKIPPED,
                 run_status=run_artifact.status.value,
                 evaluation_status="missing",
+                usage=_usage_from_run_artifact(run_artifact),
                 warnings=["Final evaluation result is missing for this model/case pair."],
             )
 
+        judge_usage = UsageSummary()
+        if self._storage.has_case_judge_result(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=model.model_id,
+            case_id=case_manifest.case_id,
+            repetition_index=repetition_index,
+            run_fingerprint=run_fingerprint,
+        ):
+            judge_result = self._storage.read_case_judge_result(
+                suite_id=suite_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                evaluation_profile_id=evaluation_profile_id,
+                evaluation_fingerprint=evaluation_fingerprint,
+                model_id=model.model_id,
+                case_id=case_manifest.case_id,
+                repetition_index=repetition_index,
+            )
+            judge_usage = _usage_from_judge_result(judge_result)
+
         final_result = self._storage.read_case_final_result(
-            evaluation_fingerprint,
-            run_fingerprint,
-            case_manifest.case_id,
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=model.model_id,
+            case_id=case_manifest.case_id,
+            repetition_index=repetition_index,
         )
         return WorkflowCaseResult(
             model_id=model.model_id,
@@ -497,50 +722,69 @@ class WorkflowOrchestrator:
             evaluation_status="success",
             final_score=final_result.final_score,
             final_dimensions=final_result.final_dimensions,
+            usage=_combine_usage(_usage_from_run_artifact(run_artifact), judge_usage),
             warnings=_deduplicate([*_run_warnings(run_artifact), *final_result.warnings]),
         )
 
     def _ensure_run_space(
         self,
         *,
-        run_fingerprint: str,
         suite_id: str,
         run_profile: RunProfileConfig,
+        run_profile_fingerprint: str,
         model: ModelConfig,
         runner_type: str,
-        run_input: Any,
     ) -> None:
-        if not self._storage.has_run_manifest(run_fingerprint):
+        if not self._storage.has_run_manifest(suite_id, run_profile_fingerprint):
             self._storage.write_run_manifest(
                 RunStorageManifest(
-                    run_fingerprint=run_fingerprint,
-                    runner_type=runner_type,
                     suite_id=suite_id,
                     run_profile_id=run_profile.run_profile_id,
-                    model_id=model.model_id,
+                    run_profile_fingerprint=run_profile_fingerprint,
+                    runner_type=runner_type,
+                    run_repetitions=run_profile.execution_policy.run_repetitions,
                 )
             )
-        if not self._storage.has_run_fingerprint_input(run_fingerprint):
-            self._storage.write_run_fingerprint_input(run_input)
 
     def _ensure_evaluation_space(
         self,
         *,
-        evaluation_fingerprint: str,
+        suite_id: str,
+        run_profile: RunProfileConfig,
+        run_profile_fingerprint: str,
         evaluation_profile: EvaluationProfileConfig,
         evaluation_input: Any,
     ) -> None:
-        if not self._storage.has_evaluation_manifest(evaluation_fingerprint):
+        evaluation_fingerprint = evaluation_input.fingerprint
+        if not self._storage.has_evaluation_manifest(
+            suite_id,
+            run_profile_fingerprint,
+            evaluation_profile.evaluation_profile_id,
+            evaluation_fingerprint,
+        ):
             self._storage.write_evaluation_manifest(
                 EvaluationStorageManifest(
+                    suite_id=suite_id,
+                    run_profile_id=run_profile.run_profile_id,
+                    run_profile_fingerprint=run_profile_fingerprint,
                     evaluation_fingerprint=evaluation_fingerprint,
                     evaluation_profile_id=evaluation_profile.evaluation_profile_id,
                     aggregation_method=evaluation_profile.aggregation.method,
                     default_dimension_policy=evaluation_profile.final_aggregation.default_policy,
                 )
             )
-        if not self._storage.has_evaluation_fingerprint_input(evaluation_fingerprint):
-            self._storage.write_evaluation_fingerprint_input(evaluation_input)
+        if not self._storage.has_evaluation_fingerprint_input(
+            suite_id,
+            run_profile_fingerprint,
+            evaluation_profile.evaluation_profile_id,
+            evaluation_fingerprint,
+        ):
+            self._storage.write_evaluation_fingerprint_input(
+                suite_id,
+                run_profile_fingerprint,
+                evaluation_profile.evaluation_profile_id,
+                evaluation_input,
+            )
 
     def _execute_run(
         self,
@@ -758,6 +1002,168 @@ def _combine_aggregated_judges(judge_results: list[AggregatedJudgeResult]) -> Ag
         iteration_results=flattened_iterations,
         raw_results=flattened_raw_results,
     )
+
+
+def _run_repetition_indexes(run_profile: RunProfileConfig) -> range:
+    return range(run_profile.execution_policy.run_repetitions)
+
+
+def _aggregate_case_repetition_results(
+    *,
+    model_id: str,
+    case_id: str,
+    case_results: list[WorkflowCaseResult],
+) -> WorkflowCaseResult:
+    first = case_results[0]
+    final_scores = [item.final_score for item in case_results if item.final_score is not None]
+    scored_dimensions = [
+        item.final_dimensions for item in case_results if item.final_dimensions is not None
+    ]
+    aggregated_dimensions = None if not scored_dimensions else _mean_dimensions(scored_dimensions)
+    warnings = _deduplicate(
+        [
+            *[warning for item in case_results for warning in item.warnings],
+            (
+                f"Aggregated {len(case_results)} run repetitions for model '{model_id}' "
+                f"case '{case_id}'."
+            ),
+        ]
+    )
+    return WorkflowCaseResult(
+        model_id=model_id,
+        case_id=case_id,
+        run_fingerprint=first.run_fingerprint,
+        evaluation_fingerprint=first.evaluation_fingerprint,
+        run_action=_aggregate_run_action([item.run_action for item in case_results]),
+        evaluation_action=_aggregate_evaluation_action(
+            [item.evaluation_action for item in case_results]
+        ),
+        run_status=_aggregate_status([item.run_status for item in case_results]),
+        evaluation_status=_aggregate_optional_status(
+            [item.evaluation_status for item in case_results]
+        ),
+        final_score=(mean(final_scores) if final_scores else None),
+        final_dimensions=aggregated_dimensions,
+        usage=_sum_usage_summaries([item.usage for item in case_results]),
+        warnings=warnings,
+    )
+
+
+def _mean_dimensions(items: list[DimensionScores]) -> DimensionScores:
+    names = ("task", "process", "autonomy", "closeness", "efficiency", "spark")
+    payload: dict[str, float | None] = {}
+    for name in names:
+        values = [getattr(item, name) for item in items if getattr(item, name) is not None]
+        payload[name] = mean(values) if values else None
+    return DimensionScores(**payload)
+
+
+def _aggregate_run_action(actions: list[RunAction]) -> RunAction:
+    if any(action is RunAction.EXECUTED for action in actions):
+        return RunAction.EXECUTED
+    if any(action is RunAction.REUSED for action in actions):
+        return RunAction.REUSED
+    return RunAction.SKIPPED
+
+
+def _aggregate_evaluation_action(actions: list[EvaluationAction]) -> EvaluationAction:
+    if any(action is EvaluationAction.EXECUTED for action in actions):
+        return EvaluationAction.EXECUTED
+    if any(action is EvaluationAction.FINAL_RECOMPUTED for action in actions):
+        return EvaluationAction.FINAL_RECOMPUTED
+    if any(action is EvaluationAction.REUSED for action in actions):
+        return EvaluationAction.REUSED
+    return EvaluationAction.SKIPPED
+
+
+def _aggregate_status(statuses: list[str]) -> str:
+    return statuses[0] if len(set(statuses)) == 1 else "mixed"
+
+
+def _aggregate_optional_status(statuses: list[str | None]) -> str | None:
+    present_statuses = [status for status in statuses if status is not None]
+    if not present_statuses:
+        return None
+    return present_statuses[0] if len(set(present_statuses)) == 1 else "mixed"
+
+
+def _usage_from_run_artifact(run_artifact: RunArtifact) -> UsageSummary:
+    normalized = run_artifact.usage.normalized
+    return UsageSummary(
+        input_tokens=normalized.input_tokens or 0,
+        output_tokens=normalized.output_tokens or 0,
+        total_tokens=normalized.total_tokens or 0,
+        reasoning_tokens=normalized.reasoning_tokens or 0,
+        cached_input_tokens=normalized.cached_input_tokens or 0,
+        cache_write_tokens=normalized.cache_write_tokens or 0,
+        cost_usd=run_artifact.usage.cost_usd or 0.0,
+    )
+
+
+def _usage_from_judge_result(judge_result: AggregatedJudgeResult) -> UsageSummary:
+    return _sum_usage_summaries(
+        [_usage_from_provider_payload(raw.usage) for raw in judge_result.raw_results]
+    )
+
+
+def _usage_from_provider_payload(payload: dict[str, Any]) -> UsageSummary:
+    return UsageSummary(
+        input_tokens=_coerce_usage_int(payload.get("input_tokens")),
+        output_tokens=_coerce_usage_int(payload.get("output_tokens")),
+        total_tokens=_coerce_usage_int(payload.get("total_tokens")),
+        reasoning_tokens=_coerce_usage_int(payload.get("reasoning_tokens")),
+        cached_input_tokens=_coerce_usage_int(payload.get("cached_input_tokens")),
+        cache_write_tokens=_coerce_usage_int(payload.get("cache_write_tokens")),
+        cost_usd=_coerce_usage_float(payload.get("cost")),
+    )
+
+
+def _combine_usage(left: UsageSummary, right: UsageSummary) -> UsageSummary:
+    return _sum_usage_summaries([left, right])
+
+
+def _sum_usage_summaries(items: list[UsageSummary]) -> UsageSummary:
+    return UsageSummary(
+        input_tokens=sum(item.input_tokens for item in items),
+        output_tokens=sum(item.output_tokens for item in items),
+        total_tokens=sum(item.total_tokens for item in items),
+        reasoning_tokens=sum(item.reasoning_tokens for item in items),
+        cached_input_tokens=sum(item.cached_input_tokens for item in items),
+        cache_write_tokens=sum(item.cache_write_tokens for item in items),
+        cost_usd=sum(item.cost_usd for item in items),
+    )
+
+
+def _coerce_usage_int(value: Any) -> int:
+    if value is None:
+        return 0
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return 0
+    return 0
+
+
+def _coerce_usage_float(value: Any) -> float:
+    if value is None:
+        return 0.0
+    if isinstance(value, bool):
+        return float(value)
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return 0.0
+    return 0.0
 
 
 def _run_warnings(run_artifact: RunArtifact) -> list[str]:

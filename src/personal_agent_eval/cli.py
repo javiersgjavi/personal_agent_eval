@@ -5,10 +5,16 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
+
+try:
+    from dotenv import load_dotenv as _python_dotenv_load
+except ImportError:  # pragma: no cover - exercised via fallback path when dependency is absent
+    _python_dotenv_load = None
 
 from personal_agent_eval._version import __version__
 from personal_agent_eval.reporting import WorkflowReporter
@@ -167,6 +173,7 @@ def main(argv: Sequence[str] | None = None, *, runtime: CliRuntime | None = None
             conventional_directory="configs/suites",
         )
         workspace_root = workspace_root_from_config_path(suite_reference.resolved_path)
+        load_workspace_dotenv(workspace_root)
         run_profile_reference = resolve_config_reference(
             parsed_args.run_profile,
             config_kind="run profile",
@@ -229,6 +236,39 @@ def build_default_runtime(suite_path: str | Path) -> WorkflowOrchestrator:
     """Build the default filesystem-backed workflow runtime."""
     suite_root = workspace_root_from_config_path(Path(suite_path).expanduser().resolve())
     return WorkflowOrchestrator(storage_root=suite_root)
+
+
+def load_workspace_dotenv(workspace_root: Path) -> bool:
+    """Load `.env` from the workspace root into process environment."""
+    dotenv_path = workspace_root / ".env"
+    if not dotenv_path.is_file():
+        return False
+    if _python_dotenv_load is not None:
+        return bool(_python_dotenv_load(dotenv_path=dotenv_path, override=False))
+    return _load_dotenv_fallback(dotenv_path)
+
+
+def _load_dotenv_fallback(dotenv_path: Path) -> bool:
+    """Minimal `.env` loader used when python-dotenv is unavailable."""
+    loaded_any = False
+    for raw_line in dotenv_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line.removeprefix("export ").strip()
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+        os.environ[key] = value
+        loaded_any = True
+    return loaded_any
 
 
 def workspace_root_from_config_path(config_path: Path) -> Path:

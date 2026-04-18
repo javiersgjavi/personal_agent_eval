@@ -6,6 +6,7 @@ from pydantic import Field
 
 from personal_agent_eval.aggregation.models import DimensionScores
 from personal_agent_eval.artifacts.run_artifact import ArtifactModel
+from personal_agent_eval.workflow.models import UsageSummary
 
 
 class ModelSummary(ArtifactModel):
@@ -22,6 +23,7 @@ class ModelSummary(ArtifactModel):
     scored_case_count: int = Field(ge=0)
     average_final_score: float | None = Field(default=None, ge=0, le=10)
     average_dimensions: DimensionScores = Field(default_factory=DimensionScores)
+    total_usage: UsageSummary = Field(default_factory=UsageSummary)
     warning_count: int = Field(ge=0)
 
 

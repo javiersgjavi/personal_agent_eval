@@ -72,8 +72,10 @@ def _build_success_response(*, content: str = "Summary ready.") -> OpenRouterCha
             "total_tokens": 28,
             "reasoning_tokens": 1,
             "cached_input_tokens": 2,
+            "cache_write_tokens": 5,
+            "cost": 0.00042,
         },
-        raw_usage={"prompt_tokens": 20, "completion_tokens": 8},
+        raw_usage={"prompt_tokens": 20, "completion_tokens": 8, "cost": "0.00042"},
         metadata={"region": "us"},
     )
 
@@ -116,6 +118,8 @@ def test_llm_probe_runner_builds_success_artifact_from_case_profile_and_model() 
     assert artifact.provider.provider_name == "openai"
     assert artifact.provider.provider_model_id == "openai/gpt-example"
     assert artifact.usage.normalized.total_tokens == 28
+    assert artifact.usage.normalized.cache_write_tokens == 5
+    assert artifact.usage.cost_usd == 0.00042
     assert isinstance(artifact.trace[0], MessageTraceEvent)
     assert artifact.trace[0].role == "system"
     assert isinstance(artifact.trace[1], MessageTraceEvent)

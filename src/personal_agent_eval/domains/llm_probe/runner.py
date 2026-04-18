@@ -450,7 +450,9 @@ def _build_usage(response: OpenRouterChatResponse) -> UsageMetadata:
             total_tokens=_coerce_int(response.usage.get("total_tokens")),
             reasoning_tokens=_coerce_int(response.usage.get("reasoning_tokens")),
             cached_input_tokens=_coerce_int(response.usage.get("cached_input_tokens")),
+            cache_write_tokens=_coerce_int(response.usage.get("cache_write_tokens")),
         ),
+        cost_usd=_coerce_float(response.usage.get("cost")),
         raw_provider_usage=response.raw_usage,
     )
 

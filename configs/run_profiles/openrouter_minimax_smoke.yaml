@@ -8,5 +8,6 @@ runner_defaults:
   retries: 0
 execution_policy:
   max_concurrency: 1
+  run_repetitions: 2
   fail_fast: true
   stop_on_runner_error: true

@@ -34,6 +34,7 @@ def build_run_fingerprint_input(
     test_config: TestConfig,
     run_profile: RunProfileConfig,
     model_selection: ModelConfig,
+    repetition_index: int | None = None,
 ) -> RunFingerprintInput:
     """Build the persistable run fingerprint input for one execution."""
     payload = RunFingerprintPayload(
@@ -44,6 +45,7 @@ def build_run_fingerprint_input(
                 case_config=test_config,
                 run_profile=run_profile,
                 model_selection=model_selection,
+                repetition_index=repetition_index,
             )
         ),
         input_messages=_resolve_messages_for_fingerprint(test_config.input.messages),
@@ -119,6 +121,14 @@ def build_evaluation_fingerprint_input(
     return EvaluationFingerprintInput(payload=payload, fingerprint=fingerprint)
 
 
+def build_run_profile_fingerprint(*, run_profile: RunProfileConfig) -> str:
+    """Build a semantic fingerprint for one run profile."""
+    payload = _normalize_for_hash(
+        run_profile.model_dump(exclude={"run_profile_id", "title"}, mode="json")
+    )
+    return _sha256_json(payload)
+
+
 def decide_reuse(
     *,
     requested_run_fingerprint: str,
@@ -174,10 +184,13 @@ def _resolve_execution_settings(
     case_config: TestConfig,
     run_profile: RunProfileConfig,
     model_selection: ModelConfig,
+    repetition_index: int | None,
 ) -> dict[str, Any]:
     resolved = dict(run_profile.runner_defaults)
     resolved.update(run_profile.model_overrides.get(model_selection.model_id, {}))
     resolved.update(case_config.runner.model_dump(exclude={"type"}, mode="json"))
+    if repetition_index is not None:
+        resolved["run_repetition_index"] = repetition_index
     return resolved
 
 

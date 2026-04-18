@@ -318,8 +318,19 @@ Merge order (later wins): `runner_defaults` → `model_overrides[model_id]` → 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `max_concurrency` | int ≥ 1 | no | `1` | Maximum number of cases running in parallel |
+| `run_repetitions` | int ≥ 1 | no | `1` | Number of executions per model/case pair; each repetition is stored separately and workflow reporting aggregates them back by mean score/dimensions |
 | `fail_fast` | bool | no | `false` | Stop the run after the first case failure |
 | `stop_on_runner_error` | bool | no | `true` | Stop the run after the first unrecoverable runner error |
+
+`run_repetitions` affects run identity. When it is greater than `1`, each repetition gets a
+distinct `run_fingerprint` because the repetition index is added to the normalized execution
+settings that are hashed. Storage still groups those repetitions together under one visible
+campaign path:
+
+```text
+outputs/runs/suit_<suite_id>/run_profile_<run_profile_fingerprint_short6>/<model_id>/<case_id>/run_1.json
+outputs/runs/suit_<suite_id>/run_profile_<run_profile_fingerprint_short6>/<model_id>/<case_id>/run_2.json
+```
 
 ### Example `run_profile.yaml`
 
@@ -338,6 +349,7 @@ model_overrides:
     timeout_seconds: 120
 execution_policy:
   max_concurrency: 4
+  run_repetitions: 3
   fail_fast: false
   stop_on_runner_error: true
 ```

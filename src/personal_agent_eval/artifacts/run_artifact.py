@@ -106,12 +106,14 @@ class NormalizedUsage(ArtifactModel):
     total_tokens: int | None = Field(default=None, ge=0)
     reasoning_tokens: int | None = Field(default=None, ge=0)
     cached_input_tokens: int | None = Field(default=None, ge=0)
+    cache_write_tokens: int | None = Field(default=None, ge=0)
 
 
 class UsageMetadata(ArtifactModel):
     """Usage metrics with a normalized view plus raw provider payload."""
 
     normalized: NormalizedUsage = Field(default_factory=NormalizedUsage)
+    cost_usd: float | None = Field(default=None, ge=0)
     raw_provider_usage: dict[str, Any] | None = None
 
 

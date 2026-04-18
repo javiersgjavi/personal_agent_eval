@@ -70,6 +70,7 @@ pae --help
 
 - [Docs index](docs/index.md)
 - [Getting started](docs/getting_started.md)
+- [Config Model](docs/config_model.md)
 - [Configuration](docs/configuration.md)
 - [Run artifacts](docs/run_artifacts.md)
 - [Judge results](docs/judge_results.md)
@@ -106,17 +107,15 @@ uv run pae run-eval \
 
 ## Documentation Site
 
-The repository now includes an `mkdocs` configuration:
+The repository now includes an `mkdocs` configuration. MkDocs lives in the optional `docs`
+dependency group, so use:
 
 ```bash
-mkdocs serve
+uv sync --group docs
+uv run --group docs mkdocs serve
 ```
 
-or, with `uv`:
-
-```bash
-uv run mkdocs serve
-```
+(`uv run mkdocs serve` alone will fail if `mkdocs` is not installed in the default environment.)
 
 ## Notes
 

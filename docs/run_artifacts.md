@@ -28,7 +28,7 @@ For OpenRouter-backed runs, the schema can record:
 - requested model and requested gateway in the request metadata
 - gateway, provider name, provider model id, request id, response id, finish reason, and
   native finish reason in provider metadata
-- normalized token usage and raw provider usage payloads
+- normalized token usage, normalized cost, and raw provider usage payloads
 - initial message traces, assistant responses, tool call traces, retry lifecycle events, and
   final output events
 - explicit terminal errors for provider failures, timeouts, invalid provider output, and
@@ -36,6 +36,20 @@ For OpenRouter-backed runs, the schema can record:
 
 The schema package only defines the artifact surface. It does not implement runner
 execution, judge logic, fingerprinting, or artifact storage.
+
+When the provider is OpenRouter, the stored usage payload may include:
+
+- `input_tokens`
+- `output_tokens`
+- `total_tokens`
+- `reasoning_tokens`
+- `cached_input_tokens`
+- `cache_write_tokens`
+- `cost_usd`
+
+The raw provider payload is still preserved as-is under `raw_provider_usage`, so OpenRouter
+fields such as `cost_details` remain inspectable even if the normalized schema only promotes a
+subset for reporting.
 
 Deterministic evaluation in V1 consumes these canonical `RunArtifact` objects directly. The
 deterministic evaluator records per-check pass/fail outcomes plus structured metadata and
@@ -74,32 +88,59 @@ V1 stores runs and evaluations in separate deterministic filesystem spaces. Stor
 redefine fingerprint semantics; it consumes precomputed fingerprints and persists both a
 small manifest and the normalized fingerprint input payload used to derive that fingerprint.
 
-Run spaces use this layout:
+Run spaces are organized as suite-scoped campaigns keyed by the semantic run-profile
+fingerprint:
 
 ```text
-outputs/runs/<run_fingerprint>/
+outputs/runs/suit_<suite_id>/run_profile_<run_profile_fingerprint_short6>/
   manifest.json
-  fingerprint_input.json
-  cases/
+  <model_id>/
     <case_id>/
-      run.json
+      manifest.json
+      run_1.json
+      run_1.fingerprint_input.json
+      run_2.json
+      run_2.fingerprint_input.json
+      ...
 ```
 
-Evaluation spaces use this layout:
+Within one `<model_id>/<case_id>/` directory:
+
+- `run_N.json` is the raw `RunArtifact` for repetition `N`
+- `run_N.fingerprint_input.json` stores the full normalized input payload used to derive that
+  repetition's `run_fingerprint`
+- `manifest.json` maps repetition indices back to their full `run_fingerprint` values
+
+Evaluation spaces are organized similarly, but scoped by both the run-profile fingerprint and the
+evaluation fingerprint:
 
 ```text
-outputs/evaluations/<evaluation_fingerprint>/
+outputs/evaluations/suit_<suite_id>/evaluation_profile_<run_profile_fingerprint_short6>/eval_profile_<evaluation_profile_id>_<evaluation_fingerprint_short6>/
   manifest.json
   fingerprint_input.json
-  runs/
-    <run_fingerprint>/
-      cases/
-        <case_id>/
-          judge.json
-          final_result.json
+  <model_id>/
+    <case_id>/
+      manifest.json
+      judge_1.json
+      final_result_1.json
+      judge_2.json
+      final_result_2.json
+      ...
 ```
 
-This keeps execution artifacts and evaluation artifacts clearly separated while also avoiding
-collisions across multiple models or multiple run fingerprints that share the same
-evaluation methodology. Storage still preserves enough normalized fingerprint input to
-reproduce the same storage identity later.
+Within one evaluation `<model_id>/<case_id>/` directory:
+
+- `judge_N.json` is the aggregated judge result for repetition `N`
+- `final_result_N.json` is the final hybrid evaluation result for repetition `N`
+- `manifest.json` maps repetition indices back to the full `run_fingerprint` and
+  `evaluation_fingerprint`
+
+When `execution_policy.run_repetitions` is greater than `1`, each repetition gets a distinct
+`run_fingerprint` because the repetition index is included in the normalized execution settings
+used for hashing. The workflow then aggregates repetitions back into one case-level workflow
+result by taking the mean of available `final_score` values and per-dimension means of available
+final dimensions.
+
+This keeps execution artifacts and evaluation artifacts clearly separated, gives humans stable and
+explicit path labels for both campaign layers, and still preserves enough normalized fingerprint
+input to reproduce exact semantic identities later.

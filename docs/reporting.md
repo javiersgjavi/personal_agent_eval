@@ -47,11 +47,16 @@ The first terminal-oriented output is a table at `model x case` granularity.
 Example:
 
 ```text
-MODEL                CASE        RUN      EVAL      SCORE  WARNINGS
--------------------  ----------  -------  --------  -----  --------
-minimax/minimax-m2.7 case_alpha  reused   executed  7.40   1
-openai/gpt-5.4       case_alpha  executed reused    8.20   0
+MODEL                CASE        RUN      EVAL      SCORE  IN_TOK  OUT_TOK  COST_USD  WARNINGS
+-------------------  ----------  -------  --------  -----  ------  -------  --------  --------
+minimax/minimax-m2.7 case_alpha  reused   executed  7.40   120     40       0.005000  1
+openai/gpt-5.4       case_alpha  executed reused    8.20   220     80       0.007500  0
 ```
+
+`IN_TOK`, `OUT_TOK`, and `COST_USD` are workflow totals for that `model x case` row. When the
+workflow includes judge calls, reporting sums the run usage and the judge usage together. When
+`run_repetitions > 1`, reporting also sums usage and cost across repetitions while still averaging
+scores.
 
 ## Per-Model Summary
 
@@ -60,10 +65,10 @@ Reporting also derives one summary row per model.
 Example:
 
 ```text
-MODEL                CASES  AVG_SCORE  RUNS_REUSED  RUNS_EXECUTED  EVALS_REUSED  EVALS_EXECUTED  WARNINGS
--------------------  -----  ---------  -----------  -------------  -------------  --------------  --------
-minimax/minimax-m2.7 2      7.00       1            1              0              2               1
-openai/gpt-5.4       1      8.20       0            1              1              0               0
+MODEL                CASES  AVG_SCORE  RUNS_REUSED  RUNS_EXECUTED  EVALS_REUSED  EVALS_EXECUTED  IN_TOK  OUT_TOK  COST_USD  WARNINGS
+-------------------  -----  ---------  -----------  -------------  -------------  --------------  ------  -------  --------  --------
+minimax/minimax-m2.7 2      7.00       1            1              0              2               280     90       0.008000  1
+openai/gpt-5.4       1      8.20       0            1              1              0               220     80       0.007500  0
 ```
 
 ## ASCII Charts
@@ -103,14 +108,32 @@ Example:
       "case_id": "case_alpha",
       "run_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "evaluation_fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
-      "final_score": 7.4
+      "final_score": 7.4,
+      "usage": {
+        "input_tokens": 120,
+        "output_tokens": 40,
+        "total_tokens": 160,
+        "reasoning_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.005
+      }
     }
   ],
   "model_summaries": [
     {
       "model_id": "minimax/minimax-m2.7",
       "case_count": 2,
-      "average_final_score": 7.0
+      "average_final_score": 7.0,
+      "total_usage": {
+        "input_tokens": 280,
+        "output_tokens": 90,
+        "total_tokens": 370,
+        "reasoning_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.008
+      }
     }
   ]
 }

@@ -56,8 +56,9 @@ def test_openrouter_client_builds_request_and_normalizes_response() -> None:
                     "prompt_tokens": 12,
                     "completion_tokens": 5,
                     "total_tokens": 17,
-                    "reasoning_tokens": 2,
-                    "prompt_tokens_details": {"cached_tokens": 3},
+                    "completion_tokens_details": {"reasoning_tokens": 2},
+                    "prompt_tokens_details": {"cached_tokens": 3, "cache_write_tokens": 7},
+                    "cost": "0.000321",
                 },
             },
         )
@@ -89,6 +90,8 @@ def test_openrouter_client_builds_request_and_normalizes_response() -> None:
         "total_tokens": 17,
         "reasoning_tokens": 2,
         "cached_input_tokens": 3,
+        "cache_write_tokens": 7,
+        "cost": 0.000321,
     }
     assert response.assistant_message.tool_calls[0].parsed_arguments == {"city": "Madrid"}
 

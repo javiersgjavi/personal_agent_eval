@@ -10,6 +10,18 @@ from personal_agent_eval.aggregation.models import DimensionScores
 from personal_agent_eval.artifacts.run_artifact import ArtifactModel
 
 
+class UsageSummary(ArtifactModel):
+    """Aggregated usage and cost metrics for one workflow result row."""
+
+    input_tokens: int = Field(default=0, ge=0)
+    output_tokens: int = Field(default=0, ge=0)
+    total_tokens: int = Field(default=0, ge=0)
+    reasoning_tokens: int = Field(default=0, ge=0)
+    cached_input_tokens: int = Field(default=0, ge=0)
+    cache_write_tokens: int = Field(default=0, ge=0)
+    cost_usd: float = Field(default=0.0, ge=0)
+
+
 class RunAction(StrEnum):
     """How one run artifact was produced for a model/case pair."""
 
@@ -40,6 +52,7 @@ class WorkflowCaseResult(ArtifactModel):
     evaluation_status: str | None = None
     final_score: float | None = Field(default=None, ge=0, le=10)
     final_dimensions: DimensionScores | None = None
+    usage: UsageSummary = Field(default_factory=UsageSummary)
     warnings: list[str] = Field(default_factory=list)
 
 

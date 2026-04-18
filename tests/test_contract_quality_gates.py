@@ -38,8 +38,6 @@ from personal_agent_eval.config.test_config import TestConfig as CaseConfig
 from personal_agent_eval.fingerprints import (
     EvaluationFingerprintInput,
     EvaluationFingerprintPayload,
-    RunFingerprintInput,
-    RunFingerprintPayload,
     build_evaluation_fingerprint_input,
     build_run_fingerprint_input,
 )
@@ -285,42 +283,36 @@ def test_evaluation_fingerprint_reorder_vs_aggregation_change() -> None:
 
 def test_storage_layout_is_frozen_and_isolates_results_per_run_fingerprint(tmp_path: Path) -> None:
     storage = FilesystemStorage(tmp_path)
+    suite_id = "example_suite"
+    run_profile_id = "default"
+    run_profile_fingerprint = "d" * 64
+    evaluation_profile_id = "judge_default"
     evaluation_fingerprint = "e" * 64
     first_run_fingerprint = "a" * 64
     second_run_fingerprint = "b" * 64
+    first_model_name = "openai/gpt-example"
+    second_model_name = "anthropic/other-model"
     case_id = "example_case"
 
     storage.write_evaluation_manifest(
         EvaluationStorageManifest(
+            suite_id=suite_id,
+            run_profile_id=run_profile_id,
+            run_profile_fingerprint=run_profile_fingerprint,
             evaluation_fingerprint=evaluation_fingerprint,
-            evaluation_profile_id="default",
+            evaluation_profile_id=evaluation_profile_id,
             aggregation_method="median",
             default_dimension_policy="judge_only",
         )
     )
     storage.write_evaluation_fingerprint_input(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
         EvaluationFingerprintInput(
             fingerprint=evaluation_fingerprint,
             payload=EvaluationFingerprintPayload(judge_aggregation={"method": "median"}),
-        )
-    )
-    storage.write_run_fingerprint_input(
-        RunFingerprintInput(
-            fingerprint=first_run_fingerprint,
-            payload=RunFingerprintPayload(
-                runner_type="llm_probe",
-                requested_model="openai/gpt-example",
-            ),
-        )
-    )
-    storage.write_run_fingerprint_input(
-        RunFingerprintInput(
-            fingerprint=second_run_fingerprint,
-            payload=RunFingerprintPayload(
-                runner_type="llm_probe",
-                requested_model="anthropic/other-model",
-            ),
-        )
+        ),
     )
 
     first_result = _build_final_result(case_id=case_id, run_id="run_a", final_score=7.0)
@@ -328,63 +320,111 @@ def test_storage_layout_is_frozen_and_isolates_results_per_run_fingerprint(tmp_p
     judge_result = _build_judge_result()
 
     storage.write_case_judge_result(
-        evaluation_fingerprint,
-        first_run_fingerprint,
-        case_id,
-        judge_result,
+        suite_id=suite_id,
+        run_profile_id=run_profile_id,
+        run_profile_fingerprint=run_profile_fingerprint,
+        evaluation_profile_id=evaluation_profile_id,
+        evaluation_fingerprint=evaluation_fingerprint,
+        model_id=first_model_name,
+        case_id=case_id,
+        repetition_index=0,
+        run_fingerprint=first_run_fingerprint,
+        result=judge_result,
     )
     storage.write_case_final_result(
-        evaluation_fingerprint,
-        first_run_fingerprint,
-        first_result,
+        suite_id=suite_id,
+        run_profile_id=run_profile_id,
+        run_profile_fingerprint=run_profile_fingerprint,
+        evaluation_profile_id=evaluation_profile_id,
+        evaluation_fingerprint=evaluation_fingerprint,
+        model_id=first_model_name,
+        repetition_index=0,
+        run_fingerprint=first_run_fingerprint,
+        result=first_result,
     )
     storage.write_case_judge_result(
-        evaluation_fingerprint,
-        second_run_fingerprint,
-        case_id,
-        judge_result,
+        suite_id=suite_id,
+        run_profile_id=run_profile_id,
+        run_profile_fingerprint=run_profile_fingerprint,
+        evaluation_profile_id=evaluation_profile_id,
+        evaluation_fingerprint=evaluation_fingerprint,
+        model_id=second_model_name,
+        case_id=case_id,
+        repetition_index=0,
+        run_fingerprint=second_run_fingerprint,
+        result=judge_result,
     )
     storage.write_case_final_result(
-        evaluation_fingerprint,
-        second_run_fingerprint,
-        second_result,
+        suite_id=suite_id,
+        run_profile_id=run_profile_id,
+        run_profile_fingerprint=run_profile_fingerprint,
+        evaluation_profile_id=evaluation_profile_id,
+        evaluation_fingerprint=evaluation_fingerprint,
+        model_id=second_model_name,
+        repetition_index=0,
+        run_fingerprint=second_run_fingerprint,
+        result=second_result,
     )
 
-    assert storage.case_judge_path_for_run(
-        evaluation_fingerprint, first_run_fingerprint, case_id
+    assert storage.case_judge_path(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        evaluation_fingerprint,
+        first_model_name,
+        case_id,
+        0,
     ) == (
         tmp_path
         / "outputs"
         / "evaluations"
-        / evaluation_fingerprint
-        / "runs"
-        / first_run_fingerprint
-        / "cases"
+        / "suit_example_suite"
+        / "evaluation_profile_dddddd"
+        / "eval_profile_judge_default_eeeeee"
+        / "openai_gpt-example"
         / case_id
-        / "judge.json"
+        / "judge_1.json"
     )
-    assert storage.case_final_result_path_for_run(
-        evaluation_fingerprint, second_run_fingerprint, case_id
+    assert storage.case_final_result_path(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        evaluation_fingerprint,
+        second_model_name,
+        case_id,
+        0,
     ) == (
         tmp_path
         / "outputs"
         / "evaluations"
-        / evaluation_fingerprint
-        / "runs"
-        / second_run_fingerprint
-        / "cases"
+        / "suit_example_suite"
+        / "evaluation_profile_dddddd"
+        / "eval_profile_judge_default_eeeeee"
+        / "anthropic_other-model"
         / case_id
-        / "final_result.json"
+        / "final_result_1.json"
     )
     assert (
         storage.read_case_final_result(
-            evaluation_fingerprint, first_run_fingerprint, case_id
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=first_model_name,
+            case_id=case_id,
+            repetition_index=0,
         ).final_score
         == 7.0
     )
     assert (
         storage.read_case_final_result(
-            evaluation_fingerprint, second_run_fingerprint, case_id
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=second_model_name,
+            case_id=case_id,
+            repetition_index=0,
         ).final_score
         == 8.5
     )

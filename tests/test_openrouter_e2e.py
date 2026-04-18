@@ -9,6 +9,8 @@ import yaml
 
 from personal_agent_eval.artifacts import RunStatus
 from personal_agent_eval.artifacts.run_artifact import FinalOutputTraceEvent
+from personal_agent_eval.config import load_run_profile
+from personal_agent_eval.fingerprints import build_run_profile_fingerprint
 from personal_agent_eval.judge.models import JudgeOutputContract
 from personal_agent_eval.storage import FilesystemStorage
 from personal_agent_eval.workflow import EvaluationAction, RunAction, WorkflowOrchestrator
@@ -67,7 +69,18 @@ def test_openrouter_smoke_run_eval_executes_real_provider_and_judge_requests(
     assert case_result.final_score is not None
 
     storage = FilesystemStorage(workspace_root)
-    artifact = storage.read_case_run(case_result.run_fingerprint, case_result.case_id)
+    run_profile_fingerprint = build_run_profile_fingerprint(
+        run_profile=load_run_profile(
+            workspace_root / "configs" / "run_profiles" / "openrouter_full_e2e.yaml"
+        )
+    )
+    artifact = storage.read_case_run(
+        suite_id="openrouter_full_e2e_suite",
+        run_profile_fingerprint=run_profile_fingerprint,
+        model_id=case_result.model_id,
+        case_id=case_result.case_id,
+        repetition_index=0,
+    )
     assert artifact.status is RunStatus.SUCCESS
     assert artifact.request.requested_model == run_model
     assert artifact.request.gateway == "openrouter"
@@ -82,20 +95,34 @@ def test_openrouter_smoke_run_eval_executes_real_provider_and_judge_requests(
     evaluation_fingerprint = case_result.evaluation_fingerprint
     assert evaluation_fingerprint is not None
     assert storage.has_case_judge_result(
-        evaluation_fingerprint,
-        case_result.run_fingerprint,
-        case_result.case_id,
+        suite_id="openrouter_full_e2e_suite",
+        run_profile_fingerprint=run_profile_fingerprint,
+        evaluation_profile_id="openrouter_full_e2e",
+        evaluation_fingerprint=evaluation_fingerprint,
+        model_id=case_result.model_id,
+        case_id=case_result.case_id,
+        repetition_index=0,
+        run_fingerprint=case_result.run_fingerprint,
     )
     assert storage.has_case_final_result(
-        evaluation_fingerprint,
-        case_result.run_fingerprint,
-        case_result.case_id,
+        suite_id="openrouter_full_e2e_suite",
+        run_profile_fingerprint=run_profile_fingerprint,
+        evaluation_profile_id="openrouter_full_e2e",
+        evaluation_fingerprint=evaluation_fingerprint,
+        model_id=case_result.model_id,
+        case_id=case_result.case_id,
+        repetition_index=0,
+        run_fingerprint=case_result.run_fingerprint,
     )
 
     judge_result = storage.read_case_judge_result(
-        evaluation_fingerprint,
-        case_result.run_fingerprint,
-        case_result.case_id,
+        suite_id="openrouter_full_e2e_suite",
+        run_profile_fingerprint=run_profile_fingerprint,
+        evaluation_profile_id="openrouter_full_e2e",
+        evaluation_fingerprint=evaluation_fingerprint,
+        model_id=case_result.model_id,
+        case_id=case_result.case_id,
+        repetition_index=0,
     )
     assert judge_result.judge_name == "openrouter_rubric_judge"
     assert judge_result.judge_model == judge_model
@@ -112,9 +139,13 @@ def test_openrouter_smoke_run_eval_executes_real_provider_and_judge_requests(
     assert judge_contract.dimensions.task is not None
 
     final_result = storage.read_case_final_result(
-        evaluation_fingerprint,
-        case_result.run_fingerprint,
-        case_result.case_id,
+        suite_id="openrouter_full_e2e_suite",
+        run_profile_fingerprint=run_profile_fingerprint,
+        evaluation_profile_id="openrouter_full_e2e",
+        evaluation_fingerprint=evaluation_fingerprint,
+        model_id=case_result.model_id,
+        case_id=case_result.case_id,
+        repetition_index=0,
     )
     assert final_result.case_id == case_result.case_id
     assert final_result.run_id == artifact.identity.run_id
