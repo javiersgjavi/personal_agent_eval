@@ -372,6 +372,19 @@ The generated config does **not** treat the OpenClaw state directory as part of 
 workspace. The ephemeral `OPENCLAW_STATE_DIR` remains a separate runtime surface and is not
 written into `agents.defaults.workspace`.
 
+### OpenClaw Harness
+
+The current benchmark harness runs OpenClaw in a minimal benchmark-owned flow:
+
+1. resolve the effective config and materialize the ephemeral workspace
+2. create a separate ephemeral `OPENCLAW_STATE_DIR`
+3. write the generated `openclaw.json`
+4. validate it with `openclaw config validate --json`
+5. execute one local turn with `openclaw agent --local --json`
+
+`timeout_seconds` is still enforced as a real wall-clock limit for execution, but it is
+treated as runtime control metadata rather than semantic reuse identity.
+
 ---
 
 ## OpenClaw agent (`configs/agents/<agent_id>/agent.yaml`)
@@ -429,6 +442,22 @@ model must still come from suite or CLI model selection.
   - `USER.md`
 - the materialization step also produces a deterministic manifest of final workspace files for
   later fingerprinting and reuse decisions
+
+Common OpenClaw workspace files include:
+
+- `AGENTS.md`
+- `SOUL.md`
+- `USER.md`
+- `TOOLS.md`
+- `IDENTITY.md`
+
+Optional workspace content commonly includes:
+
+- `HEARTBEAT.md`
+- `BOOT.md`
+- `BOOTSTRAP.md`
+- `memory/`
+- `MEMORY.md`
 
 ### `execution_policy`
 

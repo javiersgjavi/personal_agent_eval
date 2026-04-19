@@ -119,8 +119,10 @@ outputs/runs/suit_<suite_id>/run_profile_<run_profile_fingerprint_short6>/
     <case_id>/
       manifest.json
       run_1.json
+      run_1.artifacts/
       run_1.fingerprint_input.json
       run_2.json
+      run_2.artifacts/
       run_2.fingerprint_input.json
       ...
 ```
@@ -128,6 +130,8 @@ outputs/runs/suit_<suite_id>/run_profile_<run_profile_fingerprint_short6>/
 Within one `<model_id>/<case_id>/` directory:
 
 - `run_N.json` is the raw `RunArtifact` for repetition `N`
+- `run_N.artifacts/` stores copied external files referenced by `run_N.json` (for example OpenClaw
+  generated config, raw trace, logs, snapshots, diffs, and key outputs)
 - `run_N.fingerprint_input.json` stores the full normalized input payload used to derive that
   repetition's `run_fingerprint`
 - `manifest.json` maps repetition indices back to their full `run_fingerprint` values

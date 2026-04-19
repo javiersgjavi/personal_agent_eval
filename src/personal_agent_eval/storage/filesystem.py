@@ -4,10 +4,18 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+from hashlib import sha256
 from pathlib import Path
 from typing import TypeVar
+from urllib.parse import unquote, urlparse
 
 from personal_agent_eval.aggregation.models import FinalEvaluationResult
+from personal_agent_eval.artifacts import (
+    OutputArtifactRef,
+    parse_openclaw_run_evidence,
+    with_openclaw_run_evidence,
+)
 from personal_agent_eval.artifacts.run_artifact import ArtifactModel, RunArtifact
 from personal_agent_eval.fingerprints import EvaluationFingerprintInput, RunFingerprintInput
 from personal_agent_eval.judge.models import AggregatedJudgeResult
@@ -191,6 +199,19 @@ class FilesystemStorage:
             / f"run_{repetition_index + 1}.fingerprint_input.json"
         )
 
+    def case_run_artifacts_path(
+        self,
+        suite_id: str,
+        run_profile_fingerprint: str,
+        model_id: str,
+        case_id: str,
+        repetition_index: int,
+    ) -> Path:
+        return (
+            self.run_case_path(suite_id, run_profile_fingerprint, model_id, case_id)
+            / f"run_{repetition_index + 1}.artifacts"
+        )
+
     def case_judge_path(
         self,
         suite_id: str,
@@ -273,6 +294,13 @@ class FilesystemStorage:
     ) -> Path:
         if not isinstance(fingerprint_input, RunFingerprintInput):
             raise ValueError("write_case_run() requires RunFingerprintInput.")
+        artifact = self._persist_run_artifact_assets(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model_id,
+            repetition_index=repetition_index,
+            artifact=artifact,
+        )
         path = self._write_model(
             self.case_run_path(
                 suite_id,
@@ -731,6 +759,104 @@ class FilesystemStorage:
         ]
         retained.append(replacement)
         return sorted(retained, key=lambda item: item.repetition_index)
+
+    def _persist_run_artifact_assets(
+        self,
+        *,
+        suite_id: str,
+        run_profile_fingerprint: str,
+        model_id: str,
+        repetition_index: int,
+        artifact: RunArtifact,
+    ) -> RunArtifact:
+        artifacts_dir = self.case_run_artifacts_path(
+            suite_id,
+            run_profile_fingerprint,
+            model_id,
+            artifact.identity.case_id,
+            repetition_index,
+        )
+        output_artifacts = [
+            self._persist_output_artifact_ref(artifacts_dir=artifacts_dir, ref=ref)
+            for ref in artifact.output_artifacts
+        ]
+        openclaw_evidence = parse_openclaw_run_evidence(artifact.runner_metadata)
+        updated_artifact = artifact.model_copy(update={"output_artifacts": output_artifacts})
+        if openclaw_evidence is None:
+            return updated_artifact
+
+        persisted_evidence = openclaw_evidence.model_copy(
+            update={
+                "generated_openclaw_config": self._persist_optional_output_artifact_ref(
+                    artifacts_dir=artifacts_dir,
+                    ref=openclaw_evidence.generated_openclaw_config,
+                ),
+                "raw_session_trace": self._persist_optional_output_artifact_ref(
+                    artifacts_dir=artifacts_dir,
+                    ref=openclaw_evidence.raw_session_trace,
+                ),
+                "openclaw_logs": self._persist_optional_output_artifact_ref(
+                    artifacts_dir=artifacts_dir,
+                    ref=openclaw_evidence.openclaw_logs,
+                ),
+                "workspace_snapshot": self._persist_optional_output_artifact_ref(
+                    artifacts_dir=artifacts_dir,
+                    ref=openclaw_evidence.workspace_snapshot,
+                ),
+                "workspace_diff": self._persist_optional_output_artifact_ref(
+                    artifacts_dir=artifacts_dir,
+                    ref=openclaw_evidence.workspace_diff,
+                ),
+                "key_output_artifacts": [
+                    self._persist_output_artifact_ref(artifacts_dir=artifacts_dir, ref=ref)
+                    for ref in openclaw_evidence.key_output_artifacts
+                ],
+            }
+        )
+        return with_openclaw_run_evidence(updated_artifact, persisted_evidence)
+
+    def _persist_optional_output_artifact_ref(
+        self,
+        *,
+        artifacts_dir: Path,
+        ref: OutputArtifactRef | None,
+    ) -> OutputArtifactRef | None:
+        if ref is None:
+            return None
+        return self._persist_output_artifact_ref(artifacts_dir=artifacts_dir, ref=ref)
+
+    def _persist_output_artifact_ref(
+        self,
+        *,
+        artifacts_dir: Path,
+        ref: OutputArtifactRef,
+    ) -> OutputArtifactRef:
+        source_path = self._local_file_uri_to_path(ref.uri)
+        if source_path is None or not source_path.is_file():
+            return ref
+
+        destination_name = f"{self._path_label(ref.artifact_id)}--{source_path.name}"
+        destination_path = artifacts_dir / destination_name
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        if source_path.resolve() != destination_path.resolve():
+            shutil.copy2(source_path, destination_path)
+
+        payload = destination_path.read_bytes()
+        return ref.model_copy(
+            update={
+                "uri": destination_path.resolve().as_uri(),
+                "byte_size": len(payload),
+                "sha256": sha256(payload).hexdigest(),
+            }
+        )
+
+    def _local_file_uri_to_path(self, uri: str) -> Path | None:
+        parsed = urlparse(uri)
+        if parsed.scheme != "file":
+            return None
+        if parsed.netloc not in {"", "localhost"}:
+            return None
+        return Path(unquote(parsed.path))
 
     def _short_fingerprint(self, fingerprint: str) -> str:
         normalized = fingerprint.strip().lower()

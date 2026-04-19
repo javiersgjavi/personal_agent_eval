@@ -214,3 +214,82 @@ def test_storage_round_trips_openclaw_run_artifact(tmp_path: Path) -> None:
     )
     assert loaded == run_artifact
     assert parse_openclaw_run_evidence(loaded.runner_metadata) == evidence
+
+
+def test_storage_persists_local_file_artifact_refs_for_openclaw(tmp_path: Path) -> None:
+    storage = FilesystemStorage(tmp_path / "storage")
+    runtime_root = tmp_path / "runtime"
+    runtime_root.mkdir()
+    generated_config_path = runtime_root / "openclaw.json"
+    generated_config_path.write_text(
+        '{"agents":{"defaults":{"workspace":"/tmp/ws"}}}\n',
+        encoding="utf-8",
+    )
+    report_path = runtime_root / "report.md"
+    report_path.write_text("# Report\n", encoding="utf-8")
+
+    run_artifact = with_openclaw_run_evidence(
+        _minimal_openclaw_artifact().model_copy(
+            update={
+                "output_artifacts": [
+                    _ref(
+                        artifact_id="key_report",
+                        artifact_type=OpenClawEvidenceArtifactTypes.KEY_OUTPUT,
+                        uri=report_path.resolve().as_uri(),
+                    )
+                ]
+            }
+        ),
+        OpenClawRunEvidence(
+            agent_id="support_agent",
+            generated_openclaw_config=_ref(
+                artifact_id="cfg",
+                artifact_type=OpenClawEvidenceArtifactTypes.GENERATED_OPENCLAW_CONFIG,
+                uri=generated_config_path.resolve().as_uri(),
+            ),
+        ),
+    )
+
+    storage.write_run_manifest(
+        RunStorageManifest(
+            suite_id="example_suite",
+            run_profile_id="default",
+            run_profile_fingerprint="d" * 64,
+            runner_type="openclaw",
+            run_repetitions=1,
+        )
+    )
+    storage.write_case_run(
+        suite_id="example_suite",
+        run_profile_id="default",
+        run_profile_fingerprint="d" * 64,
+        model_id="baseline_model",
+        repetition_index=0,
+        run_fingerprint="a" * 64,
+        artifact=run_artifact,
+        fingerprint_input=RunFingerprintInput(
+            fingerprint="a" * 64,
+            payload=RunFingerprintPayload(
+                runner_type="openclaw",
+                requested_model="openai/gpt-example",
+            ),
+        ),
+    )
+
+    loaded = storage.read_case_run(
+        suite_id="example_suite",
+        run_profile_fingerprint="d" * 64,
+        model_id="baseline_model",
+        case_id="example_case",
+        repetition_index=0,
+    )
+    evidence = parse_openclaw_run_evidence(loaded.runner_metadata)
+    assert evidence is not None
+    assert evidence.generated_openclaw_config is not None
+    assert loaded.output_artifacts[0].uri.startswith("file://")
+    assert evidence.generated_openclaw_config.uri.startswith("file://")
+    persisted_report = Path(loaded.output_artifacts[0].uri.removeprefix("file://"))
+    persisted_config = Path(evidence.generated_openclaw_config.uri.removeprefix("file://"))
+    assert persisted_report.is_file()
+    assert persisted_config.is_file()
+    assert persisted_report.read_text(encoding="utf-8") == "# Report\n"

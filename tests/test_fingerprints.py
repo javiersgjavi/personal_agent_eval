@@ -11,7 +11,7 @@ from personal_agent_eval.config import (
     load_test_config,
 )
 from personal_agent_eval.config.suite_config import ModelConfig
-from personal_agent_eval.config.test_config import TestConfig
+from personal_agent_eval.config.test_config import TestConfig as CaseConfig
 from personal_agent_eval.domains.openclaw import materialize_openclaw_workspace
 from personal_agent_eval.fingerprints import (
     ReuseAction,
@@ -361,7 +361,7 @@ def test_reuse_decision_helpers_follow_v1_rules() -> None:
     )
 
 
-def _write_openclaw_case(tmp_path: Path) -> TestConfig:
+def _write_openclaw_case(tmp_path: Path) -> CaseConfig:
     path = tmp_path / "openclaw_case.yaml"
     path.write_text(
         "\n".join(
