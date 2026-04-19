@@ -5,6 +5,7 @@ from personal_agent_eval.config.evaluation_profile import (
     EvaluationProfileConfig,
     load_evaluation_profile,
 )
+from personal_agent_eval.config.openclaw_agent import OpenClawAgentConfig, load_openclaw_agent
 from personal_agent_eval.config.run_profile import RunProfileConfig, load_run_profile
 from personal_agent_eval.config.suite_config import SuiteConfig, load_suite_config
 from personal_agent_eval.config.test_config import TestConfig, load_test_config
@@ -12,10 +13,12 @@ from personal_agent_eval.config.test_config import TestConfig, load_test_config
 __all__ = [
     "ConfigError",
     "EvaluationProfileConfig",
+    "OpenClawAgentConfig",
     "RunProfileConfig",
     "SuiteConfig",
     "TestConfig",
     "load_evaluation_profile",
+    "load_openclaw_agent",
     "load_run_profile",
     "load_suite_config",
     "load_test_config",

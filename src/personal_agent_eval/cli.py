@@ -5,17 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
-try:
-    from dotenv import load_dotenv as _python_dotenv_load
-except ImportError:  # pragma: no cover - exercised via fallback path when dependency is absent
-    _python_dotenv_load = None
+from dotenv import load_dotenv
 
 from personal_agent_eval._version import __version__
 from personal_agent_eval.reporting import WorkflowReporter
@@ -255,10 +251,7 @@ def main(argv: Sequence[str] | None = None, *, runtime: CliRuntime | None = None
         print(reporter.render_cli(result))
 
     _chart_commands = frozenset({"eval", "run-eval", "report"})
-    if (
-        parsed_args.command in _chart_commands
-        and not getattr(parsed_args, "no_chart", False)
-    ):
+    if parsed_args.command in _chart_commands and not getattr(parsed_args, "no_chart", False):
         from personal_agent_eval.reporting.score_cost_chart import render_score_cost_chart_png
 
         epid = result.evaluation_profile_id or "report"
@@ -295,32 +288,7 @@ def load_workspace_dotenv(workspace_root: Path) -> bool:
     dotenv_path = workspace_root / ".env"
     if not dotenv_path.is_file():
         return False
-    if _python_dotenv_load is not None:
-        return bool(_python_dotenv_load(dotenv_path=dotenv_path, override=False))
-    return _load_dotenv_fallback(dotenv_path)
-
-
-def _load_dotenv_fallback(dotenv_path: Path) -> bool:
-    """Minimal `.env` loader used when python-dotenv is unavailable."""
-    loaded_any = False
-    for raw_line in dotenv_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("export "):
-            line = line.removeprefix("export ").strip()
-        if "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        if not key or key in os.environ:
-            continue
-        value = value.strip()
-        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
-            value = value[1:-1]
-        os.environ[key] = value
-        loaded_any = True
-    return loaded_any
+    return bool(load_dotenv(dotenv_path=dotenv_path, override=False))
 
 
 def workspace_root_from_config_path(config_path: Path) -> Path:

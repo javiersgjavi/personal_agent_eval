@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any, cast
 
 from personal_agent_eval.reporting.models import ModelSummary, StructuredReport
 
@@ -18,9 +20,7 @@ DEFAULT_TITLE = "Model comparison: final quality vs estimated total benchmark co
 DEFAULT_SUBTITLE = (
     "(Higher = better score, further left = lower estimated cost — bubble size = latency)"
 )
-DEFAULT_XLABEL = (
-    "Estimated cost to run the full benchmark ($, input + output, estimate)"
-)
+DEFAULT_XLABEL = "Estimated cost to run the full benchmark ($, input + output, estimate)"
 DEFAULT_YLABEL = "Overall benchmark score (0 to 10)"
 
 # Bubble area range (matplotlib scatter `s` is in points²)
@@ -118,10 +118,13 @@ def render_score_cost_chart_png(
             "or `uv sync --extra charts`."
         ) from exc
 
+    adjust_text_fn: Callable[..., Any] | None = None
     try:
-        from adjustText import adjust_text
+        from adjustText import adjust_text as _adjust_text_import
+
+        adjust_text_fn = cast(Callable[..., Any], _adjust_text_import)
     except ImportError:
-        adjust_text = None  # type: ignore[assignment,misc]
+        pass
 
     output_path = output_path.expanduser().resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -191,8 +194,8 @@ def render_score_cost_chart_png(
         )
         texts.append(ann)
 
-    if adjust_text is not None:
-        adjust_text(
+    if adjust_text_fn is not None:
+        adjust_text_fn(
             texts,
             x=costs,
             y=scores,

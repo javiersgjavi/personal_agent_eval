@@ -1,8 +1,8 @@
 # Config Model
 
-`personal_agent_eval` is driven by four YAML configuration types. Each one
-answers a different question, and together they define a complete benchmark
-**campaign**.
+`personal_agent_eval` is driven by four YAML configuration types plus a reusable
+OpenClaw agent directory. Each one answers a different question, and together they
+define a complete benchmark **campaign**.
 
 | Config type | File path | Answers |
 |---|---|---|
@@ -10,6 +10,7 @@ answers a different question, and together they define a complete benchmark
 | Suite | `configs/suites/<suite_id>.yaml` | _Which_ cases and models |
 | Run profile | `configs/run_profiles/<profile_id>.yaml` | _How_ to execute |
 | Evaluation profile | `configs/evaluation_profiles/<profile_id>.yaml` | _How_ to judge |
+| OpenClaw agent | `configs/agents/<agent_id>/agent.yaml` + `workspace/` | _Which reusable OpenClaw workspace_ |
 
 ---
 
@@ -80,6 +81,9 @@ deterministic_checks:
 Key fields: `runner`, `input.messages`, `input.attachments`,
 `expectations.hard_expectations` / `expectations.soft_expectations`, `deterministic_checks`, `tags`.
 
+For OpenClaw, the case schema stays the same. Use `runner.type: openclaw`, keep the task in
+`input.messages`, and place any runner-specific hints under `input.context.openclaw`.
+
 ---
 
 ### `suite.yaml` — the campaign scope
@@ -125,6 +129,37 @@ execution_policy:
 ```
 
 Key fields: `runner_defaults`, `model_overrides`, `execution_policy.run_repetitions`.
+
+For OpenClaw, `run_profile.yaml` also owns the dedicated runtime block:
+
+```yaml
+openclaw:
+  agent_id: support_agent
+  image: ghcr.io/openclaw/openclaw-base:0.1.0
+  timeout_seconds: 300
+```
+
+That block selects the reusable agent directory and runtime image instead of relying on
+free-form runner defaults.
+
+---
+
+### `configs/agents/<agent_id>/agent.yaml` — reusable OpenClaw agent
+
+This is the fifth config surface introduced for OpenClaw. It is directory-based rather than
+single-file based:
+
+```text
+configs/agents/support_agent/
+  agent.yaml
+  workspace/
+    AGENTS.md
+    SOUL.md
+```
+
+`agent.yaml` stores benchmark-owned OpenClaw fragments (`identity`, `agents_defaults`,
+`agent`, `model_defaults`) and `workspace/` stores the reusable workspace template that will
+be copied into each ephemeral run.
 
 ---
 

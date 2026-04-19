@@ -1,0 +1,21 @@
+schema_version: 1
+agent_id: support_agent
+title: Support Agent
+description: Minimal fixture agent for OpenClaw config tests
+tags:
+  - support
+  - openclaw
+  - support
+openclaw:
+  identity:
+    name: Support Agent
+  agents_defaults:
+    sandbox: workspace-write
+  agent:
+    id: support-agent
+    prompt: You are a benchmark fixture agent.
+  model_defaults:
+    aliases:
+      default: benchmark-primary
+    fallbacks:
+      - openai/gpt-4o-mini

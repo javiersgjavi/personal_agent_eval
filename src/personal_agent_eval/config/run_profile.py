@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, field_validator
 
 from personal_agent_eval.config._base import (
     ID_PATTERN,
@@ -24,6 +24,22 @@ class ExecutionPolicy(ConfigModel):
     stop_on_runner_error: bool = True
 
 
+class OpenClawRunProfile(ConfigModel):
+    """OpenClaw-specific execution settings resolved from run_profile.yaml."""
+
+    agent_id: str = Field(pattern=ID_PATTERN)
+    image: str
+    timeout_seconds: int = Field(gt=0)
+
+    @field_validator("image")
+    @classmethod
+    def _validate_image(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("openclaw.image must be a non-empty string.")
+        return stripped
+
+
 class RunProfileConfig(ConfigModel):
     """Canonical run profile config."""
 
@@ -33,6 +49,7 @@ class RunProfileConfig(ConfigModel):
     runner_defaults: dict[str, Any] = Field(default_factory=dict)
     model_overrides: dict[str, dict[str, Any]] = Field(default_factory=dict)
     execution_policy: ExecutionPolicy = Field(default_factory=ExecutionPolicy)
+    openclaw: OpenClawRunProfile | None = None
 
 
 def load_run_profile(path: str | Path) -> RunProfileConfig:

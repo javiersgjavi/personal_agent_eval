@@ -1,8 +1,9 @@
 # Configuration Reference
 
-`personal_agent_eval` uses four YAML config file types. Each file must declare
-`schema_version: 1` at the top and is loaded through a typed, validated loader that
-raises an explicit `ConfigError` on any schema violation.
+`personal_agent_eval` uses four core YAML config file types plus one OpenClaw agent
+directory contract. Each YAML file must declare `schema_version: 1` at the top and is
+loaded through a typed, validated loader that raises an explicit `ConfigError` on any
+schema violation.
 
 ---
 
@@ -14,6 +15,7 @@ raises an explicit `ConfigError` on any schema violation.
 | Suite | `configs/suites/<suite_id>.yaml` | `suite_id` | `load_suite_config(path)` |
 | Run profile | `configs/run_profiles/<profile_id>.yaml` | `run_profile_id` | `load_run_profile(path)` |
 | Evaluation profile | `configs/evaluation_profiles/<profile_id>.yaml` | `evaluation_profile_id` | `load_evaluation_profile(path)` |
+| OpenClaw agent | `configs/agents/<agent_id>/agent.yaml` + `workspace/` | `agent_id` | `load_openclaw_agent(path)` |
 
 CLI flags (`--suite`, `--run-profile`, `--evaluation-profile`) accept either an
 explicit YAML path **or** just the plain ID and will search the conventional directory
@@ -49,6 +51,12 @@ expectations for judge scoring, and deterministic checks.
 Any extra fields (e.g. `temperature: 0`) are passed through to the runner as
 case-level overrides; they take precedence over `run_profile.runner_defaults` but
 are overridden by `run_profile.model_overrides`.
+
+For `openclaw` cases, keep the same canonical shape:
+
+- task prompt in `input.messages`
+- optional case hints under `input.context.openclaw`
+- success criteria in `expectations` and `deterministic_checks`
 
 ### `input`
 
@@ -295,6 +303,7 @@ controls. Does not implement any runner logic itself.
 | `runner_defaults` | mapping | no | `{}` | Default runner settings applied to every case |
 | `model_overrides` | mapping of model_id → mapping | no | `{}` | Per-model setting overrides |
 | `execution_policy` | `ExecutionPolicy` | no | see below | Concurrency and error-handling controls |
+| `openclaw` | `OpenClawRunProfile \| null` | no | `null` | OpenClaw runtime selection (`agent_id`, `image`, `timeout_seconds`) |
 
 ### `runner_defaults` and `model_overrides`
 
@@ -312,6 +321,84 @@ The `llm_probe` runner recognises these fields:
 | `tool_choice` | string | provider default | Force tool choice (`"auto"`, `"none"`, or a specific tool name) |
 
 Merge order (later wins): `runner_defaults` → `model_overrides[model_id]` → case-level `runner:` fields.
+
+### `openclaw`
+
+When present, the `openclaw` block selects the reusable agent directory and the base
+runtime image for OpenClaw execution:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `agent_id` | string (slug) | yes | Resolves `configs/agents/<agent_id>/` |
+| `image` | string | yes | Container image used by the harness |
+| `timeout_seconds` | int > 0 | yes | Wall-clock timeout for the OpenClaw run |
+
+Example:
+
+```yaml
+schema_version: 1
+run_profile_id: openclaw_smoke
+title: OpenClaw smoke profile
+openclaw:
+  agent_id: support_agent
+  image: ghcr.io/openclaw/openclaw-base:0.1.0
+  timeout_seconds: 300
+execution_policy:
+  max_concurrency: 1
+```
+
+`runner_defaults` and `model_overrides` continue to apply to `llm_probe`. OpenClaw uses
+the dedicated `openclaw` block instead of encoding runtime selection in free-form keys.
+
+---
+
+## OpenClaw agent (`configs/agents/<agent_id>/agent.yaml`)
+
+OpenClaw agents are directory-based configs:
+
+```text
+configs/agents/<agent_id>/
+  agent.yaml
+  workspace/
+    AGENTS.md
+    SOUL.md
+    ...
+```
+
+`agent.yaml` declares stable benchmark-owned fragments that are merged into the generated
+`openclaw.json`. `workspace/` is the template copied into the ephemeral run workspace.
+
+### Top-level fields
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `schema_version` | `1` | yes | — | Must be `1` |
+| `agent_id` | string (slug) | yes | — | Must match the parent directory name |
+| `title` | string | yes | — | Human-readable label |
+| `description` | string | no | `null` | Optional summary |
+| `tags` | list of strings | no | `[]` | Free tags; duplicates/whitespace are normalised |
+| `metadata` | mapping | no | `{}` | Arbitrary JSON-serializable metadata |
+| `openclaw` | `OpenClawFragments` | no | `{}` | Benchmark-owned fragments for generated `openclaw.json` |
+
+### `openclaw`
+
+Initial supported fragment keys:
+
+| Field | Type | Description |
+|---|---|---|
+| `identity` | mapping | Optional identity fragment |
+| `agents_defaults` | mapping | Partial object merged into `agents.defaults` |
+| `agent` | mapping | Partial object used to build the single `agents.list[]` entry |
+| `model_defaults` | mapping | Optional non-primary model defaults such as `aliases` and `fallbacks` |
+
+The loader rejects primary-model override keys in these fragments; the effective benchmark
+model must still come from suite or CLI model selection.
+
+### Workspace contract
+
+- `workspace/` must exist beside `agent.yaml`
+- the directory is loaded as-is and validated as part of the agent contract
+- standard files such as `AGENTS.md` or `SOUL.md` may be completed later with deterministic placeholders during materialization
 
 ### `execution_policy`
 

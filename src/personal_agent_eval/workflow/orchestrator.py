@@ -1068,9 +1068,7 @@ def _aggregate_case_repetition_results(
         ]
     )
     latencies = [
-        item.run_latency_seconds
-        for item in case_results
-        if item.run_latency_seconds is not None
+        item.run_latency_seconds for item in case_results if item.run_latency_seconds is not None
     ]
     return WorkflowCaseResult(
         model_id=model_id,

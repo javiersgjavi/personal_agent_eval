@@ -39,6 +39,9 @@ jobs:
       - name: Lint – ruff format
         run: uv run ruff format --check src tests
 
+      - name: Typecheck – ty
+        run: uv run ty check src tests
+
       - name: Unit tests (no network)
         # The openrouter_e2e marker requires real API keys and network access;
         # it is gated out here and can be run manually or in a separate workflow.

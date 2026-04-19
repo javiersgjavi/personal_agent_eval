@@ -8,6 +8,7 @@ import pytest
 from personal_agent_eval.config import (
     ConfigError,
     load_evaluation_profile,
+    load_openclaw_agent,
     load_run_profile,
     load_suite_config,
     load_test_config,
@@ -65,6 +66,36 @@ def test_load_run_profile_from_fixture() -> None:
     assert config.execution_policy.max_concurrency == 2
     assert config.execution_policy.run_repetitions == 1
     assert config.execution_policy.fail_fast is True
+
+
+def test_load_openclaw_run_profile_from_fixture() -> None:
+    config = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "openclaw.yaml")
+
+    assert config.run_profile_id == "openclaw_default"
+    assert config.openclaw is not None
+    assert config.openclaw.agent_id == "support_agent"
+    assert config.openclaw.image == "ghcr.io/openclaw/openclaw-base:0.1.0"
+    assert config.openclaw.timeout_seconds == 300
+
+
+def test_load_openclaw_agent_from_fixture_directory() -> None:
+    config = load_openclaw_agent(FIXTURES_ROOT / "configs" / "agents" / "support_agent")
+
+    assert config.agent_id == "support_agent"
+    assert config.title == "Support Agent"
+    assert config.tags == ["openclaw", "support"]
+    assert (
+        config.source_path
+        == (FIXTURES_ROOT / "configs" / "agents" / "support_agent" / "agent.yaml").resolve()
+    )
+    assert config.agent_dir == (FIXTURES_ROOT / "configs" / "agents" / "support_agent").resolve()
+    assert (
+        config.workspace_dir
+        == (FIXTURES_ROOT / "configs" / "agents" / "support_agent" / "workspace").resolve()
+    )
+    assert config.openclaw.identity == {"name": "Support Agent"}
+    assert config.openclaw.model_defaults is not None
+    assert config.openclaw.model_defaults.aliases == {"default": "benchmark-primary"}
 
 
 def test_load_evaluation_profile_from_fixture() -> None:
@@ -173,6 +204,35 @@ def test_test_loader_rejects_invalid_runner_type(tmp_path: Path) -> None:
 
     with pytest.raises(ConfigError, match="runner.type"):
         load_test_config(path)
+
+
+def test_test_loader_accepts_openclaw_runner_context(tmp_path: Path) -> None:
+    path = tmp_path / "test.yaml"
+    path.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "case_id: openclaw_case",
+                "title: OpenClaw case",
+                "runner:",
+                "  type: openclaw",
+                "input:",
+                "  messages:",
+                "    - role: user",
+                "      content: Solve the task.",
+                "  context:",
+                "    openclaw:",
+                "      expected_artifact: report.md",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    config = load_test_config(path)
+
+    assert config.runner.type == "openclaw"
+    assert config.input.context == {"openclaw": {"expected_artifact": "report.md"}}
 
 
 def test_test_loader_rejects_unknown_top_level_field(tmp_path: Path) -> None:
@@ -355,3 +415,89 @@ def test_yaml_loader_requires_mapping(tmp_path: Path) -> None:
 
     with pytest.raises(ConfigError, match="top-level mapping"):
         load_suite_config(path)
+
+
+def test_load_openclaw_agent_rejects_mismatched_directory_name(tmp_path: Path) -> None:
+    agent_dir = tmp_path / "wrong_dir"
+    workspace_dir = agent_dir / "workspace"
+    workspace_dir.mkdir(parents=True)
+    (workspace_dir / "AGENTS.md").write_text("placeholder\n", encoding="utf-8")
+    (agent_dir / "agent.yaml").write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "agent_id: support_agent",
+                "title: Support agent",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="must match directory name"):
+        load_openclaw_agent(agent_dir)
+
+
+def test_load_openclaw_agent_requires_workspace_directory(tmp_path: Path) -> None:
+    agent_dir = tmp_path / "support_agent"
+    agent_dir.mkdir()
+    (agent_dir / "agent.yaml").write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "agent_id: support_agent",
+                "title: Support agent",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="missing workspace directory"):
+        load_openclaw_agent(agent_dir)
+
+
+def test_load_openclaw_agent_rejects_primary_model_override(tmp_path: Path) -> None:
+    agent_dir = tmp_path / "support_agent"
+    workspace_dir = agent_dir / "workspace"
+    workspace_dir.mkdir(parents=True)
+    (workspace_dir / "AGENTS.md").write_text("placeholder\n", encoding="utf-8")
+    (agent_dir / "agent.yaml").write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "agent_id: support_agent",
+                "title: Support agent",
+                "openclaw:",
+                "  agent:",
+                "    model: forbidden/model",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="primary benchmark model"):
+        load_openclaw_agent(agent_dir)
+
+
+def test_load_run_profile_rejects_invalid_openclaw_block(tmp_path: Path) -> None:
+    path = tmp_path / "run_profile.yaml"
+    path.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "run_profile_id: openclaw_profile",
+                "title: Invalid OpenClaw profile",
+                "openclaw:",
+                "  agent_id: support_agent",
+                "  image: '   '",
+                "  timeout_seconds: 0",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="Invalid run profile"):
+        load_run_profile(path)

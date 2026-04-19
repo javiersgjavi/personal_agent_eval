@@ -27,13 +27,13 @@ def _read_prompt_file(path: Path) -> str:
     return text
 
 
-def _resolve_prompt_file_path(profile: EvaluationProfileConfig) -> Path:
+def _resolve_prompt_file_path(profile: EvaluationProfileConfig, relative_path: str) -> Path:
     base = profile.source_path
     if base is None:
         raise ConfigError(
             "judge_system_prompt_path requires the evaluation profile to be loaded from a file."
         )
-    file_path = (base.parent / profile.judge_system_prompt_path).expanduser()
+    file_path = (base.parent / relative_path).expanduser()
     try:
         resolved = file_path.resolve()
     except OSError as exc:
@@ -51,7 +51,7 @@ def resolve_judge_system_prompt_details(profile: EvaluationProfileConfig) -> dic
             "text": _normalize_multiline_prompt(profile.judge_system_prompt),
         }
     if profile.judge_system_prompt_path is not None and profile.judge_system_prompt_path.strip():
-        resolved = _resolve_prompt_file_path(profile)
+        resolved = _resolve_prompt_file_path(profile, profile.judge_system_prompt_path.strip())
         return {
             "source": f"path:{profile.judge_system_prompt_path}",
             "text": _read_prompt_file(resolved),

@@ -12,8 +12,9 @@ It is designed around:
 - incremental reuse through fingerprints and storage
 - reporting from structured workflow results
 
-V1 is centered on `llm_probe`. The architecture already reserves space for a later
-`openclaw` runner.
+The current implementation is centered on `llm_probe`, and the configuration layer now also
+includes the first OpenClaw-specific contracts (`configs/agents/<agent_id>/agent.yaml`,
+`workspace/`, and `run_profile.openclaw`) that future runner work will consume.
 
 ## What Exists Today
 
