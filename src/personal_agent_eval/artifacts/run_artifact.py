@@ -1,4 +1,4 @@
-"""Canonical run artifact schema for V1."""
+"""Canonical run artifact schema (shared across runners, including OpenClaw extensions)."""
 
 from __future__ import annotations
 
@@ -243,5 +243,11 @@ class RunArtifact(ArtifactModel):
 
         if self.status is not RunStatus.SUCCESS and self.error is None:
             raise ValueError("Non-successful runs must include an error object.")
+
+        from personal_agent_eval.artifacts.openclaw_run_evidence import (
+            validate_runner_metadata_openclaw,
+        )
+
+        validate_runner_metadata_openclaw(self.runner_metadata)
 
         return self

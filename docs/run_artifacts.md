@@ -15,6 +15,27 @@ The V1 schema is provider-aware and runner-agnostic:
 - It reserves `runner_metadata` for runner-specific extension fields without changing the
   canonical top-level structure.
 
+### OpenClaw evidence (`runner_metadata.openclaw`)
+
+OpenClaw runs attach a typed block at `runner_metadata.openclaw` (constant
+`OPENCLAW_RUNNER_METADATA_KEY` in code). It validates as `OpenClawRunEvidence` and keeps
+large assets as `OutputArtifactRef` entries (URIs to files outside `run_N.json`), for
+example:
+
+- generated OpenClaw config (`openclaw_generated_config`)
+- raw session trace (`openclaw_raw_session_trace`)
+- captured logs (`openclaw_logs`)
+- workspace snapshot archive (`openclaw_workspace_snapshot`)
+- workspace diff (`openclaw_workspace_diff`)
+- optional key outputs (`openclaw_key_output`), as a list
+
+Concrete `artifact_type` strings are defined on `OpenClawEvidenceArtifactTypes`. Use
+`parse_openclaw_run_evidence(run_artifact.runner_metadata)` (or
+`with_openclaw_run_evidence(...)`) so downstream code does not scrape ad hoc dict keys.
+
+If the `openclaw` key is present, it must be a valid `OpenClawRunEvidence` payload or
+`RunArtifact` validation fails.
+
 V1 terminal statuses are:
 
 - `success`
