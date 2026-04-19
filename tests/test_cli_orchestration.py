@@ -131,6 +131,7 @@ def test_cli_routes_eval_command_to_runtime_and_renders_json(
             "configs/evaluation_profiles/default.yaml",
             "--output",
             "json",
+            "--no-chart",
         ],
         runtime=cast(CliRuntime, runtime),
     )
@@ -140,6 +141,41 @@ def test_cli_routes_eval_command_to_runtime_and_renders_json(
     payload = json.loads(capsys.readouterr().out)
     assert payload["suite_id"] == "example_suite"
     assert payload["case_results"][0]["final_score"] == 7.0
+
+
+def test_cli_writes_default_chart_to_evaluation_profile_subdir(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """eval/report/run-eval emit a chart by default unless --no-chart is passed."""
+    captured_paths: list[Path] = []
+
+    def _fake_render(_report: object, path: Path, **_kwargs: object) -> Path:
+        captured_paths.append(path)
+        return path
+
+    monkeypatch.setattr(
+        "personal_agent_eval.reporting.score_cost_chart.render_score_cost_chart_png",
+        _fake_render,
+    )
+    runtime = FakeRuntime()
+
+    exit_code = main(
+        [
+            "report",
+            "--suite",
+            "configs/suites/example_suite.yaml",
+            "--run-profile",
+            "configs/run_profiles/default.yaml",
+            "--evaluation-profile",
+            "configs/evaluation_profiles/default.yaml",
+        ],
+        runtime=cast(CliRuntime, runtime),
+    )
+
+    assert exit_code == 0
+    assert captured_paths == [Path("/tmp/workspace/outputs/charts/default/score_cost.png")]
+    assert "Chart written to:" in capsys.readouterr().err
 
 
 def test_cli_routes_report_command_to_runtime(capsys: pytest.CaptureFixture[str]) -> None:
@@ -154,6 +190,7 @@ def test_cli_routes_report_command_to_runtime(capsys: pytest.CaptureFixture[str]
             "configs/run_profiles/default.yaml",
             "--evaluation-profile",
             "configs/evaluation_profiles/default.yaml",
+            "--no-chart",
         ],
         runtime=cast(CliRuntime, runtime),
     )
@@ -197,6 +234,7 @@ def test_cli_resolves_ids_from_conventional_directories(
             "default",
             "--evaluation-profile",
             "judge",
+            "--no-chart",
         ],
         runtime=cast(CliRuntime, runtime),
     )
@@ -258,6 +296,7 @@ def test_cli_loads_openrouter_api_key_from_workspace_dotenv(
             "default",
             "--evaluation-profile",
             "judge",
+            "--no-chart",
         ],
         runtime=cast(CliRuntime, runtime),
     )

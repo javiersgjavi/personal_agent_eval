@@ -4,7 +4,7 @@ title: OpenRouter minimax smoke profile (legacy tasks)
 runner_defaults:
   temperature: 0
   timeout_seconds: 90
-  max_tokens: 512
+  max_tokens: 2048
   retries: 0
 execution_policy:
   max_concurrency: 1

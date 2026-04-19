@@ -39,7 +39,7 @@ title: Minimal
 def test_resolve_repo_evaluation_profile_uses_configs_default_file() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     cfg = load_evaluation_profile(
-        repo_root / "configs" / "evaluation_profiles" / "judge_gpt54.yaml"
+        repo_root / "configs" / "evaluation_profiles" / "judge_gpt54_mini.yaml"
     )
     text = resolve_judge_system_prompt_text(cfg)
     assert "strict evaluation judge" in text

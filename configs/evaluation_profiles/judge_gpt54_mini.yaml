@@ -1,11 +1,11 @@
 schema_version: 1
 evaluation_profile_id: judge_gpt54
-title: Judge with openai/gpt-5.4
+title: Judge with openai/gpt-5.4-mini
 judge_system_prompt_path: prompts/judge_system_default.txt
 judges:
   - judge_id: gpt54_judge
     type: llm_probe
-    model: openai/gpt-5.4
+    model: openai/gpt-5.4-mini
 judge_runs:
   - judge_run_id: gpt54_single
     judge_id: gpt54_judge

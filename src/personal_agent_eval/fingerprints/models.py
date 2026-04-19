@@ -12,13 +12,20 @@ from personal_agent_eval.artifacts.run_artifact import ArtifactModel
 FINGERPRINT_HEX_PATTERN = r"^[a-f0-9]{64}$"
 
 
+class FingerprintHashPayloadModel(ArtifactModel):
+    """Payload material for SHA-256 fingerprints; do not round floats (stable hash input)."""
+
+    def to_json_dict(self, *, round_floats: bool = False) -> dict[str, Any]:
+        return super().to_json_dict(round_floats=round_floats)
+
+
 class FingerprintAlgorithm(StrEnum):
     """Hash algorithms currently supported for canonical fingerprints."""
 
     SHA256 = "sha256"
 
 
-class FingerprintInputBase(ArtifactModel):
+class FingerprintInputBase(FingerprintHashPayloadModel):
     """Persistable fingerprint input payload for later storage."""
 
     fingerprint_version: Literal[1] = 1
@@ -42,7 +49,7 @@ class AttachmentFingerprint(ArtifactModel):
     name: str | None = None
 
 
-class RunFingerprintPayload(ArtifactModel):
+class RunFingerprintPayload(FingerprintHashPayloadModel):
     """Normalized execution inputs that affect the raw run trace."""
 
     runner_type: str
@@ -86,7 +93,7 @@ class AnchorReferenceFingerprint(ArtifactModel):
     text: str
 
 
-class EvaluationFingerprintPayload(ArtifactModel):
+class EvaluationFingerprintPayload(FingerprintHashPayloadModel):
     """Normalized evaluation inputs that affect judging and aggregation."""
 
     judges: list[JudgeDefinitionFingerprint] = Field(default_factory=list)

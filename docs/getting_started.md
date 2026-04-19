@@ -119,12 +119,20 @@ uv run pae run-eval \
   --output json
 ```
 
+For **`eval`**, **`run-eval`**, and **`report`**, the CLI also **writes a score-vs-cost chart PNG**
+by default under `outputs/charts/<evaluation_profile_id>/score_cost.png` (requires the optional
+`[charts]` extra). Use **`--no-chart`** to skip it, or **`--chart /path/to/file.png`** for a custom
+destination. Chart status lines go to **stderr** so JSON on stdout stays parseable.
+
 The reporting layer is a pure consumer of structured workflow results and can render:
 
-- per-model per-case tables
-- per-model summaries
-- JSON report payloads
+- per-model per-case tables (including run vs evaluation cost split and run latency)
+- per-model summaries (including average latency and cost split)
+- JSON report payloads (including workflow-level cost totals)
 - basic ASCII charts
+- optional matplotlib bubble chart (score vs cost, bubble size ~ latency)
+
+See [Reporting](reporting.md) for column names and structured fields.
 
 Execution artifacts are stored under suite-scoped campaign directories. For example, runs now
 land under paths like:

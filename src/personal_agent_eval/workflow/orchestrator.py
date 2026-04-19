@@ -344,6 +344,7 @@ class WorkflowOrchestrator:
             )
 
         if command == "run" or evaluation_profile is None:
+            run_u = _usage_from_run_artifact(run_artifact)
             return WorkflowCaseResult(
                 model_id=model.model_id,
                 case_id=case_manifest.case_id,
@@ -351,7 +352,10 @@ class WorkflowOrchestrator:
                 run_action=run_action,
                 run_status=run_artifact.status.value,
                 evaluation_action=EvaluationAction.SKIPPED,
-                usage=_usage_from_run_artifact(run_artifact),
+                run_latency_seconds=_latency_from_run_artifact(run_artifact),
+                run_usage=run_u,
+                evaluation_usage=UsageSummary(),
+                usage=run_u,
                 warnings=_run_warnings(run_artifact),
             )
 
@@ -452,6 +456,8 @@ class WorkflowOrchestrator:
                     judge_result=judge_result,
                 )
             except Exception as exc:
+                run_u = _usage_from_run_artifact(run_artifact)
+                eval_u = _usage_from_judge_result(judge_result)
                 return WorkflowCaseResult(
                     model_id=model.model_id,
                     case_id=case_manifest.case_id,
@@ -463,10 +469,10 @@ class WorkflowOrchestrator:
                     evaluation_status="failed",
                     final_score=None,
                     final_dimensions=None,
-                    usage=_combine_usage(
-                        _usage_from_run_artifact(run_artifact),
-                        _usage_from_judge_result(judge_result),
-                    ),
+                    run_latency_seconds=_latency_from_run_artifact(run_artifact),
+                    run_usage=run_u,
+                    evaluation_usage=eval_u,
+                    usage=_combine_usage(run_u, eval_u),
                     warnings=_deduplicate(
                         [
                             *_run_warnings(run_artifact),
@@ -525,6 +531,8 @@ class WorkflowOrchestrator:
                     judge_result=judge_result,
                 )
             except Exception as exc:
+                run_u = _usage_from_run_artifact(run_artifact)
+                eval_u = _usage_from_judge_result(judge_result)
                 return WorkflowCaseResult(
                     model_id=model.model_id,
                     case_id=case_manifest.case_id,
@@ -536,10 +544,10 @@ class WorkflowOrchestrator:
                     evaluation_status="failed",
                     final_score=None,
                     final_dimensions=None,
-                    usage=_combine_usage(
-                        _usage_from_run_artifact(run_artifact),
-                        _usage_from_judge_result(judge_result),
-                    ),
+                    run_latency_seconds=_latency_from_run_artifact(run_artifact),
+                    run_usage=run_u,
+                    evaluation_usage=eval_u,
+                    usage=_combine_usage(run_u, eval_u),
                     warnings=_deduplicate(
                         [
                             *_run_warnings(run_artifact),
@@ -566,6 +574,7 @@ class WorkflowOrchestrator:
             evaluation_action = EvaluationAction.EXECUTED
             evaluation_status = "success"
 
+        run_u = _usage_from_run_artifact(run_artifact)
         return WorkflowCaseResult(
             model_id=model.model_id,
             case_id=case_manifest.case_id,
@@ -577,7 +586,10 @@ class WorkflowOrchestrator:
             evaluation_status=evaluation_status,
             final_score=final_result.final_score,
             final_dimensions=final_result.final_dimensions,
-            usage=_combine_usage(_usage_from_run_artifact(run_artifact), judge_usage),
+            run_latency_seconds=_latency_from_run_artifact(run_artifact),
+            run_usage=run_u,
+            evaluation_usage=judge_usage,
+            usage=_combine_usage(run_u, judge_usage),
             warnings=_deduplicate([*_run_warnings(run_artifact), *final_result.warnings]),
         )
 
@@ -650,6 +662,9 @@ class WorkflowOrchestrator:
                 evaluation_action=EvaluationAction.SKIPPED,
                 run_status="missing",
                 evaluation_status="missing",
+                run_latency_seconds=None,
+                run_usage=UsageSummary(),
+                evaluation_usage=UsageSummary(),
                 usage=UsageSummary(),
                 warnings=["Run artifact is missing for this model/case pair."],
             )
@@ -671,6 +686,7 @@ class WorkflowOrchestrator:
             repetition_index=repetition_index,
             run_fingerprint=run_fingerprint,
         ):
+            run_u = _usage_from_run_artifact(run_artifact)
             return WorkflowCaseResult(
                 model_id=model.model_id,
                 case_id=case_manifest.case_id,
@@ -680,7 +696,10 @@ class WorkflowOrchestrator:
                 evaluation_action=EvaluationAction.SKIPPED,
                 run_status=run_artifact.status.value,
                 evaluation_status="missing",
-                usage=_usage_from_run_artifact(run_artifact),
+                run_latency_seconds=_latency_from_run_artifact(run_artifact),
+                run_usage=run_u,
+                evaluation_usage=UsageSummary(),
+                usage=run_u,
                 warnings=["Final evaluation result is missing for this model/case pair."],
             )
 
@@ -715,6 +734,7 @@ class WorkflowOrchestrator:
             case_id=case_manifest.case_id,
             repetition_index=repetition_index,
         )
+        run_u = _usage_from_run_artifact(run_artifact)
         return WorkflowCaseResult(
             model_id=model.model_id,
             case_id=case_manifest.case_id,
@@ -726,7 +746,10 @@ class WorkflowOrchestrator:
             evaluation_status="success",
             final_score=final_result.final_score,
             final_dimensions=final_result.final_dimensions,
-            usage=_combine_usage(_usage_from_run_artifact(run_artifact), judge_usage),
+            run_latency_seconds=_latency_from_run_artifact(run_artifact),
+            run_usage=run_u,
+            evaluation_usage=judge_usage,
+            usage=_combine_usage(run_u, judge_usage),
             warnings=_deduplicate([*_run_warnings(run_artifact), *final_result.warnings]),
         )
 
@@ -905,6 +928,9 @@ def _build_summary(
     cases_requested: int,
     results: list[WorkflowCaseResult],
 ) -> WorkflowSummary:
+    run_cost = sum(result.run_usage.cost_usd for result in results)
+    evaluation_cost = sum(result.evaluation_usage.cost_usd for result in results)
+    total_cost = sum(result.usage.cost_usd for result in results)
     return WorkflowSummary(
         models_requested=models_requested,
         cases_requested=cases_requested,
@@ -920,6 +946,9 @@ def _build_summary(
         final_results_recomputed=sum(
             result.evaluation_action is EvaluationAction.FINAL_RECOMPUTED for result in results
         ),
+        run_cost_usd=run_cost,
+        evaluation_cost_usd=evaluation_cost,
+        total_cost_usd=total_cost,
     )
 
 
@@ -1038,6 +1067,11 @@ def _aggregate_case_repetition_results(
             ),
         ]
     )
+    latencies = [
+        item.run_latency_seconds
+        for item in case_results
+        if item.run_latency_seconds is not None
+    ]
     return WorkflowCaseResult(
         model_id=model_id,
         case_id=case_id,
@@ -1053,6 +1087,9 @@ def _aggregate_case_repetition_results(
         ),
         final_score=(mean(final_scores) if final_scores else None),
         final_dimensions=aggregated_dimensions,
+        run_latency_seconds=mean(latencies) if latencies else None,
+        run_usage=_sum_usage_summaries([item.run_usage for item in case_results]),
+        evaluation_usage=_sum_usage_summaries([item.evaluation_usage for item in case_results]),
         usage=_sum_usage_summaries([item.usage for item in case_results]),
         warnings=warnings,
     )
@@ -1094,6 +1131,10 @@ def _aggregate_optional_status(statuses: list[str | None]) -> str | None:
     if not present_statuses:
         return None
     return present_statuses[0] if len(set(present_statuses)) == 1 else "mixed"
+
+
+def _latency_from_run_artifact(run_artifact: RunArtifact) -> float | None:
+    return run_artifact.timing.duration_seconds
 
 
 def _usage_from_run_artifact(run_artifact: RunArtifact) -> UsageSummary:

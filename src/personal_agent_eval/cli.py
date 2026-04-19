@@ -6,6 +6,7 @@ import argparse
 import json
 import logging
 import os
+import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -127,6 +128,28 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["text", "json"],
         help="Output format for CLI results.",
     )
+    eval_parent.add_argument(
+        "--no-chart",
+        action="store_true",
+        help="Skip writing the score/cost bubble chart PNG (enabled by default for this command).",
+    )
+    eval_parent.add_argument(
+        "--chart",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help=(
+            "Write the chart to this path instead of the default "
+            "outputs/charts/<evaluation_profile_id>/score_cost.png under the workspace root. "
+            "Requires the [charts] extra (matplotlib)."
+        ),
+    )
+    eval_parent.add_argument(
+        "--chart-footnote",
+        default=None,
+        metavar="TEXT",
+        help="Optional footer text for the score/cost chart.",
+    )
 
     eval_parser = subparsers.add_parser(
         "eval",
@@ -225,10 +248,39 @@ def main(argv: Sequence[str] | None = None, *, runtime: CliRuntime | None = None
         return 2
 
     reporter = WorkflowReporter()
+    report = reporter.build_report(result)
     if parsed_args.output == "json":
-        print(json.dumps(reporter.build_report(result).to_json_dict(), indent=2, sort_keys=True))
+        print(json.dumps(report.to_json_dict(), indent=2, sort_keys=True))
     else:
         print(reporter.render_cli(result))
+
+    _chart_commands = frozenset({"eval", "run-eval", "report"})
+    if (
+        parsed_args.command in _chart_commands
+        and not getattr(parsed_args, "no_chart", False)
+    ):
+        from personal_agent_eval.reporting.score_cost_chart import render_score_cost_chart_png
+
+        epid = result.evaluation_profile_id or "report"
+        raw_chart = getattr(parsed_args, "chart", None)
+        if raw_chart is not None:
+            chart_path = Path(raw_chart).expanduser().resolve()
+        else:
+            chart_path = (
+                Path(result.workspace_root) / "outputs" / "charts" / epid / "score_cost.png"
+            )
+
+        try:
+            render_score_cost_chart_png(
+                report,
+                chart_path,
+                footnote=getattr(parsed_args, "chart_footnote", None),
+            )
+            print(f"Chart written to: {chart_path.resolve()}", file=sys.stderr)
+        except ImportError as exc:
+            logging.getLogger(__name__).warning("%s", exc)
+        except ValueError as exc:
+            logging.getLogger(__name__).warning("%s", exc)
     return 0
 
 

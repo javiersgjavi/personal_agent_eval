@@ -52,6 +52,19 @@ class WorkflowCaseResult(ArtifactModel):
     evaluation_status: str | None = None
     final_score: float | None = Field(default=None, ge=0, le=10)
     final_dimensions: DimensionScores | None = None
+    run_latency_seconds: float | None = Field(
+        default=None,
+        ge=0,
+        description="Wall-clock duration of the subject-model run in seconds.",
+    )
+    run_usage: UsageSummary = Field(
+        default_factory=UsageSummary,
+        description="Usage/cost for subject-model runs only.",
+    )
+    evaluation_usage: UsageSummary = Field(
+        default_factory=UsageSummary,
+        description="Usage/cost for judge/evaluation calls only.",
+    )
     usage: UsageSummary = Field(default_factory=UsageSummary)
     warnings: list[str] = Field(default_factory=list)
 
@@ -67,6 +80,21 @@ class WorkflowSummary(ArtifactModel):
     evaluations_executed: int = Field(ge=0)
     evaluations_reused: int = Field(ge=0)
     final_results_recomputed: int = Field(ge=0)
+    run_cost_usd: float = Field(
+        default=0.0,
+        ge=0,
+        description="Sum of run costs across result rows.",
+    )
+    evaluation_cost_usd: float = Field(
+        default=0.0,
+        ge=0,
+        description="Sum of judge/evaluation costs across result rows.",
+    )
+    total_cost_usd: float = Field(
+        default=0.0,
+        ge=0,
+        description="Total cost (runs + evaluation) for this workflow invocation.",
+    )
 
 
 class WorkflowResult(ArtifactModel):

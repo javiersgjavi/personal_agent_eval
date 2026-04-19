@@ -38,12 +38,16 @@ class WorkflowReporter:
                 key=lambda item: item[0],
             )
         ]
+        summary = workflow_result.summary
         return StructuredReport(
             suite_id=workflow_result.suite_id,
             run_profile_id=workflow_result.run_profile_id,
             evaluation_profile_id=workflow_result.evaluation_profile_id,
             case_results=[case.to_json_dict() for case in workflow_result.results],
             model_summaries=summaries,
+            run_cost_usd=summary.run_cost_usd,
+            evaluation_cost_usd=summary.evaluation_cost_usd,
+            total_cost_usd=summary.total_cost_usd,
         )
 
     def render_cli(self, workflow_result: WorkflowResult) -> str:
@@ -67,8 +71,15 @@ class WorkflowReporter:
                 case.run_action.value,
                 case.evaluation_action.value,
                 f"{case.final_score:.2f}" if case.final_score is not None else "n/a",
+                (
+                    f"{case.run_latency_seconds:.1f}s"
+                    if case.run_latency_seconds is not None
+                    else "n/a"
+                ),
                 str(case.usage.input_tokens),
                 str(case.usage.output_tokens),
+                self._format_cost(case.run_usage.cost_usd),
+                self._format_cost(case.evaluation_usage.cost_usd),
                 self._format_cost(case.usage.cost_usd),
                 str(len(case.warnings)),
             ]
@@ -87,9 +98,12 @@ class WorkflowReporter:
                         "RUN",
                         "EVAL",
                         "SCORE",
+                        "LATENCY_S",
                         "IN_TOK",
                         "OUT_TOK",
-                        "COST_USD",
+                        "RUN_COST",
+                        "EVAL_COST",
+                        "TOTAL_COST",
                         "WARNINGS",
                     ],
                     rows,
@@ -110,8 +124,15 @@ class WorkflowReporter:
                 str(summary.evaluation_reused),
                 str(summary.evaluation_executed),
                 str(summary.evaluation_skipped),
+                (
+                    f"{summary.average_latency_seconds:.1f}s"
+                    if summary.average_latency_seconds is not None
+                    else "n/a"
+                ),
                 str(summary.total_usage.input_tokens),
                 str(summary.total_usage.output_tokens),
+                self._format_cost(summary.run_cost_usd),
+                self._format_cost(summary.evaluation_cost_usd),
                 self._format_cost(summary.total_usage.cost_usd),
                 str(summary.warning_count),
             ]
@@ -131,9 +152,12 @@ class WorkflowReporter:
                         "EVALS_REUSED",
                         "EVALS_EXECUTED",
                         "EVALS_SKIPPED",
+                        "AVG_LATENCY_S",
                         "IN_TOK",
                         "OUT_TOK",
-                        "COST_USD",
+                        "RUN_COST",
+                        "EVAL_COST",
+                        "TOTAL_COST",
                         "WARNINGS",
                     ],
                     rows,
@@ -172,6 +196,9 @@ class WorkflowReporter:
                 f"Evaluation profile: {report.evaluation_profile_id or 'n/a'}",
                 f"Models: {len(report.model_summaries)}",
                 f"Cases: {len(report.case_results)}",
+                f"Cost (USD) — runs: {self._format_cost(report.run_cost_usd)}",
+                f"Cost (USD) — evaluation: {self._format_cost(report.evaluation_cost_usd)}",
+                f"Cost (USD) — total: {self._format_cost(report.total_cost_usd)}",
             ]
         )
 
@@ -214,6 +241,9 @@ class WorkflowReporter:
                 }
             ),
             total_usage=self._sum_usage(case_results),
+            average_latency_seconds=self._average_latency(case_results),
+            run_cost_usd=sum(case.run_usage.cost_usd for case in case_results),
+            evaluation_cost_usd=sum(case.evaluation_usage.cost_usd for case in case_results),
             warning_count=sum(len(case.warnings) for case in case_results),
         )
 
@@ -233,7 +263,15 @@ class WorkflowReporter:
         return f"{value:.2f}" if value is not None else "n/a"
 
     def _format_cost(self, value: float) -> str:
-        return f"{value:.6f}"
+        return f"{value:.5f}"
+
+    def _average_latency(self, case_results: list[WorkflowCaseResult]) -> float | None:
+        values = [
+            case.run_latency_seconds
+            for case in case_results
+            if case.run_latency_seconds is not None
+        ]
+        return mean(values) if values else None
 
     def _sum_usage(self, case_results: list[WorkflowCaseResult]) -> UsageSummary:
         return UsageSummary(

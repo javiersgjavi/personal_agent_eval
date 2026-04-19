@@ -38,6 +38,12 @@ def test_build_report_groups_by_model_and_summarizes_scores() -> None:
     assert minimax_summary.total_usage.input_tokens == 280
     assert minimax_summary.total_usage.output_tokens == 90
     assert minimax_summary.total_usage.cost_usd == pytest.approx(0.008)
+    assert minimax_summary.run_cost_usd == pytest.approx(0.003)
+    assert minimax_summary.evaluation_cost_usd == pytest.approx(0.005)
+
+    assert report.run_cost_usd == pytest.approx(0.006)
+    assert report.evaluation_cost_usd == pytest.approx(0.0095)
+    assert report.total_cost_usd == pytest.approx(0.0155)
 
     gpt_summary = next(
         summary for summary in report.model_summaries if summary.model_id == "openai/gpt-5.4"
@@ -45,6 +51,8 @@ def test_build_report_groups_by_model_and_summarizes_scores() -> None:
     assert gpt_summary.case_count == 1
     assert gpt_summary.average_final_score == 8.2
     assert gpt_summary.total_usage.input_tokens == 220
+    assert gpt_summary.run_cost_usd == pytest.approx(0.003)
+    assert gpt_summary.evaluation_cost_usd == pytest.approx(0.0045)
     assert gpt_summary.warning_count == 0
 
 
@@ -58,7 +66,12 @@ def test_render_cli_contains_tables_and_ascii_charts() -> None:
     assert "minimax/minimax-m2.7" in output
     assert "openai/gpt-5.4" in output
     assert "task" in output
-    assert "COST_USD" in output
+    assert "RUN_COST" in output
+    assert "EVAL_COST" in output
+    assert "TOTAL_COST" in output
+    assert "LATENCY_S" in output
+    assert "AVG_LATENCY_S" in output
+    assert "Cost (USD) — runs:" in output
     assert "#" in output
 
 
@@ -94,6 +107,7 @@ def _workflow_result_fixture() -> WorkflowResult:
                 run_fingerprint=RUN_FP_A,
                 evaluation_fingerprint=EVAL_FP_A,
                 final_score=7.4,
+                run_latency_seconds=12.5,
                 final_dimensions=DimensionScores(
                     task=8.0,
                     process=7.2,
@@ -101,6 +115,18 @@ def _workflow_result_fixture() -> WorkflowResult:
                     closeness=6.5,
                     efficiency=6.8,
                     spark=6.0,
+                ),
+                run_usage=UsageSummary(
+                    input_tokens=50,
+                    output_tokens=20,
+                    total_tokens=70,
+                    cost_usd=0.002,
+                ),
+                evaluation_usage=UsageSummary(
+                    input_tokens=70,
+                    output_tokens=20,
+                    total_tokens=90,
+                    cost_usd=0.003,
                 ),
                 usage=UsageSummary(
                     input_tokens=120,
@@ -120,6 +146,7 @@ def _workflow_result_fixture() -> WorkflowResult:
                 run_fingerprint=RUN_FP_A,
                 evaluation_fingerprint=EVAL_FP_A,
                 final_score=6.6,
+                run_latency_seconds=9.0,
                 final_dimensions=DimensionScores(
                     task=7.0,
                     process=6.8,
@@ -127,6 +154,18 @@ def _workflow_result_fixture() -> WorkflowResult:
                     closeness=6.0,
                     efficiency=6.0,
                     spark=5.5,
+                ),
+                run_usage=UsageSummary(
+                    input_tokens=60,
+                    output_tokens=20,
+                    total_tokens=80,
+                    cost_usd=0.001,
+                ),
+                evaluation_usage=UsageSummary(
+                    input_tokens=100,
+                    output_tokens=30,
+                    total_tokens=130,
+                    cost_usd=0.002,
                 ),
                 usage=UsageSummary(
                     input_tokens=160,
@@ -146,6 +185,7 @@ def _workflow_result_fixture() -> WorkflowResult:
                 run_fingerprint=RUN_FP_B,
                 evaluation_fingerprint=EVAL_FP_B,
                 final_score=8.2,
+                run_latency_seconds=22.0,
                 final_dimensions=DimensionScores(
                     task=8.8,
                     process=8.1,
@@ -153,6 +193,18 @@ def _workflow_result_fixture() -> WorkflowResult:
                     closeness=7.4,
                     efficiency=7.8,
                     spark=7.2,
+                ),
+                run_usage=UsageSummary(
+                    input_tokens=90,
+                    output_tokens=40,
+                    total_tokens=130,
+                    cost_usd=0.003,
+                ),
+                evaluation_usage=UsageSummary(
+                    input_tokens=130,
+                    output_tokens=40,
+                    total_tokens=170,
+                    cost_usd=0.0045,
                 ),
                 usage=UsageSummary(
                     input_tokens=220,
@@ -172,5 +224,8 @@ def _workflow_result_fixture() -> WorkflowResult:
             evaluations_executed=2,
             evaluations_reused=1,
             final_results_recomputed=0,
+            run_cost_usd=0.006,
+            evaluation_cost_usd=0.0095,
+            total_cost_usd=0.0155,
         ),
     )

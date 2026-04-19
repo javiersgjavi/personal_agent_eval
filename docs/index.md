@@ -28,7 +28,7 @@ The current implementation already includes:
 - hybrid aggregation
 - fingerprints and storage
 - workflow orchestration in `pae`
-- structured reporting
+- structured reporting (cost split, latency, optional score/cost chart PNG)
 
 ## Read This Next
 

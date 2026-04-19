@@ -163,6 +163,9 @@ model/case/repetition combinations are computed.
 
 ```text
 outputs/
+├── charts/                              ← optional; CLI score/cost PNG (eval / run-eval / report)
+│   └── {evaluation_profile_id}/
+│       └── score_cost.png
 ├── runs/
 │   └── suit_{suite_id}/
 │       └── run_profile_{fp6}/
@@ -178,6 +181,9 @@ outputs/
                     └── {case_id}/
                         └── final_result_N.json
 ```
+
+The chart is written by default when the optional `charts` dependency is installed; use
+`--no-chart` to skip. See [Reporting](reporting.md).
 
 !!! note "Fingerprints"
     `fp6` is the first 6 characters of the SHA-256 fingerprint of the

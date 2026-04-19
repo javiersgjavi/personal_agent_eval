@@ -18,9 +18,19 @@ class ArtifactModel(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    def to_json_dict(self) -> dict[str, Any]:
-        """Return a JSON-serializable mapping."""
-        return self.model_dump(mode="json")
+    def to_json_dict(self, *, round_floats: bool = True) -> dict[str, Any]:
+        """Return a JSON-serializable mapping.
+
+        By default, floating-point values are rounded for readable JSON (scores, costs,
+        latencies). Fingerprint hash payloads pass ``round_floats=False`` so hashes stay
+        stable.
+        """
+        raw = self.model_dump(mode="json")
+        if not round_floats:
+            return raw
+        from personal_agent_eval.serialization.json_floats import round_floats_for_json
+
+        return round_floats_for_json(raw)
 
 
 class RunStatus(StrEnum):
