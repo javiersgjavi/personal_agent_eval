@@ -10,10 +10,12 @@ from typing import Any
 
 import yaml
 
+from personal_agent_eval.config import OpenClawAgentConfig
 from personal_agent_eval.config.evaluation_profile import EvaluationProfileConfig
 from personal_agent_eval.config.run_profile import RunProfileConfig
 from personal_agent_eval.config.suite_config import ModelConfig
 from personal_agent_eval.config.test_config import Message, TestConfig
+from personal_agent_eval.domains.openclaw.workspace import OpenClawWorkspaceManifest
 from personal_agent_eval.fingerprints.models import (
     AnchorReferenceFingerprint,
     AttachmentFingerprint,
@@ -21,6 +23,9 @@ from personal_agent_eval.fingerprints.models import (
     EvaluationFingerprintPayload,
     JudgeDefinitionFingerprint,
     JudgeRunFingerprint,
+    OpenClawAgentFingerprintInput,
+    OpenClawAgentFingerprintPayload,
+    OpenClawWorkspaceEntryFingerprint,
     ResolvedMessageFingerprint,
     ReuseAction,
     ReuseDecision,
@@ -36,17 +41,19 @@ def build_run_fingerprint_input(
     run_profile: RunProfileConfig,
     model_selection: ModelConfig,
     repetition_index: int | None = None,
+    openclaw_agent_fingerprint: str | None = None,
 ) -> RunFingerprintInput:
     """Build the persistable run fingerprint input for one execution."""
     payload = RunFingerprintPayload(
         runner_type=test_config.runner.type,
         requested_model=_resolve_requested_model(model_selection),
         runner_config=_normalize_for_hash(
-            _resolve_execution_settings(
+            _resolve_runner_settings_for_fingerprint(
                 case_config=test_config,
                 run_profile=run_profile,
                 model_selection=model_selection,
                 repetition_index=repetition_index,
+                openclaw_agent_fingerprint=openclaw_agent_fingerprint,
             )
         ),
         input_messages=_resolve_messages_for_fingerprint(test_config.input.messages),
@@ -59,6 +66,29 @@ def build_run_fingerprint_input(
     )
     fingerprint = _sha256_json(payload.to_json_dict())
     return RunFingerprintInput(payload=payload, fingerprint=fingerprint)
+
+
+def build_openclaw_agent_fingerprint_input(
+    *,
+    agent_config: OpenClawAgentConfig,
+    workspace_manifest: OpenClawWorkspaceManifest,
+) -> OpenClawAgentFingerprintInput:
+    """Build the persistable fingerprint input for one resolved OpenClaw agent."""
+    payload = OpenClawAgentFingerprintPayload(
+        agent_id=agent_config.agent_id,
+        agent_config=_normalize_for_hash(agent_config.model_dump(mode="json")),
+        workspace_entries=[
+            OpenClawWorkspaceEntryFingerprint(
+                relative_path=entry.relative_path,
+                source=entry.source,
+                sha256=entry.sha256,
+                size_bytes=entry.size_bytes,
+            )
+            for entry in workspace_manifest.entries
+        ],
+    )
+    fingerprint = _sha256_json(payload.to_json_dict())
+    return OpenClawAgentFingerprintInput(payload=payload, fingerprint=fingerprint)
 
 
 def build_evaluation_fingerprint_input(
@@ -127,9 +157,7 @@ def build_evaluation_fingerprint_input(
 
 def build_run_profile_fingerprint(*, run_profile: RunProfileConfig) -> str:
     """Build a semantic fingerprint for one run profile."""
-    payload = _normalize_for_hash(
-        run_profile.model_dump(exclude={"run_profile_id", "title"}, mode="json")
-    )
+    payload = _normalize_for_hash(_run_profile_payload_for_fingerprint(run_profile))
     return _sha256_json(payload)
 
 
@@ -183,7 +211,29 @@ def is_evaluation_reusable(
     )
 
 
-def _resolve_execution_settings(
+def _resolve_runner_settings_for_fingerprint(
+    *,
+    case_config: TestConfig,
+    run_profile: RunProfileConfig,
+    model_selection: ModelConfig,
+    repetition_index: int | None,
+    openclaw_agent_fingerprint: str | None,
+) -> dict[str, Any]:
+    if case_config.runner.type == "openclaw":
+        return _resolve_openclaw_runner_settings_for_fingerprint(
+            run_profile=run_profile,
+            repetition_index=repetition_index,
+            openclaw_agent_fingerprint=openclaw_agent_fingerprint,
+        )
+    return _resolve_llm_probe_execution_settings(
+        case_config=case_config,
+        run_profile=run_profile,
+        model_selection=model_selection,
+        repetition_index=repetition_index,
+    )
+
+
+def _resolve_llm_probe_execution_settings(
     *,
     case_config: TestConfig,
     run_profile: RunProfileConfig,
@@ -196,6 +246,39 @@ def _resolve_execution_settings(
     if repetition_index is not None:
         resolved["run_repetition_index"] = repetition_index
     return resolved
+
+
+def _resolve_openclaw_runner_settings_for_fingerprint(
+    *,
+    run_profile: RunProfileConfig,
+    repetition_index: int | None,
+    openclaw_agent_fingerprint: str | None,
+) -> dict[str, Any]:
+    if run_profile.openclaw is None:
+        raise ValueError(
+            "OpenClaw run fingerprinting requires run_profile.openclaw to be configured."
+        )
+    if not openclaw_agent_fingerprint:
+        raise ValueError(
+            "OpenClaw run fingerprinting requires an OpenClaw agent fingerprint."
+        )
+    resolved: dict[str, Any] = {
+        "agent_fingerprint": openclaw_agent_fingerprint,
+        "image": run_profile.openclaw.image,
+    }
+    if repetition_index is not None:
+        resolved["run_repetition_index"] = repetition_index
+    return resolved
+
+
+def _run_profile_payload_for_fingerprint(run_profile: RunProfileConfig) -> dict[str, Any]:
+    payload = run_profile.model_dump(exclude={"run_profile_id", "title"}, mode="json")
+    openclaw = payload.get("openclaw")
+    if isinstance(openclaw, Mapping):
+        normalized_openclaw = dict(openclaw)
+        normalized_openclaw.pop("timeout_seconds", None)
+        payload["openclaw"] = normalized_openclaw
+    return payload
 
 
 def _resolve_requested_model(model_selection: ModelConfig) -> str:

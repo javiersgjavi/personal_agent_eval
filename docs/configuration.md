@@ -647,6 +647,10 @@ Fingerprints are computed from normalised semantic payloads, not from raw YAML t
 - `evaluation_fingerprint`: includes only inputs that affect judge behaviour and final
   aggregation. Excludes profile IDs and titles.
 
+For OpenClaw runs, the reuse identity includes the resolved agent definition, the effective
+workspace contents, and the runtime image. `timeout_seconds` is treated as runtime control
+metadata and is excluded from the semantic reuse fingerprint.
+
 Two equivalent configs produce the same fingerprint even if files move or IDs change.
 
 ---

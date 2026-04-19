@@ -112,9 +112,10 @@ Key fields: `suite_id`, `cases`, `models`.
 
 ### `run_profile.yaml` — execution policy
 
-Controls every aspect of how the runner calls the model. The SHA-256
-fingerprint of this file's content is used to scope campaign directories —
-changing any parameter here produces a new fingerprint and a new directory.
+Controls every aspect of how the runner calls the model. A semantic SHA-256
+fingerprint of the effective execution identity is used to scope campaign
+directories. Changing a field that affects reuse semantics produces a new
+fingerprint and a new directory.
 
 ```yaml
 schema_version: 1

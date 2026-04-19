@@ -49,6 +49,31 @@ class AttachmentFingerprint(ArtifactModel):
     name: str | None = None
 
 
+class OpenClawWorkspaceEntryFingerprint(ArtifactModel):
+    """Normalized effective workspace entry used for OpenClaw agent identity."""
+
+    relative_path: str
+    source: Literal["template", "placeholder"]
+    sha256: str = Field(pattern=FINGERPRINT_HEX_PATTERN)
+    size_bytes: int = Field(ge=0)
+
+
+class OpenClawAgentFingerprintPayload(FingerprintHashPayloadModel):
+    """Normalized OpenClaw agent definition and effective workspace identity."""
+
+    agent_id: str
+    agent_config: dict[str, Any] = Field(default_factory=dict)
+    workspace_entries: list[OpenClawWorkspaceEntryFingerprint] = Field(default_factory=list)
+
+
+class OpenClawAgentFingerprintInput(FingerprintInputBase):
+    """Persistable OpenClaw agent fingerprint input payload."""
+
+    kind: Literal["openclaw_agent"] = "openclaw_agent"
+    payload: OpenClawAgentFingerprintPayload
+    fingerprint: str = Field(pattern=FINGERPRINT_HEX_PATTERN)
+
+
 class RunFingerprintPayload(FingerprintHashPayloadModel):
     """Normalized execution inputs that affect the raw run trace."""
 

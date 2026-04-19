@@ -1,17 +1,24 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from personal_agent_eval.config import (
     load_evaluation_profile,
+    load_openclaw_agent,
     load_run_profile,
     load_suite_config,
     load_test_config,
 )
+from personal_agent_eval.config.suite_config import ModelConfig
+from personal_agent_eval.config.test_config import TestConfig
+from personal_agent_eval.domains.openclaw import materialize_openclaw_workspace
 from personal_agent_eval.fingerprints import (
     ReuseAction,
     build_evaluation_fingerprint_input,
+    build_openclaw_agent_fingerprint_input,
     build_run_fingerprint_input,
+    build_run_profile_fingerprint,
     decide_reuse,
     is_evaluation_reusable,
     is_run_reusable,
@@ -91,6 +98,182 @@ def test_run_fingerprint_changes_when_execution_settings_change() -> None:
     )
 
     assert base_input.fingerprint != changed_input.fingerprint
+
+
+def test_openclaw_agent_fingerprint_is_stable_across_equivalent_materializations(
+    tmp_path: Path,
+) -> None:
+    agent_config = load_openclaw_agent(FIXTURES_ROOT / "configs" / "agents" / "support_agent")
+    assert agent_config.workspace_dir is not None
+    first_workspace = materialize_openclaw_workspace(
+        template_dir=agent_config.workspace_dir,
+        workspace_dir=tmp_path / "first" / "workspace",
+    )
+    second_workspace = materialize_openclaw_workspace(
+        template_dir=agent_config.workspace_dir,
+        workspace_dir=tmp_path / "second" / "workspace",
+    )
+
+    first_input = build_openclaw_agent_fingerprint_input(
+        agent_config=agent_config,
+        workspace_manifest=first_workspace.manifest,
+    )
+    second_input = build_openclaw_agent_fingerprint_input(
+        agent_config=agent_config,
+        workspace_manifest=second_workspace.manifest,
+    )
+
+    assert first_input.fingerprint == second_input.fingerprint
+    assert first_input.payload.workspace_entries == second_input.payload.workspace_entries
+    assert {entry.source for entry in first_input.payload.workspace_entries} == {
+        "template",
+        "placeholder",
+    }
+
+
+def test_openclaw_agent_fingerprint_changes_when_workspace_contents_change(tmp_path: Path) -> None:
+    source_agent_dir = FIXTURES_ROOT / "configs" / "agents" / "support_agent"
+    copied_agent_dir = tmp_path / "support_agent"
+    shutil.copytree(source_agent_dir, copied_agent_dir)
+    (copied_agent_dir / "workspace" / "AGENTS.md").write_text(
+        "# Support Agent\n\nChanged workspace content.\n",
+        encoding="utf-8",
+    )
+
+    original_agent = load_openclaw_agent(source_agent_dir)
+    changed_agent = load_openclaw_agent(copied_agent_dir)
+    assert original_agent.workspace_dir is not None
+    assert changed_agent.workspace_dir is not None
+    original_workspace = materialize_openclaw_workspace(
+        template_dir=original_agent.workspace_dir,
+        workspace_dir=tmp_path / "original-run" / "workspace",
+    )
+    changed_workspace = materialize_openclaw_workspace(
+        template_dir=changed_agent.workspace_dir,
+        workspace_dir=tmp_path / "changed-run" / "workspace",
+    )
+
+    original_input = build_openclaw_agent_fingerprint_input(
+        agent_config=original_agent,
+        workspace_manifest=original_workspace.manifest,
+    )
+    changed_input = build_openclaw_agent_fingerprint_input(
+        agent_config=changed_agent,
+        workspace_manifest=changed_workspace.manifest,
+    )
+
+    assert original_input.fingerprint != changed_input.fingerprint
+
+
+def test_openclaw_run_fingerprint_uses_agent_identity_and_image_but_not_timeout(
+    tmp_path: Path,
+) -> None:
+    case_config = _write_openclaw_case(tmp_path)
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "openclaw.yaml")
+    assert run_profile.openclaw is not None
+    agent_config = load_openclaw_agent(FIXTURES_ROOT / "configs" / "agents" / "support_agent")
+    assert agent_config.workspace_dir is not None
+    materialized_workspace = materialize_openclaw_workspace(
+        template_dir=agent_config.workspace_dir,
+        workspace_dir=tmp_path / "workspace",
+    )
+    agent_input = build_openclaw_agent_fingerprint_input(
+        agent_config=agent_config,
+        workspace_manifest=materialized_workspace.manifest,
+    )
+    model_selection = ModelConfig.model_validate(
+        {"model_id": "baseline_model", "requested_model": "openai/gpt-4o-mini"}
+    )
+
+    base_input = build_run_fingerprint_input(
+        test_config=case_config,
+        run_profile=run_profile,
+        model_selection=model_selection,
+        openclaw_agent_fingerprint=agent_input.fingerprint,
+    )
+    changed_timeout_profile = run_profile.model_copy(
+        update={
+            "openclaw": run_profile.openclaw.model_copy(update={"timeout_seconds": 999}),
+        }
+    )
+    changed_timeout_input = build_run_fingerprint_input(
+        test_config=case_config,
+        run_profile=changed_timeout_profile,
+        model_selection=model_selection,
+        openclaw_agent_fingerprint=agent_input.fingerprint,
+    )
+    changed_image_profile = run_profile.model_copy(
+        update={
+            "openclaw": run_profile.openclaw.model_copy(
+                update={"image": "ghcr.io/openclaw/openclaw-base:9.9.9"}
+            ),
+        }
+    )
+    changed_image_input = build_run_fingerprint_input(
+        test_config=case_config,
+        run_profile=changed_image_profile,
+        model_selection=model_selection,
+        openclaw_agent_fingerprint=agent_input.fingerprint,
+    )
+    changed_agent_input = build_run_fingerprint_input(
+        test_config=case_config,
+        run_profile=run_profile,
+        model_selection=model_selection,
+        openclaw_agent_fingerprint="f" * 64,
+    )
+
+    assert base_input.payload.runner_config == {
+        "agent_fingerprint": agent_input.fingerprint,
+        "image": "ghcr.io/openclaw/openclaw-base:0.1.0",
+    }
+    assert base_input.fingerprint == changed_timeout_input.fingerprint
+    assert base_input.fingerprint != changed_image_input.fingerprint
+    assert base_input.fingerprint != changed_agent_input.fingerprint
+
+
+def test_openclaw_run_fingerprint_requires_agent_fingerprint(tmp_path: Path) -> None:
+    case_config = _write_openclaw_case(tmp_path)
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "openclaw.yaml")
+    model_selection = ModelConfig.model_validate(
+        {"model_id": "baseline_model", "requested_model": "openai/gpt-4o-mini"}
+    )
+
+    try:
+        build_run_fingerprint_input(
+            test_config=case_config,
+            run_profile=run_profile,
+            model_selection=model_selection,
+        )
+    except ValueError as exc:
+        assert "requires an OpenClaw agent fingerprint" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("Expected OpenClaw run fingerprinting to reject missing agent input.")
+
+
+def test_run_profile_fingerprint_ignores_openclaw_timeout_but_changes_on_image() -> None:
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "openclaw.yaml")
+    assert run_profile.openclaw is not None
+
+    base_fingerprint = build_run_profile_fingerprint(run_profile=run_profile)
+    changed_timeout_fingerprint = build_run_profile_fingerprint(
+        run_profile=run_profile.model_copy(
+            update={
+                "openclaw": run_profile.openclaw.model_copy(update={"timeout_seconds": 999}),
+            }
+        )
+    )
+    changed_image_fingerprint = build_run_profile_fingerprint(
+        run_profile=run_profile.model_copy(
+            update={
+                "openclaw": run_profile.openclaw.model_copy(
+                    update={"image": "ghcr.io/openclaw/openclaw-base:9.9.9"}
+                ),
+            }
+        )
+    )
+
+    assert base_fingerprint == changed_timeout_fingerprint
+    assert base_fingerprint != changed_image_fingerprint
 
 
 def test_evaluation_fingerprint_ignores_profile_id_but_changes_on_semantic_changes() -> None:
@@ -176,3 +359,30 @@ def test_reuse_decision_helpers_follow_v1_rules() -> None:
         stored_run_fingerprint="a" * 64,
         stored_evaluation_fingerprint="b" * 64,
     )
+
+
+def _write_openclaw_case(tmp_path: Path) -> TestConfig:
+    path = tmp_path / "openclaw_case.yaml"
+    path.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "case_id: openclaw_case",
+                "title: OpenClaw case",
+                "runner:",
+                "  type: openclaw",
+                "input:",
+                "  messages:",
+                "    - role: system",
+                "      content: You are careful.",
+                "    - role: user",
+                "      content: Solve the task.",
+                "  context:",
+                "    openclaw:",
+                "      expected_artifact: report.md",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return load_test_config(path)
