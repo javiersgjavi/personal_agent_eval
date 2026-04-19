@@ -350,6 +350,28 @@ execution_policy:
 `runner_defaults` and `model_overrides` continue to apply to `llm_probe`. OpenClaw uses
 the dedicated `openclaw` block instead of encoding runtime selection in free-form keys.
 
+### Generated `openclaw.json`
+
+The benchmark resolves one effective OpenClaw config per run and then renders a minimal,
+deterministic `openclaw.json`.
+
+Current merge and injection rules:
+
+1. start from the benchmark-safe base shape
+2. merge `agent.yaml` fragments:
+   - `openclaw.identity` -> `identity`
+   - `openclaw.agents_defaults` -> `agents.defaults`
+   - `openclaw.agent` -> the single `agents.list[0]` entry
+   - `openclaw.model_defaults` -> non-primary `models` settings such as `aliases` and `fallbacks`
+3. inject the benchmark-selected primary model into:
+   - `models.default`
+   - `agents.list[0].model`
+4. inject the ephemeral workspace path into `agents.defaults.workspace`
+
+The generated config does **not** treat the OpenClaw state directory as part of the
+workspace. The ephemeral `OPENCLAW_STATE_DIR` remains a separate runtime surface and is not
+written into `agents.defaults.workspace`.
+
 ---
 
 ## OpenClaw agent (`configs/agents/<agent_id>/agent.yaml`)
@@ -398,7 +420,15 @@ model must still come from suite or CLI model selection.
 
 - `workspace/` must exist beside `agent.yaml`
 - the directory is loaded as-is and validated as part of the agent contract
-- standard files such as `AGENTS.md` or `SOUL.md` may be completed later with deterministic placeholders during materialization
+- the harness copies the template into an empty ephemeral run workspace before execution
+- missing standard root files are filled with deterministic placeholder markdown files for:
+  - `AGENTS.md`
+  - `IDENTITY.md`
+  - `SOUL.md`
+  - `TOOLS.md`
+  - `USER.md`
+- the materialization step also produces a deterministic manifest of final workspace files for
+  later fingerprinting and reuse decisions
 
 ### `execution_policy`
 
