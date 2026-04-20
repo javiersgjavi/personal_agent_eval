@@ -365,7 +365,8 @@ Current merge and injection rules:
 1. merge `agent.yaml` fragments into the generated tree:
    - `openclaw.agents_defaults` -> `agents.defaults` (legacy string `sandbox` values are coerced to
      an object, e.g. `workspace-write` -> `{ "mode": "off" }`)
-   - `openclaw.agent` -> the single `agents.list[0]` entry (`prompt` is emitted as `systemPrompt`)
+   - `openclaw.agent` -> the single `agents.list[0]` entry (`prompt` is emitted as
+     `systemPromptOverride`)
    - `openclaw.model_defaults`: `fallbacks` -> `agents.defaults.model.fallbacks`; `aliases` ->
      `agents.defaults.models[<primary>].alias` plus catalog entries for fallback models
    - `openclaw.identity` is **not** written to `openclaw.json` (unknown at root in strict validation);

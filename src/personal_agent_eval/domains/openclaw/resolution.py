@@ -177,11 +177,11 @@ def _build_openclaw_agent_list_entry(
     directory_agent_id: str,
     primary_model: str,
 ) -> dict[str, Any]:
-    """Build ``agents.list[]`` entry; map legacy ``prompt`` to ``systemPrompt``."""
+    """Build ``agents.list[]`` entry; map legacy ``prompt`` to ``systemPromptOverride``."""
     entry = dict(fragment)
     entry.setdefault("id", directory_agent_id)
     if "prompt" in entry:
-        entry["systemPrompt"] = entry.pop("prompt")
+        entry["systemPromptOverride"] = entry.pop("prompt")
     entry["model"] = primary_model
     return entry
 

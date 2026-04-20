@@ -115,7 +115,7 @@ def test_render_openclaw_json_is_deterministic_and_uses_requested_model(tmp_path
     assert generated.agents.agent_list == [
         {
             "id": "support-agent",
-            "systemPrompt": "You are a benchmark fixture agent.",
+            "systemPromptOverride": "You are a benchmark fixture agent.",
             "model": or_primary,
         }
     ]
