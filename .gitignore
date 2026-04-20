@@ -154,6 +154,15 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Local OpenClaw workspace exports (large binaries; extract under configs/agents/*/workspace)
+/workspace-export-*.zip
+
+# Benchmark YAML layouts under configs/ stay local. Track only curated snippets under
+# configs/examples/ (un-ignore rules must stay last for this block).
+/configs/**
+!/configs/examples/
+!/configs/examples/**
+
 # Generated evaluation outputs
 /outputs/
 /runs/

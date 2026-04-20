@@ -1,0 +1,22 @@
+schema_version: 1
+agent_id: tapas
+title: Tapas
+description: Agente personal con workspace tipo OpenClaw (archivos estándar, memoria y skills).
+tags:
+  - tapas
+  - openclaw
+openclaw:
+  identity:
+    name: Tapas
+  agents_defaults:
+    sandbox: workspace-write
+  agent:
+    id: tapas
+    prompt: >
+      Eres Tapas. Sigue AGENTS.md, SOUL.md e IDENTITY.md del workspace; usa memory/ con criterio
+      y mantén un tono claro y respetuoso.
+  model_defaults:
+    aliases:
+      default: benchmark-primary
+    fallbacks:
+      - openai/gpt-4o-mini
