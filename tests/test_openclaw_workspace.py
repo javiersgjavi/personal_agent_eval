@@ -26,12 +26,12 @@ def test_materialize_openclaw_workspace_copies_files_and_injects_placeholders(
 
     assert materialized.template_dir == template_dir.resolve()
     assert materialized.workspace_dir == (tmp_path / "runs" / "workspace").resolve()
-    assert (
-        materialized.workspace_dir / "AGENTS.md"
-    ).read_text(encoding="utf-8") == "# Custom agent\n"
-    assert (
-        materialized.workspace_dir / "docs" / "guide.txt"
-    ).read_text(encoding="utf-8") == "hello workspace\n"
+    assert (materialized.workspace_dir / "AGENTS.md").read_text(
+        encoding="utf-8"
+    ) == "# Custom agent\n"
+    assert (materialized.workspace_dir / "docs" / "guide.txt").read_text(
+        encoding="utf-8"
+    ) == "hello workspace\n"
     assert materialized.manifest.placeholder_files == [
         "IDENTITY.md",
         "SOUL.md",

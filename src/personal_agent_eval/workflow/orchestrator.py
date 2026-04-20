@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import tempfile
 from pathlib import Path
 from statistics import mean, median
 from typing import Any, Protocol
@@ -16,7 +17,9 @@ from personal_agent_eval.config import (
     EvaluationProfileConfig,
     RunProfileConfig,
     SuiteConfig,
+    TestConfig,
     load_evaluation_profile,
+    load_openclaw_agent,
     load_run_profile,
     load_suite_config,
 )
@@ -24,8 +27,12 @@ from personal_agent_eval.config.suite_config import ModelConfig
 from personal_agent_eval.deterministic import DeterministicEvaluator
 from personal_agent_eval.deterministic.models import DeterministicEvaluationResult
 from personal_agent_eval.domains.llm_probe import OpenRouterClient, run_llm_probe_case
+from personal_agent_eval.domains.openclaw import OpenClawExecutor, run_openclaw_case
+from personal_agent_eval.domains.openclaw.workspace import materialize_openclaw_workspace
 from personal_agent_eval.fingerprints import (
+    RunFingerprintInput,
     build_evaluation_fingerprint_input,
+    build_openclaw_agent_fingerprint_input,
     build_run_fingerprint_input,
     build_run_profile_fingerprint,
 )
@@ -71,8 +78,15 @@ class WorkflowJudgeClientFactory(Protocol):
         """Return one client instance."""
 
 
+class WorkflowOpenClawExecutorFactory(Protocol):
+    """Factory for OpenClaw subprocess/command executors."""
+
+    def __call__(self) -> OpenClawExecutor:
+        """Return one executor instance per run execution."""
+
+
 class WorkflowOrchestrator:
-    """Execute the V1 run/eval workflow over suite models and cases."""
+    """Execute `pae` run/eval workflows over suite models and cases."""
 
     def __init__(
         self,
@@ -80,10 +94,12 @@ class WorkflowOrchestrator:
         storage_root: str | Path,
         run_client_factory: WorkflowRunClientFactory | None = None,
         judge_client_factory: WorkflowJudgeClientFactory | None = None,
+        openclaw_executor_factory: WorkflowOpenClawExecutorFactory | None = None,
     ) -> None:
         self._storage = FilesystemStorage(storage_root)
         self._run_client_factory = run_client_factory or OpenRouterClient
         self._judge_client_factory = judge_client_factory or OpenRouterJudgeClient
+        self._openclaw_executor_factory = openclaw_executor_factory
 
     def run(
         self,
@@ -158,6 +174,7 @@ class WorkflowOrchestrator:
                         evaluation_profile_id=evaluation_profile.evaluation_profile_id,
                         run_profile_fingerprint=run_profile_fingerprint,
                         evaluation_fingerprint=evaluation_input.fingerprint,
+                        workspace_root=workspace_root,
                     )
                 )
 
@@ -210,6 +227,7 @@ class WorkflowOrchestrator:
                     evaluation_profile=evaluation_profile,
                     case_manifest=case_manifest,
                     model=model,
+                    workspace_root=workspace_root,
                 )
                 results.append(result)
 
@@ -240,6 +258,7 @@ class WorkflowOrchestrator:
         evaluation_profile: EvaluationProfileConfig | None,
         case_manifest: CaseManifest,
         model: ModelConfig,
+        workspace_root: Path,
     ) -> WorkflowCaseResult:
         repetition_indexes = list(_run_repetition_indexes(run_profile))
         case_results = [
@@ -253,6 +272,7 @@ class WorkflowOrchestrator:
                 model=model,
                 repetition_index=repetition_index,
                 repetition_count=len(repetition_indexes),
+                workspace_root=workspace_root,
             )
             for repetition_index in repetition_indexes
         ]
@@ -276,8 +296,10 @@ class WorkflowOrchestrator:
         model: ModelConfig,
         repetition_index: int,
         repetition_count: int,
+        workspace_root: Path,
     ) -> WorkflowCaseResult:
-        run_input = build_run_fingerprint_input(
+        run_input = _build_run_fingerprint_input_for_workflow(
+            workspace_root=workspace_root,
             test_config=case_manifest.config,
             run_profile=run_profile,
             model_selection=model,
@@ -327,6 +349,7 @@ class WorkflowOrchestrator:
             )
             run_action = RunAction.EXECUTED
             run_artifact = self._execute_run(
+                workspace_root=workspace_root,
                 suite_id=suite_config.suite_id,
                 case_manifest=case_manifest,
                 run_profile=run_profile,
@@ -603,11 +626,13 @@ class WorkflowOrchestrator:
         evaluation_profile_id: str,
         run_profile_fingerprint: str,
         evaluation_fingerprint: str,
+        workspace_root: Path,
     ) -> WorkflowCaseResult:
         repetition_indexes = list(_run_repetition_indexes(run_profile))
         case_results = []
         for repetition_index in repetition_indexes:
-            run_input = build_run_fingerprint_input(
+            run_input = _build_run_fingerprint_input_for_workflow(
+                workspace_root=workspace_root,
                 test_config=case_manifest.config,
                 run_profile=run_profile,
                 model_selection=model,
@@ -819,23 +844,44 @@ class WorkflowOrchestrator:
     def _execute_run(
         self,
         *,
+        workspace_root: Path,
         suite_id: str,
         case_manifest: CaseManifest,
         run_profile: RunProfileConfig,
         model: ModelConfig,
     ) -> RunArtifact:
-        if case_manifest.config.runner.type != "llm_probe":
-            raise NotImplementedError(
-                f"Runner '{case_manifest.config.runner.type}' is not supported in V1 workflow."
+        run_id = f"run_{uuid4().hex}"
+        if case_manifest.config.runner.type == "llm_probe":
+            client = self._run_client_factory()
+            return run_llm_probe_case(
+                run_id=run_id,
+                suite_id=suite_id,
+                case_config=case_manifest.config,
+                run_profile=run_profile,
+                model_selection=model,
+                client=client,
             )
-        client = self._run_client_factory()
-        return run_llm_probe_case(
-            run_id=f"run_{uuid4().hex}",
-            suite_id=suite_id,
-            case_config=case_manifest.config,
-            run_profile=run_profile,
-            model_selection=model,
-            client=client,
+        if case_manifest.config.runner.type == "openclaw":
+            if run_profile.openclaw is None:
+                raise ValueError("OpenClaw cases require run_profile.openclaw to be configured.")
+            agent_dir = workspace_root / "configs" / "agents" / run_profile.openclaw.agent_id
+            agent_config = load_openclaw_agent(agent_dir)
+            executor = (
+                self._openclaw_executor_factory()
+                if self._openclaw_executor_factory is not None
+                else None
+            )
+            return run_openclaw_case(
+                run_id=run_id,
+                suite_id=suite_id,
+                case_config=case_manifest.config,
+                run_profile=run_profile,
+                model_selection=model,
+                agent_config=agent_config,
+                executor=executor,
+            )
+        raise NotImplementedError(
+            f"Runner '{case_manifest.config.runner.type}' is not supported in the workflow."
         )
 
     def _evaluate_deterministic(
@@ -911,6 +957,41 @@ class WorkflowOrchestrator:
             deterministic_result=deterministic_result,
             judge_result=judge_result,
         )
+
+
+def _build_run_fingerprint_input_for_workflow(
+    *,
+    workspace_root: Path,
+    test_config: TestConfig,
+    run_profile: RunProfileConfig,
+    model_selection: ModelConfig,
+    repetition_index: int | None,
+) -> RunFingerprintInput:
+    """Match :func:`build_run_fingerprint_input` while resolving OpenClaw agent identity."""
+    openclaw_agent_fingerprint: str | None = None
+    if test_config.runner.type == "openclaw":
+        if run_profile.openclaw is None:
+            raise ValueError("OpenClaw cases require run_profile.openclaw to be configured.")
+        agent_dir = workspace_root / "configs" / "agents" / run_profile.openclaw.agent_id
+        agent_config = load_openclaw_agent(agent_dir)
+        if agent_config.workspace_dir is None:
+            raise ValueError("OpenClaw agent config must include a workspace directory.")
+        with tempfile.TemporaryDirectory(prefix="pae-openclaw-fp-") as tmp:
+            materialized = materialize_openclaw_workspace(
+                template_dir=agent_config.workspace_dir,
+                workspace_dir=Path(tmp) / "workspace",
+            )
+            openclaw_agent_fingerprint = build_openclaw_agent_fingerprint_input(
+                agent_config=agent_config,
+                workspace_manifest=materialized.manifest,
+            ).fingerprint
+    return build_run_fingerprint_input(
+        test_config=test_config,
+        run_profile=run_profile,
+        model_selection=model_selection,
+        repetition_index=repetition_index,
+        openclaw_agent_fingerprint=openclaw_agent_fingerprint,
+    )
 
 
 def _workspace_root_from_suite_path(suite_path: Path | None) -> Path:

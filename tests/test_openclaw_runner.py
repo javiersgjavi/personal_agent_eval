@@ -111,8 +111,7 @@ def test_run_openclaw_case_success_captures_external_evidence(tmp_path: Path) ->
 
     assert generated_config_path.is_file()
     assert (
-        raw_trace_path.read_text(encoding="utf-8").strip()
-        == '{"content": "Generated report.md"}'
+        raw_trace_path.read_text(encoding="utf-8").strip() == '{"content": "Generated report.md"}'
     )
     assert "run_agent" in log_path.read_text(encoding="utf-8")
     assert "report.md" in diff_path.read_text(encoding="utf-8")

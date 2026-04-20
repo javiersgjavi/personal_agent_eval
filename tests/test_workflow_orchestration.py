@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,7 @@ from personal_agent_eval.domains.llm_probe.openrouter import (
     OpenRouterAssistantMessage,
     OpenRouterChatResponse,
 )
+from personal_agent_eval.domains.openclaw import OpenClawCommandResult, OpenClawExecutor
 from personal_agent_eval.fingerprints import build_run_profile_fingerprint
 from personal_agent_eval.judge.models import JudgeIterationStatus, RawJudgeRunResult
 from personal_agent_eval.judge.system_prompt import resolve_judge_system_prompt_details
@@ -71,6 +73,41 @@ class FakeJudgeClient:
             request_messages=[dict(message) for message in invocation.messages],
             response_content=json.dumps(parsed_response),
             parsed_response=parsed_response,
+        )
+
+
+class FakeOpenClawExecutor(OpenClawExecutor):
+    """Same behavior as in test_openclaw_runner (local stub for workflow tests)."""
+
+    def validate_config(
+        self,
+        *,
+        config_path: Path,
+        env: Mapping[str, str],
+    ) -> OpenClawCommandResult:
+        del config_path, env
+        return OpenClawCommandResult(returncode=0, stdout='{"ok":true}\n')
+
+    def run_agent(
+        self,
+        *,
+        agent_id: str,
+        message: str,
+        config_path: Path,
+        env: Mapping[str, str],
+        timeout_seconds: int,
+    ) -> OpenClawCommandResult:
+        del agent_id, env, timeout_seconds
+        payload = json.loads(config_path.read_text(encoding="utf-8"))
+        workspace_dir = Path(payload["agents"]["defaults"]["workspace"])
+        (workspace_dir / "report.md").write_text(
+            f"# Report\n\n{message[:32]}\n",
+            encoding="utf-8",
+        )
+        return OpenClawCommandResult(
+            returncode=0,
+            stdout=json.dumps({"content": "Generated report.md"}),
+            stderr="mock log output\n",
         )
 
 
@@ -235,6 +272,50 @@ def test_report_reads_existing_artifacts_without_reexecution(tmp_path: Path) -> 
     assert all(result.final_dimensions is not None for result in report.results)
 
 
+def test_openclaw_workflow_run_executes_then_reuses(tmp_path: Path) -> None:
+    workspace_root = _build_openclaw_workspace(tmp_path)
+    workflow = WorkflowOrchestrator(
+        storage_root=workspace_root,
+        openclaw_executor_factory=FakeOpenClawExecutor,
+    )
+
+    first = workflow.run(
+        suite_path=workspace_root / "configs" / "suites" / "openclaw_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "openclaw.yaml",
+    )
+    second = workflow.run(
+        suite_path=workspace_root / "configs" / "suites" / "openclaw_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "openclaw.yaml",
+    )
+
+    assert first.summary.model_case_pairs == 1
+    assert first.summary.runs_executed == 1
+    assert first.results[0].run_action is RunAction.EXECUTED
+    assert first.results[0].run_status == "success"
+
+    assert second.summary.runs_reused == 1
+    assert second.results[0].run_action is RunAction.REUSED
+
+
+def test_openclaw_workflow_report_finds_stored_run(tmp_path: Path) -> None:
+    workspace_root = _build_openclaw_workspace(tmp_path)
+    workflow = WorkflowOrchestrator(
+        storage_root=workspace_root,
+        openclaw_executor_factory=FakeOpenClawExecutor,
+    )
+    workflow.run(
+        suite_path=workspace_root / "configs" / "suites" / "openclaw_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "openclaw.yaml",
+    )
+    report = workflow.report(
+        suite_path=workspace_root / "configs" / "suites" / "openclaw_suite.yaml",
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "openclaw.yaml",
+        evaluation_profile_path=workspace_root / "configs" / "evaluation_profiles" / "default.yaml",
+    )
+    assert report.results[0].run_action is RunAction.REUSED
+    assert report.results[0].run_status == "success"
+
+
 def test_run_eval_marks_evaluation_failed_when_judge_produces_no_successful_iterations(
     tmp_path: Path,
 ) -> None:
@@ -266,6 +347,60 @@ def test_run_eval_marks_evaluation_failed_when_judge_produces_no_successful_iter
     assert all(item.evaluation_action is EvaluationAction.EXECUTED for item in result.results)
     assert all(item.evaluation_status == "failed" for item in result.results)
     assert all(item.final_score is None for item in result.results)
+
+
+def _build_openclaw_workspace(tmp_path: Path) -> Path:
+    fixture_root = Path(__file__).resolve().parent / "fixtures" / "config"
+    workspace_root = tmp_path / "openclaw_workspace"
+    shutil.copytree(fixture_root, workspace_root)
+
+    case_dir = workspace_root / "configs" / "cases" / "openclaw_smoke"
+    case_dir.mkdir(parents=True, exist_ok=True)
+    (case_dir / "test.yaml").write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "case_id: openclaw_smoke",
+                "title: OpenClaw smoke workflow",
+                "runner:",
+                "  type: openclaw",
+                "input:",
+                "  messages:",
+                "    - role: user",
+                "      content: Produce report.md in the workspace.",
+                "  context:",
+                "    openclaw:",
+                "      expected_artifact: report.md",
+                "tags:",
+                "  - smoke",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    suite_path = workspace_root / "configs" / "suites" / "openclaw_suite.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": 1,
+                "suite_id": "openclaw_suite",
+                "title": "OpenClaw suite",
+                "models": [
+                    {
+                        "model_id": "baseline_model",
+                        "provider": "openai",
+                        "model_name": "gpt-example",
+                    },
+                ],
+                "case_selection": {"include_case_ids": ["openclaw_smoke"]},
+                "metadata": {"owner": "qa"},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    return workspace_root
 
 
 def _build_workspace(tmp_path: Path) -> Path:

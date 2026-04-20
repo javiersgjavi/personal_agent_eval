@@ -35,6 +35,12 @@ V1 now exposes these orchestration commands:
 - `pae run-eval`
 - `pae report`
 
+**OpenClaw:** cases with `runner.type: openclaw` use the same commands. Choose a run profile
+that defines `openclaw` (`agent_id`, `image`, `timeout_seconds`) and keep the reusable agent
+under `configs/agents/<agent_id>/` (`agent.yaml` plus `workspace/`). The workflow resolves the
+agent into run fingerprints, executes the OpenClaw harness (CLI subprocess unless you inject a
+custom executor in library code), and persists artifacts for reuse like `llm_probe` runs.
+
 When working inside this repository, prefer running the CLI via `uv`:
 
 ```bash

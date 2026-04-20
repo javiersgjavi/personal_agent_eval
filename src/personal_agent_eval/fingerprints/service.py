@@ -259,9 +259,7 @@ def _resolve_openclaw_runner_settings_for_fingerprint(
             "OpenClaw run fingerprinting requires run_profile.openclaw to be configured."
         )
     if not openclaw_agent_fingerprint:
-        raise ValueError(
-            "OpenClaw run fingerprinting requires an OpenClaw agent fingerprint."
-        )
+        raise ValueError("OpenClaw run fingerprinting requires an OpenClaw agent fingerprint.")
     resolved: dict[str, Any] = {
         "agent_fingerprint": openclaw_agent_fingerprint,
         "image": run_profile.openclaw.image,
