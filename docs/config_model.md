@@ -136,7 +136,7 @@ For OpenClaw, `run_profile.yaml` also owns the dedicated runtime block:
 ```yaml
 openclaw:
   agent_id: support_agent
-  image: ghcr.io/openclaw/openclaw-base:0.1.0
+  image: ghcr.io/openclaw/openclaw:2026.4.15
   timeout_seconds: 300
 ```
 

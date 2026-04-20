@@ -55,7 +55,7 @@ def _minimal_openclaw_artifact(*, runner_metadata: dict[str, Any] | None = None)
 def test_openclaw_run_evidence_round_trip_json() -> None:
     evidence = OpenClawRunEvidence(
         agent_id="support_agent",
-        container_image="ghcr.io/openclaw/openclaw-base:0.1.0",
+        container_image="ghcr.io/openclaw/openclaw:2026.4.15",
         generated_openclaw_config=_ref(
             artifact_id="openclaw_cfg",
             artifact_type=OpenClawEvidenceArtifactTypes.GENERATED_OPENCLAW_CONFIG,

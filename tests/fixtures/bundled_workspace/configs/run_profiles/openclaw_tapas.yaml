@@ -3,7 +3,7 @@ run_profile_id: openclaw_tapas
 title: OpenClaw run profile (tapas agent)
 openclaw:
   agent_id: tapas
-  image: ghcr.io/openclaw/openclaw-base:0.1.0
+  image: ghcr.io/openclaw/openclaw:2026.4.15
   timeout_seconds: 300
 execution_policy:
   max_concurrency: 1

@@ -74,7 +74,7 @@ def test_load_openclaw_run_profile_from_fixture() -> None:
     assert config.run_profile_id == "openclaw_default"
     assert config.openclaw is not None
     assert config.openclaw.agent_id == "support_agent"
-    assert config.openclaw.image == "ghcr.io/openclaw/openclaw-base:0.1.0"
+    assert config.openclaw.image == "ghcr.io/openclaw/openclaw:2026.4.15"
     assert config.openclaw.timeout_seconds == 300
 
 

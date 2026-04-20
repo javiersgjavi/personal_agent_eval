@@ -131,7 +131,7 @@ def test_repo_resolve_openclaw_config_matches_agent_and_model(tmp_path: Path) ->
     assert resolved.agent_id == "support_agent"
     assert resolved.requested_model == "openai/gpt-example"
     assert resolved.openclaw_primary_model_ref == "openrouter/openai/gpt-example"
-    assert resolved.container_image == "ghcr.io/openclaw/openclaw-base:0.1.0"
+    assert resolved.container_image == "ghcr.io/openclaw/openclaw:2026.4.15"
     assert resolved.openclaw_workspace_path_in_config == str(materialized.workspace_dir.resolve())
     generated = render_openclaw_json(resolved)
     assert generated.models["default"] == "openrouter/openai/gpt-example"

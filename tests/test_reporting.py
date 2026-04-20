@@ -95,7 +95,7 @@ def test_structured_report_is_json_serializable_and_preserves_fingerprints() -> 
 def test_structured_report_includes_openclaw_storage_fields_when_present() -> None:
     oc = OpenClawWorkflowEvidenceSummary(
         agent_id="support_agent",
-        container_image="ghcr.io/openclaw/openclaw-base:0.1.0",
+        container_image="ghcr.io/openclaw/openclaw:2026.4.15",
         evidence_paths={
             "openclaw_generated_config": (
                 "outputs/runs/suit_s/run_profile_aaaaaa/m/c/run_1.artifacts/x--openclaw.json"

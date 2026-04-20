@@ -129,7 +129,7 @@ def test_run_openclaw_case_uses_docker_cli(
     assert len(calls) >= 2
     assert calls[0][0] == "docker"
     assert "run" in calls[0]
-    assert "ghcr.io/openclaw/openclaw-base:0.1.0" in calls[0]
+    assert "ghcr.io/openclaw/openclaw:2026.4.15" in calls[0]
     assert "OPENCLAW_CONFIG_PATH=/work/openclaw.json" in calls[0]
     generated = (tmp_path / "runtime-docker" / "openclaw.json").read_text(encoding="utf-8")
     assert '"/work/workspace"' in generated

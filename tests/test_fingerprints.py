@@ -205,7 +205,7 @@ def test_openclaw_run_fingerprint_uses_agent_identity_and_image_but_not_timeout(
     changed_image_profile = run_profile.model_copy(
         update={
             "openclaw": run_profile.openclaw.model_copy(
-                update={"image": "ghcr.io/openclaw/openclaw-base:9.9.9"}
+                update={"image": "ghcr.io/openclaw/openclaw:9.9.9"}
             ),
         }
     )
@@ -235,7 +235,7 @@ def test_openclaw_run_fingerprint_uses_agent_identity_and_image_but_not_timeout(
 
     assert base_input.payload.runner_config == {
         "agent_fingerprint": agent_input.fingerprint,
-        "image": "ghcr.io/openclaw/openclaw-base:0.1.0",
+        "image": "ghcr.io/openclaw/openclaw:2026.4.15",
         "docker_cli": "docker",
         "openclaw_primary_model_ref": "openrouter/openai/gpt-4o-mini",
     }
@@ -280,7 +280,7 @@ def test_run_profile_fingerprint_ignores_openclaw_timeout_but_changes_on_image()
         run_profile=run_profile.model_copy(
             update={
                 "openclaw": run_profile.openclaw.model_copy(
-                    update={"image": "ghcr.io/openclaw/openclaw-base:9.9.9"}
+                    update={"image": "ghcr.io/openclaw/openclaw:9.9.9"}
                 ),
             }
         )
