@@ -1,0 +1,47 @@
+schema_version: 1
+case_id: tapas_h3_openclaw
+title: Tapas OpenClaw — H3 finance reasoning (reference task)
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: user
+      content: |
+        Tengo 80.000€ ahorrados. Mi situación:
+        - 60.000€ reservados para posible hipoteca en 1-2 años
+        - 10.000€ fondo de emergencia (no tocar)
+        - 10.000€ disponibles para invertir ahora mismo
+
+        Tengo 26 años, trabajo estable, perfil moderado.
+
+        Con los 10.000€ disponibles:
+        1. ¿Qué asset allocation me recomendarías?
+        2. ¿Qué instrumentos concretos (ETFs, fondos)?
+        3. ¿Tiene sentido invertir a largo plazo si en 1-2 años puedo necesitar el dinero de la hipoteca?
+
+        Sé específico y razona cada punto.
+expectations:
+  hard_expectations:
+    - text: >
+        Keeps the 60.000€ mortgage reserve clearly separate from investable money; does not recommend
+        investing those funds as if they were discretionary.
+    - text: Addresses only the 10.000€ discretionary tranche for concrete allocation and instruments (not vague “diversify” only).
+    - text: Warns about the short horizon (1–2 years) and liquidity implications; no guaranteed returns or promises.
+  soft_expectations:
+    - text: Answers all three numbered questions with reasoning, in a clear length (roughly within a few hundred words unless the user asks otherwise).
+    - text: Tone is accessible (peer explaining finances), not a generic bank brochure.
+deterministic_checks:
+  - check_id: tapas-h3-final-response
+    dimensions:
+      - task
+    declarative:
+      kind: final_response_present
+tags:
+  - openclaw
+  - tapas
+  - reasoning
+  - h3
+  - hard
+metadata:
+  source: model-benchmark/references/tasks/reasoning/H3_finance_reasoning.md
+  reference_task_id: H3_finance_reasoning

@@ -1,0 +1,53 @@
+schema_version: 1
+case_id: tapas_x7_openclaw
+title: Tapas OpenClaw — X7 multi-constraint planning (reference task)
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: user
+      content: |
+        Necesito que me ayudes a planificar la siguiente semana. Estas son mis
+        restricciones y compromisos:
+
+        COMPROMISOS FIJOS:
+        - Lunes: standup Avature 10:30h (1h)
+        - Martes: reunión con inversor 16:00h (2h)
+        - Miércoles: dentista 11:00h (1.5h)
+        - Viernes: entrega informe mensual VenPraLab (deadline 18:00h)
+
+        TAREAS PENDIENTES (urgentes):
+        - Preparar one-pager VenPraLab para la reunión del martes (estimado: 4h)
+        - Revisar y corregir prototipo de la app de Avature (estimado: 6h, pedido para el miércoles por la tarde)
+        - Preparar al inversor: investigar su background + ensayo del pitch (estimado: 3h)
+        - Escribir informe mensual VenPraLab (estimado: 5h)
+
+        RESTRICCIONES PERSONALES:
+        - No trabajar más de 9h/día
+        - Necesito tener el lunes por la tarde libre (compromiso personal inamovible)
+        - El viernes antes de las 10:00h no puedo concentrarme (tengo el desayuno familiar semanal)
+expectations:
+  hard_expectations:
+    - text: >
+        Identifies explicitly that the 6h Avature prototype review cannot fit Wednesday afternoon
+        alongside the dentist morning slot and other constraints (the core scheduling conflict).
+    - text: Proposes a realistic weekly plan that respects fixed commitments and personal constraints (max 9h/day, Monday afternoon free, Friday morning low focus).
+    - text: Proposes how to communicate the trade-off or delay to Avature (or stakeholders), instead of pretending the impossible schedule works.
+  soft_expectations:
+    - text: Delivers a concise structured plan (table or short sections), not an overly long wall of text.
+    - text: Prioritizes protecting the investor meeting and the VenPraLab monthly report deadline where relevant.
+deterministic_checks:
+  - check_id: tapas-x7-final-response
+    dimensions:
+      - task
+    declarative:
+      kind: final_response_present
+tags:
+  - openclaw
+  - tapas
+  - reasoning
+  - x7
+  - extreme
+metadata:
+  source: model-benchmark/references/tasks/reasoning/X7_multiconstraint_planning.md
+  reference_task_id: X7_multiconstraint_planning

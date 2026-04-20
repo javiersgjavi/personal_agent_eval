@@ -153,3 +153,15 @@ def test_repo_legacy_minimax_suite_models_map_to_openrouter_refs() -> None:
 def test_repo_suite_ids_are_unique() -> None:
     suites = discover_suites(BUNDLED_WORKSPACE_ROOT)
     assert "openclaw_smoke_suite" in suites
+
+
+def test_tapas_reasoning_openclaw_suite_expands_x7_and_h3() -> None:
+    expanded = expand_suite(BUNDLED_WORKSPACE_ROOT, "tapas_reasoning_openclaw_suite")
+    case_ids = {item.case_id for item in expanded}
+    assert case_ids == {"tapas_h3_openclaw", "tapas_x7_openclaw"}
+
+
+def test_tapas_openclaw_cases_are_discovered() -> None:
+    cases = discover_cases(BUNDLED_WORKSPACE_ROOT)
+    assert cases["tapas_x7_openclaw"].config.runner.type == "openclaw"
+    assert cases["tapas_h3_openclaw"].config.runner.type == "openclaw"
