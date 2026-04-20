@@ -52,6 +52,7 @@ from personal_agent_eval.storage import (
     FilesystemStorage,
     RunStorageManifest,
 )
+from personal_agent_eval.storage.report_paths import build_openclaw_workflow_evidence_summary
 from personal_agent_eval.workflow.models import (
     EvaluationAction,
     RunAction,
@@ -62,6 +63,35 @@ from personal_agent_eval.workflow.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _storage_fields_for_run_row(
+    storage: FilesystemStorage,
+    *,
+    suite_id: str,
+    run_profile_fingerprint: str,
+    model_id: str,
+    case_id: str,
+    repetition_index: int,
+    run_artifact: RunArtifact | None,
+) -> dict[str, Any]:
+    """Workspace-relative storage locations for reporting (OpenClaw + generic run bundle)."""
+    if run_artifact is None:
+        return {}
+    rel = storage.run_case_storage_relative_paths(
+        suite_id=suite_id,
+        run_profile_fingerprint=run_profile_fingerprint,
+        model_id=model_id,
+        case_id=case_id,
+        repetition_index=repetition_index,
+    )
+    return {
+        "runner_type": run_artifact.identity.runner_type,
+        "stored_run_artifact_path": rel["run_artifact"],
+        "stored_run_fingerprint_input_path": rel["run_fingerprint_input"],
+        "stored_run_artifacts_dir": rel["run_artifacts_dir"],
+        "openclaw_evidence": build_openclaw_workflow_evidence_summary(storage.root, run_artifact),
+    }
 
 
 class WorkflowRunClientFactory(Protocol):
@@ -380,6 +410,15 @@ class WorkflowOrchestrator:
                 evaluation_usage=UsageSummary(),
                 usage=run_u,
                 warnings=_run_warnings(run_artifact),
+                **_storage_fields_for_run_row(
+                    self._storage,
+                    suite_id=suite_config.suite_id,
+                    run_profile_fingerprint=run_profile_fingerprint,
+                    model_id=model.model_id,
+                    case_id=case_manifest.case_id,
+                    repetition_index=repetition_index,
+                    run_artifact=run_artifact,
+                ),
             )
 
         evaluation_input = build_evaluation_fingerprint_input(evaluation_profile=evaluation_profile)
@@ -505,6 +544,15 @@ class WorkflowOrchestrator:
                             ),
                         ]
                     ),
+                    **_storage_fields_for_run_row(
+                        self._storage,
+                        suite_id=suite_config.suite_id,
+                        run_profile_fingerprint=run_profile_fingerprint,
+                        model_id=model.model_id,
+                        case_id=case_manifest.case_id,
+                        repetition_index=repetition_index,
+                        run_artifact=run_artifact,
+                    ),
                 )
             self._storage.write_case_final_result(
                 suite_id=suite_config.suite_id,
@@ -581,6 +629,15 @@ class WorkflowOrchestrator:
                             ),
                         ]
                     ),
+                    **_storage_fields_for_run_row(
+                        self._storage,
+                        suite_id=suite_config.suite_id,
+                        run_profile_fingerprint=run_profile_fingerprint,
+                        model_id=model.model_id,
+                        case_id=case_manifest.case_id,
+                        repetition_index=repetition_index,
+                        run_artifact=run_artifact,
+                    ),
                 )
             self._storage.write_case_final_result(
                 suite_id=suite_config.suite_id,
@@ -614,6 +671,15 @@ class WorkflowOrchestrator:
             evaluation_usage=judge_usage,
             usage=_combine_usage(run_u, judge_usage),
             warnings=_deduplicate([*_run_warnings(run_artifact), *final_result.warnings]),
+            **_storage_fields_for_run_row(
+                self._storage,
+                suite_id=suite_config.suite_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                model_id=model.model_id,
+                case_id=case_manifest.case_id,
+                repetition_index=repetition_index,
+                run_artifact=run_artifact,
+            ),
         )
 
     def _report_model_case(
@@ -726,6 +792,15 @@ class WorkflowOrchestrator:
                 evaluation_usage=UsageSummary(),
                 usage=run_u,
                 warnings=["Final evaluation result is missing for this model/case pair."],
+                **_storage_fields_for_run_row(
+                    self._storage,
+                    suite_id=suite_id,
+                    run_profile_fingerprint=run_profile_fingerprint,
+                    model_id=model.model_id,
+                    case_id=case_manifest.case_id,
+                    repetition_index=repetition_index,
+                    run_artifact=run_artifact,
+                ),
             )
 
         judge_usage = UsageSummary()
@@ -776,6 +851,15 @@ class WorkflowOrchestrator:
             evaluation_usage=judge_usage,
             usage=_combine_usage(run_u, judge_usage),
             warnings=_deduplicate([*_run_warnings(run_artifact), *final_result.warnings]),
+            **_storage_fields_for_run_row(
+                self._storage,
+                suite_id=suite_id,
+                run_profile_fingerprint=run_profile_fingerprint,
+                model_id=model.model_id,
+                case_id=case_manifest.case_id,
+                repetition_index=repetition_index,
+                run_artifact=run_artifact,
+            ),
         )
 
     def _ensure_run_space(

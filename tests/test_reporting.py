@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import pytest
 
 from personal_agent_eval.aggregation.models import DimensionScores
@@ -12,6 +14,7 @@ from personal_agent_eval.workflow import (
     WorkflowResult,
     WorkflowSummary,
 )
+from personal_agent_eval.workflow.models import OpenClawWorkflowEvidenceSummary
 
 RUN_FP_A = "a" * 64
 RUN_FP_B = "b" * 64
@@ -87,6 +90,56 @@ def test_structured_report_is_json_serializable_and_preserves_fingerprints() -> 
         "minimax/minimax-m2.7",
         "openai/gpt-5.4",
     }
+
+
+def test_structured_report_includes_openclaw_storage_fields_when_present() -> None:
+    oc = OpenClawWorkflowEvidenceSummary(
+        agent_id="support_agent",
+        container_image="ghcr.io/openclaw/openclaw-base:0.1.0",
+        evidence_paths={
+            "openclaw_generated_config": (
+                "outputs/runs/suit_s/run_profile_aaaaaa/m/c/run_1.artifacts/x--openclaw.json"
+            ),
+        },
+    )
+    result = WorkflowResult(
+        command="run",
+        workspace_root="/w",
+        suite_id="s",
+        run_profile_id="rp",
+        results=[
+            WorkflowCaseResult(
+                model_id="m",
+                case_id="c",
+                run_fingerprint=RUN_FP_A,
+                run_action=RunAction.EXECUTED,
+                run_status="success",
+                runner_type="openclaw",
+                stored_run_artifact_path="outputs/runs/suit_s/run_profile_aaaaaa/m/c/run_1.json",
+                stored_run_fingerprint_input_path=(
+                    "outputs/runs/suit_s/run_profile_aaaaaa/m/c/run_1.fingerprint_input.json"
+                ),
+                stored_run_artifacts_dir="outputs/runs/suit_s/run_profile_aaaaaa/m/c/run_1.artifacts",
+                openclaw_evidence=oc,
+            ),
+        ],
+        summary=WorkflowSummary(
+            models_requested=1,
+            cases_requested=1,
+            model_case_pairs=1,
+            runs_executed=1,
+            runs_reused=0,
+            evaluations_executed=0,
+            evaluations_reused=0,
+            final_results_recomputed=0,
+        ),
+    )
+    row = cast(dict[str, Any], WorkflowReporter().build_report(result).case_results[0])
+    assert row["runner_type"] == "openclaw"
+    assert cast(str, row["stored_run_artifact_path"]).endswith("run_1.json")
+    oc_row = cast(dict[str, Any], row["openclaw_evidence"])
+    assert oc_row["agent_id"] == "support_agent"
+    assert "openclaw_generated_config" in cast(dict[str, Any], oc_row["evidence_paths"])
 
 
 def _workflow_result_fixture() -> WorkflowResult:

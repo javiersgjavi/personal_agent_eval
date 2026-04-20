@@ -19,6 +19,13 @@ include:
 - `run_usage` / `evaluation_usage`: token and cost for the subject run vs judge calls
 - `usage`: combined total for that row
 - `run_latency_seconds`: wall-clock duration of the subject run (from the run artifact `timing`)
+- **Storage hints** (when a run artifact exists for that row): `runner_type`,
+  `stored_run_artifact_path`, `stored_run_fingerprint_input_path`, and `stored_run_artifacts_dir`
+  as paths **relative to the workspace root** (the same root that contains `outputs/`).
+- **OpenClaw**: optional `openclaw_evidence` with `agent_id`, `container_image`, and
+  `evidence_paths` (maps each stable `artifact_type` to a workspace-relative file path). These
+  fields are omitted on rows without a run (for example missing artifacts) and omitted for
+  aggregated multi-repetition rows where per-repetition paths do not apply.
 
 Example (abbreviated):
 

@@ -212,6 +212,44 @@ class FilesystemStorage:
             / f"run_{repetition_index + 1}.artifacts"
         )
 
+    def run_case_storage_relative_paths(
+        self,
+        *,
+        suite_id: str,
+        run_profile_fingerprint: str,
+        model_id: str,
+        case_id: str,
+        repetition_index: int,
+    ) -> dict[str, str]:
+        """Paths under ``self.root`` for the canonical run bundle (POSIX, relative)."""
+        root = self.root.resolve()
+        run_json = self.case_run_path(
+            suite_id,
+            run_profile_fingerprint,
+            model_id,
+            case_id,
+            repetition_index,
+        ).resolve()
+        fp_input = self.case_run_fingerprint_input_path(
+            suite_id,
+            run_profile_fingerprint,
+            model_id,
+            case_id,
+            repetition_index,
+        ).resolve()
+        bundle = self.case_run_artifacts_path(
+            suite_id,
+            run_profile_fingerprint,
+            model_id,
+            case_id,
+            repetition_index,
+        ).resolve()
+        return {
+            "run_artifact": run_json.relative_to(root).as_posix(),
+            "run_fingerprint_input": fp_input.relative_to(root).as_posix(),
+            "run_artifacts_dir": bundle.relative_to(root).as_posix(),
+        }
+
     def case_judge_path(
         self,
         suite_id: str,
@@ -336,6 +374,7 @@ class FilesystemStorage:
                 model_id=model_id,
                 case_id=artifact.identity.case_id,
             )
+        oc_evidence = parse_openclaw_run_evidence(artifact.runner_metadata)
         manifest = manifest.model_copy(
             update={
                 "iterations": self._replace_run_iteration(
@@ -344,7 +383,9 @@ class FilesystemStorage:
                         repetition_index=repetition_index,
                         run_fingerprint=run_fingerprint,
                     ),
-                )
+                ),
+                "runner_type": artifact.identity.runner_type,
+                "openclaw_agent_id": oc_evidence.agent_id if oc_evidence is not None else None,
             }
         )
         self._write_model(manifest_path, manifest)

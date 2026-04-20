@@ -52,6 +52,14 @@ class RunCaseStorageManifest(ArtifactModel):
     model_id: str = Field(min_length=1)
     case_id: str = Field(min_length=1)
     iterations: list[RunIterationRecord] = Field(default_factory=list)
+    runner_type: str | None = Field(
+        default=None,
+        description="Runner for this case when known (e.g. openclaw vs llm_probe).",
+    )
+    openclaw_agent_id: str | None = Field(
+        default=None,
+        description="Resolved OpenClaw agent_id when runner_type is openclaw.",
+    )
 
 
 class EvaluationIterationRecord(ArtifactModel):

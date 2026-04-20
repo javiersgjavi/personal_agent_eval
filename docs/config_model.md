@@ -207,7 +207,10 @@ outputs/
 │       └── run_profile_{fp6}/
 │           └── {model_id}/
 │               └── {case_id}/
+│                   ├── manifest.json
 │                   ├── run_1.json
+│                   ├── run_1.artifacts/   ← copied refs (e.g. OpenClaw evidence)
+│                   ├── run_1.fingerprint_input.json
 │                   └── run_2.json        ← when run_repetitions > 1
 └── evaluations/
     └── suit_{suite_id}/

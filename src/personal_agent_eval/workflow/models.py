@@ -39,6 +39,17 @@ class EvaluationAction(StrEnum):
     SKIPPED = "skipped"
 
 
+class OpenClawWorkflowEvidenceSummary(ArtifactModel):
+    """OpenClaw evidence locations relative to the workflow workspace root."""
+
+    agent_id: str = Field(min_length=1)
+    container_image: str | None = None
+    evidence_paths: dict[str, str] = Field(
+        default_factory=dict,
+        description="Maps stable artifact_type (or key_output key) to workspace-relative paths.",
+    )
+
+
 class WorkflowCaseResult(ArtifactModel):
     """One workflow result row scoped to one model/case pair."""
 
@@ -67,6 +78,27 @@ class WorkflowCaseResult(ArtifactModel):
     )
     usage: UsageSummary = Field(default_factory=UsageSummary)
     warnings: list[str] = Field(default_factory=list)
+    runner_type: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Subject run runner when a run artifact is available for this row.",
+    )
+    stored_run_artifact_path: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Path to run_N.json relative to the workspace root.",
+    )
+    stored_run_fingerprint_input_path: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Path to run_N.fingerprint_input.json relative to the workspace root.",
+    )
+    stored_run_artifacts_dir: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Path to run_N.artifacts/ relative to the workspace root.",
+    )
+    openclaw_evidence: OpenClawWorkflowEvidenceSummary | None = None
 
 
 class WorkflowSummary(ArtifactModel):

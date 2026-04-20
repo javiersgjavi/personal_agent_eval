@@ -134,7 +134,9 @@ Within one `<model_id>/<case_id>/` directory:
   generated config, raw trace, logs, snapshots, diffs, and key outputs)
 - `run_N.fingerprint_input.json` stores the full normalized input payload used to derive that
   repetition's `run_fingerprint`
-- `manifest.json` maps repetition indices back to their full `run_fingerprint` values
+- `manifest.json` maps repetition indices back to their full `run_fingerprint` values. The case-level
+  run manifest may also record `runner_type` and, for OpenClaw runs, `openclaw_agent_id`, so stored
+  campaigns remain inspectable without opening each `run_N.json`.
 
 Evaluation spaces are organized similarly, but scoped by both the run-profile fingerprint and the
 evaluation fingerprint:
