@@ -164,3 +164,40 @@ def test_tapas_openclaw_cases_are_discovered() -> None:
     cases = discover_cases(BUNDLED_WORKSPACE_ROOT)
     assert cases["tapas_x7_openclaw"].config.runner.type == "openclaw"
     assert cases["tapas_h3_openclaw"].config.runner.type == "openclaw"
+
+
+def test_tapas_reasoning_suite_resolves_minimax_for_openclaw(tmp_path: Path) -> None:
+    """Tapas H3/X7 suite uses a real OpenRouter slug (not gpt-example) so runs can call the API."""
+    suite = load_suite_config(
+        BUNDLED_WORKSPACE_ROOT / "configs" / "suites" / "tapas_reasoning_openclaw_suite.yaml"
+    )
+    assert len(suite.models) == 1
+    model = suite.models[0]
+    assert model.model_id == "minimax_m27"
+    raw = model.model_dump(mode="json").get("requested_model") or ""
+    assert openrouter_primary_model_ref(raw) == "openrouter/minimax/minimax-m2.7"
+
+    case = load_test_config(
+        BUNDLED_WORKSPACE_ROOT / "configs" / "cases" / "tapas_h3_openclaw" / "test.yaml"
+    )
+    run_profile = load_run_profile(
+        BUNDLED_WORKSPACE_ROOT / "configs" / "run_profiles" / "openclaw_tapas.yaml"
+    )
+    agent = load_openclaw_agent(BUNDLED_WORKSPACE_ROOT / "configs" / "agents" / "tapas")
+    assert agent.workspace_dir is not None
+    materialized = materialize_openclaw_workspace(
+        template_dir=agent.workspace_dir,
+        workspace_dir=tmp_path / "ws",
+    )
+    resolved = resolve_openclaw_config(
+        case_config=case,
+        run_profile=run_profile,
+        model_selection=model,
+        agent_config=agent,
+        workspace_dir=materialized.workspace_dir,
+        state_dir=tmp_path / "state",
+    )
+    assert resolved.openclaw_primary_model_ref == "openrouter/minimax/minimax-m2.7"
+    generated = render_openclaw_json(resolved)
+    assert generated.agents.defaults["model"]["primary"] == "openrouter/minimax/minimax-m2.7"
+    assert generated.agents.agent_list[0]["model"] == "openrouter/minimax/minimax-m2.7"

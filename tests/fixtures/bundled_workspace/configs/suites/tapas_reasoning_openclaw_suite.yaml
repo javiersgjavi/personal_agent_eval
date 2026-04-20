@@ -2,9 +2,9 @@ schema_version: 1
 suite_id: tapas_reasoning_openclaw_suite
 title: Tapas OpenClaw — X7 + H3 reference scenarios
 models:
-  - model_id: baseline_model
-    provider: openai
-    model_name: gpt-example
+  - model_id: minimax_m27
+    requested_model: minimax/minimax-m2.7
+    label: minimax/minimax-m2.7 (OpenRouter)
 case_selection:
   include_case_ids:
     - tapas_x7_openclaw
