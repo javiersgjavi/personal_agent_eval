@@ -30,6 +30,10 @@ class OpenClawRunProfile(ConfigModel):
     agent_id: str = Field(pattern=ID_PATTERN)
     image: str
     timeout_seconds: int = Field(gt=0)
+    docker_cli: str = Field(
+        default="docker",
+        description="OCI runtime CLI (docker, podman, …) used to run the pinned image.",
+    )
 
     @field_validator("image")
     @classmethod
@@ -37,6 +41,14 @@ class OpenClawRunProfile(ConfigModel):
         stripped = value.strip()
         if not stripped:
             raise ValueError("openclaw.image must be a non-empty string.")
+        return stripped
+
+    @field_validator("docker_cli")
+    @classmethod
+    def _validate_docker_cli(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("openclaw.docker_cli must be a non-empty string.")
         return stripped
 
 

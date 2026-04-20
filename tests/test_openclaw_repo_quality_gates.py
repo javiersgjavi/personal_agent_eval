@@ -12,7 +12,11 @@ from personal_agent_eval.config import (
     load_test_config,
 )
 from personal_agent_eval.domains.openclaw import materialize_openclaw_workspace
-from personal_agent_eval.domains.openclaw.resolution import resolve_openclaw_config
+from personal_agent_eval.domains.openclaw.resolution import (
+    openrouter_primary_model_ref,
+    render_openclaw_json,
+    resolve_openclaw_config,
+)
 from personal_agent_eval.fingerprints import (
     build_openclaw_agent_fingerprint_input,
     build_run_fingerprint_input,
@@ -96,7 +100,22 @@ def test_repo_resolve_openclaw_config_matches_agent_and_model(tmp_path: Path) ->
     )
     assert resolved.agent_id == "support_agent"
     assert resolved.requested_model == "openai/gpt-example"
+    assert resolved.openclaw_primary_model_ref == "openrouter/openai/gpt-example"
     assert resolved.container_image == "ghcr.io/openclaw/openclaw-base:0.1.0"
+    assert resolved.openclaw_workspace_path_in_config == str(materialized.workspace_dir.resolve())
+    generated = render_openclaw_json(resolved)
+    assert generated.models["default"] == "openrouter/openai/gpt-example"
+    assert generated.agents.defaults["model"]["primary"] == "openrouter/openai/gpt-example"
+
+
+def test_repo_legacy_minimax_suite_models_map_to_openrouter_refs() -> None:
+    suite = load_suite_config(REPO_ROOT / "configs" / "suites" / "legacy_h1_h4_x7_h8_minimax.yaml")
+    m27 = next(m for m in suite.models if m.model_id == "minimax_m27")
+    raw_m27 = m27.model_dump(mode="json").get("requested_model") or ""
+    assert openrouter_primary_model_ref(raw_m27) == "openrouter/minimax/minimax-m2.7"
+    glm = next(m for m in suite.models if m.model_id == "glm5_turbo")
+    raw_glm = glm.model_dump(mode="json").get("requested_model") or ""
+    assert openrouter_primary_model_ref(raw_glm) == "openrouter/z-ai/glm-5-turbo"
 
 
 def test_repo_suite_ids_are_unique() -> None:

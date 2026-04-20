@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import json
 import shutil
-from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 
+from helpers.docker_subprocess_stub import patch_openclaw_docker_run
 from personal_agent_eval.config import load_evaluation_profile, load_run_profile
 from personal_agent_eval.domains.llm_probe.openrouter import (
     OpenRouterAssistantMessage,
     OpenRouterChatResponse,
 )
-from personal_agent_eval.domains.openclaw import OpenClawCommandResult, OpenClawExecutor
 from personal_agent_eval.fingerprints import build_run_profile_fingerprint
 from personal_agent_eval.judge.models import JudgeIterationStatus, RawJudgeRunResult
 from personal_agent_eval.judge.system_prompt import resolve_judge_system_prompt_details
@@ -73,41 +73,6 @@ class FakeJudgeClient:
             request_messages=[dict(message) for message in invocation.messages],
             response_content=json.dumps(parsed_response),
             parsed_response=parsed_response,
-        )
-
-
-class FakeOpenClawExecutor(OpenClawExecutor):
-    """Same behavior as in test_openclaw_runner (local stub for workflow tests)."""
-
-    def validate_config(
-        self,
-        *,
-        config_path: Path,
-        env: Mapping[str, str],
-    ) -> OpenClawCommandResult:
-        del config_path, env
-        return OpenClawCommandResult(returncode=0, stdout='{"ok":true}\n')
-
-    def run_agent(
-        self,
-        *,
-        agent_id: str,
-        message: str,
-        config_path: Path,
-        env: Mapping[str, str],
-        timeout_seconds: int,
-    ) -> OpenClawCommandResult:
-        del agent_id, env, timeout_seconds
-        payload = json.loads(config_path.read_text(encoding="utf-8"))
-        workspace_dir = Path(payload["agents"]["defaults"]["workspace"])
-        (workspace_dir / "report.md").write_text(
-            f"# Report\n\n{message[:32]}\n",
-            encoding="utf-8",
-        )
-        return OpenClawCommandResult(
-            returncode=0,
-            stdout=json.dumps({"content": "Generated report.md"}),
-            stderr="mock log output\n",
         )
 
 
@@ -272,12 +237,12 @@ def test_report_reads_existing_artifacts_without_reexecution(tmp_path: Path) -> 
     assert all(result.final_dimensions is not None for result in report.results)
 
 
-def test_openclaw_workflow_run_executes_then_reuses(tmp_path: Path) -> None:
+def test_openclaw_workflow_run_executes_then_reuses(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    patch_openclaw_docker_run(monkeypatch)
     workspace_root = _build_openclaw_workspace(tmp_path)
-    workflow = WorkflowOrchestrator(
-        storage_root=workspace_root,
-        openclaw_executor_factory=FakeOpenClawExecutor,
-    )
+    workflow = WorkflowOrchestrator(storage_root=workspace_root)
 
     first = workflow.run(
         suite_path=workspace_root / "configs" / "suites" / "openclaw_suite.yaml",
@@ -297,12 +262,12 @@ def test_openclaw_workflow_run_executes_then_reuses(tmp_path: Path) -> None:
     assert second.results[0].run_action is RunAction.REUSED
 
 
-def test_openclaw_workflow_report_finds_stored_run(tmp_path: Path) -> None:
+def test_openclaw_workflow_report_finds_stored_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    patch_openclaw_docker_run(monkeypatch)
     workspace_root = _build_openclaw_workspace(tmp_path)
-    workflow = WorkflowOrchestrator(
-        storage_root=workspace_root,
-        openclaw_executor_factory=FakeOpenClawExecutor,
-    )
+    workflow = WorkflowOrchestrator(storage_root=workspace_root)
     workflow.run(
         suite_path=workspace_root / "configs" / "suites" / "openclaw_suite.yaml",
         run_profile_path=workspace_root / "configs" / "run_profiles" / "openclaw.yaml",

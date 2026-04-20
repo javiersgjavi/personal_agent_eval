@@ -27,7 +27,7 @@ from personal_agent_eval.config.suite_config import ModelConfig
 from personal_agent_eval.deterministic import DeterministicEvaluator
 from personal_agent_eval.deterministic.models import DeterministicEvaluationResult
 from personal_agent_eval.domains.llm_probe import OpenRouterClient, run_llm_probe_case
-from personal_agent_eval.domains.openclaw import OpenClawExecutor, run_openclaw_case
+from personal_agent_eval.domains.openclaw import run_openclaw_case
 from personal_agent_eval.domains.openclaw.workspace import materialize_openclaw_workspace
 from personal_agent_eval.fingerprints import (
     RunFingerprintInput,
@@ -108,13 +108,6 @@ class WorkflowJudgeClientFactory(Protocol):
         """Return one client instance."""
 
 
-class WorkflowOpenClawExecutorFactory(Protocol):
-    """Factory for OpenClaw subprocess/command executors."""
-
-    def __call__(self) -> OpenClawExecutor:
-        """Return one executor instance per run execution."""
-
-
 class WorkflowOrchestrator:
     """Execute `pae` run/eval workflows over suite models and cases."""
 
@@ -124,12 +117,10 @@ class WorkflowOrchestrator:
         storage_root: str | Path,
         run_client_factory: WorkflowRunClientFactory | None = None,
         judge_client_factory: WorkflowJudgeClientFactory | None = None,
-        openclaw_executor_factory: WorkflowOpenClawExecutorFactory | None = None,
     ) -> None:
         self._storage = FilesystemStorage(storage_root)
         self._run_client_factory = run_client_factory or OpenRouterClient
         self._judge_client_factory = judge_client_factory or OpenRouterJudgeClient
-        self._openclaw_executor_factory = openclaw_executor_factory
 
     def run(
         self,
@@ -950,11 +941,6 @@ class WorkflowOrchestrator:
                 raise ValueError("OpenClaw cases require run_profile.openclaw to be configured.")
             agent_dir = workspace_root / "configs" / "agents" / run_profile.openclaw.agent_id
             agent_config = load_openclaw_agent(agent_dir)
-            executor = (
-                self._openclaw_executor_factory()
-                if self._openclaw_executor_factory is not None
-                else None
-            )
             return run_openclaw_case(
                 run_id=run_id,
                 suite_id=suite_id,
@@ -962,7 +948,6 @@ class WorkflowOrchestrator:
                 run_profile=run_profile,
                 model_selection=model,
                 agent_config=agent_config,
-                executor=executor,
             )
         raise NotImplementedError(
             f"Runner '{case_manifest.config.runner.type}' is not supported in the workflow."

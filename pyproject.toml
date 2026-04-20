@@ -72,7 +72,7 @@ indent-style = "space"
 [tool.ty]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "tests"]
 testpaths = ["tests"]
 markers = [
   "openrouter_e2e: real OpenRouter smoke test gated by environment variables and network access",

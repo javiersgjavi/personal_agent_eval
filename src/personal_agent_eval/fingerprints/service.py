@@ -15,6 +15,7 @@ from personal_agent_eval.config.evaluation_profile import EvaluationProfileConfi
 from personal_agent_eval.config.run_profile import RunProfileConfig
 from personal_agent_eval.config.suite_config import ModelConfig
 from personal_agent_eval.config.test_config import Message, TestConfig
+from personal_agent_eval.domains.openclaw.resolution import openrouter_primary_model_ref
 from personal_agent_eval.domains.openclaw.workspace import OpenClawWorkspaceManifest
 from personal_agent_eval.fingerprints.models import (
     AnchorReferenceFingerprint,
@@ -222,6 +223,7 @@ def _resolve_runner_settings_for_fingerprint(
     if case_config.runner.type == "openclaw":
         return _resolve_openclaw_runner_settings_for_fingerprint(
             run_profile=run_profile,
+            model_selection=model_selection,
             repetition_index=repetition_index,
             openclaw_agent_fingerprint=openclaw_agent_fingerprint,
         )
@@ -251,6 +253,7 @@ def _resolve_llm_probe_execution_settings(
 def _resolve_openclaw_runner_settings_for_fingerprint(
     *,
     run_profile: RunProfileConfig,
+    model_selection: ModelConfig,
     repetition_index: int | None,
     openclaw_agent_fingerprint: str | None,
 ) -> dict[str, Any]:
@@ -260,9 +263,12 @@ def _resolve_openclaw_runner_settings_for_fingerprint(
         )
     if not openclaw_agent_fingerprint:
         raise ValueError("OpenClaw run fingerprinting requires an OpenClaw agent fingerprint.")
+    raw_model = _resolve_requested_model(model_selection)
     resolved: dict[str, Any] = {
         "agent_fingerprint": openclaw_agent_fingerprint,
         "image": run_profile.openclaw.image,
+        "docker_cli": run_profile.openclaw.docker_cli,
+        "openclaw_primary_model_ref": openrouter_primary_model_ref(raw_model),
     }
     if repetition_index is not None:
         resolved["run_repetition_index"] = repetition_index

@@ -304,7 +304,7 @@ controls. Does not implement any runner logic itself.
 | `runner_defaults` | mapping | no | `{}` | Default runner settings applied to every case |
 | `model_overrides` | mapping of model_id → mapping | no | `{}` | Per-model setting overrides |
 | `execution_policy` | `ExecutionPolicy` | no | see below | Concurrency and error-handling controls |
-| `openclaw` | `OpenClawRunProfile \| null` | no | `null` | OpenClaw runtime selection (`agent_id`, `image`, `timeout_seconds`) |
+| `openclaw` | `OpenClawRunProfile \| null` | no | `null` | OpenClaw runtime (`agent_id`, `image`, `timeout_seconds`, optional `docker_cli`) |
 
 ### `runner_defaults` and `model_overrides`
 
@@ -331,8 +331,9 @@ runtime image for OpenClaw execution:
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `agent_id` | string (slug) | yes | Resolves `configs/agents/<agent_id>/` |
-| `image` | string | yes | Container image used by the harness |
+| `image` | string | yes | OCI image for `openclaw` CLI (validate + agent turn) |
 | `timeout_seconds` | int > 0 | yes | Wall-clock timeout for the OpenClaw run |
+| `docker_cli` | string | no (`docker`) | Executable for `docker run` (e.g. `podman`) |
 
 Example:
 
@@ -349,7 +350,9 @@ execution_policy:
 ```
 
 `runner_defaults` and `model_overrides` continue to apply to `llm_probe`. OpenClaw uses
-the dedicated `openclaw` block instead of encoding runtime selection in free-form keys.
+the dedicated `openclaw` block instead of encoding runtime selection in free-form keys. Execution is
+**Docker/OCI-only** for OpenClaw cases; provider keys (e.g. `OPENROUTER_API_KEY`) must be present in
+the host environment so they can be passed into the container.
 
 ### Generated `openclaw.json`
 
@@ -364,9 +367,12 @@ Current merge and injection rules:
    - `openclaw.agents_defaults` -> `agents.defaults`
    - `openclaw.agent` -> the single `agents.list[0]` entry
    - `openclaw.model_defaults` -> non-primary `models` settings such as `aliases` and `fallbacks`
-3. inject the benchmark-selected primary model into:
+3. resolve the suite model the same way as `llm_probe` (`requested_model` → …), then map it to an
+   **OpenRouter ref** `openrouter/<provider>/<model>` for:
    - `models.default`
    - `agents.list[0].model`
+   - `agents.defaults.model.primary`
+   - string entries in `models.fallbacks` (when present)
 4. inject the ephemeral workspace path into `agents.defaults.workspace`
 
 The generated config does **not** treat the OpenClaw state directory as part of the

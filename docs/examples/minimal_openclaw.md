@@ -6,9 +6,11 @@ itself** (gateway, channels, global config), see the official docs: [OpenClaw do
 
 The benchmark does **not** use `~/.openclaw/openclaw.json` as the source of truth for evaluation
 runs. Instead, for each run it materializes a workspace, writes a **generated** `openclaw.json`,
-sets `OPENCLAW_STATE_DIR`, and invokes the `openclaw` CLI (validate + local agent turn). Your
-machine still needs the `openclaw` executable on `PATH` if you execute real harness runs (tests
-often inject a fake executor).
+sets `OPENCLAW_STATE_DIR`, and invokes the `openclaw` CLI **inside the container image** pinned in
+the run profile (`docker run`, validate + local agent turn). Your machine needs **Docker** (or a
+compatible OCI runtime via `openclaw.docker_cli`) and network access to pull that image. Set
+`OPENROUTER_API_KEY` on the host so OpenClaw inside the container can call models via OpenRouter.
+Unit tests patch `subprocess.run` instead of running real containers.
 
 ## Layout (shipped in this repo)
 
@@ -25,7 +27,7 @@ filename id: `judge_gpt54_mini`).
 
 ## Commands (from repository root)
 
-Run only (requires working OpenClaw CLI or tests with injected executor):
+Run only (requires Docker and the pinned OpenClaw image):
 
 ```bash
 uv run pae run \

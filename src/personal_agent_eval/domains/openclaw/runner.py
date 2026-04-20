@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
-from typing import Any, Literal, Protocol
+from typing import Any, Literal
 
 from personal_agent_eval.artifacts import (
     LlmExecutionParameters,
@@ -48,28 +48,8 @@ from personal_agent_eval.domains.openclaw.workspace import materialize_openclaw_
 
 MessageRole = Literal["system", "user", "assistant", "tool"]
 
-
-class OpenClawExecutor(Protocol):
-    """Minimal command surface needed by the benchmark harness."""
-
-    def validate_config(
-        self,
-        *,
-        config_path: Path,
-        env: Mapping[str, str],
-    ) -> OpenClawCommandResult:
-        """Validate one generated OpenClaw config."""
-
-    def run_agent(
-        self,
-        *,
-        agent_id: str,
-        message: str,
-        config_path: Path,
-        env: Mapping[str, str],
-        timeout_seconds: int,
-    ) -> OpenClawCommandResult:
-        """Run one local OpenClaw agent turn."""
+# In-container workdir; must stay aligned with workspace_path_in_openclaw_config for Docker runs.
+OPENCLAW_DOCKER_WORKDIR = "/work"
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,8 +62,19 @@ class OpenClawCommandResult:
     timed_out: bool = False
 
 
-class SubprocessOpenClawExecutor:
-    """Best-effort subprocess-backed OpenClaw executor."""
+class DockerOpenClawExecutor:
+    """Run the OpenClaw CLI only inside the pinned image (the only supported path)."""
+
+    def __init__(
+        self,
+        *,
+        image: str,
+        docker_cli: str = "docker",
+        workdir: str = OPENCLAW_DOCKER_WORKDIR,
+    ) -> None:
+        self._image = image.strip()
+        self._docker_cli = docker_cli.strip()
+        self._workdir = workdir
 
     def validate_config(
         self,
@@ -91,12 +82,15 @@ class SubprocessOpenClawExecutor:
         config_path: Path,
         env: Mapping[str, str],
     ) -> OpenClawCommandResult:
-        del config_path
-        return _run_subprocess(
-            ["openclaw", "config", "validate", "--json"],
+        argv = _docker_openclaw_argv(
+            docker_cli=self._docker_cli,
+            image=self._image,
+            workdir=self._workdir,
+            config_path=config_path,
             env=env,
-            timeout_seconds=30,
+            inner_command=["openclaw", "config", "validate", "--json"],
         )
+        return _run_subprocess(argv, env=os.environ, timeout_seconds=30)
 
     def run_agent(
         self,
@@ -107,9 +101,13 @@ class SubprocessOpenClawExecutor:
         env: Mapping[str, str],
         timeout_seconds: int,
     ) -> OpenClawCommandResult:
-        del config_path
-        return _run_subprocess(
-            [
+        argv = _docker_openclaw_argv(
+            docker_cli=self._docker_cli,
+            image=self._image,
+            workdir=self._workdir,
+            config_path=config_path,
+            env=env,
+            inner_command=[
                 "openclaw",
                 "agent",
                 "--local",
@@ -121,9 +119,8 @@ class SubprocessOpenClawExecutor:
                 "--timeout",
                 str(timeout_seconds),
             ],
-            env=env,
-            timeout_seconds=timeout_seconds,
         )
+        return _run_subprocess(argv, env=os.environ, timeout_seconds=timeout_seconds)
 
 
 def run_openclaw_case(
@@ -134,11 +131,14 @@ def run_openclaw_case(
     run_profile: RunProfileConfig,
     model_selection: ModelConfig,
     agent_config: OpenClawAgentConfig,
-    executor: OpenClawExecutor | None = None,
     runtime_root: Path | None = None,
     queued_at: datetime | None = None,
 ) -> RunArtifact:
-    """Run one OpenClaw case and capture external evidence refs."""
+    """Run one OpenClaw case and capture external evidence refs.
+
+    The OpenClaw CLI is always invoked via ``docker run`` using the run profile image; there is
+    no host-local execution path.
+    """
     if case_config.runner.type != "openclaw":
         raise ValueError("run_openclaw_case() requires runner.type='openclaw'.")
     if run_profile.openclaw is None:
@@ -146,7 +146,11 @@ def run_openclaw_case(
     if agent_config.workspace_dir is None:
         raise ValueError("OpenClaw execution requires agent_config.workspace_dir.")
 
-    executor = executor or SubprocessOpenClawExecutor()
+    executor = DockerOpenClawExecutor(
+        image=run_profile.openclaw.image,
+        docker_cli=run_profile.openclaw.docker_cli,
+    )
+    workspace_path_in_openclaw_config = f"{OPENCLAW_DOCKER_WORKDIR}/workspace"
     queued_timestamp = queued_at or datetime.now(UTC)
     started_at = datetime.now(UTC)
     started_monotonic = perf_counter()
@@ -161,6 +165,14 @@ def run_openclaw_case(
     workspace_diff_path = harness_root / "workspace.diff"
 
     trace_builder = _TraceBuilder()
+    trace_builder.add_runner_event(
+        name="openclaw_executor_selected",
+        detail="Docker-only execution using the run profile image.",
+        metadata={
+            "pinned_image": run_profile.openclaw.image,
+            "docker_cli": run_profile.openclaw.docker_cli,
+        },
+    )
     resolved_config = resolve_openclaw_config(
         case_config=case_config,
         run_profile=run_profile,
@@ -168,6 +180,7 @@ def run_openclaw_case(
         agent_config=agent_config,
         workspace_dir=workspace_dir,
         state_dir=state_dir,
+        workspace_path_in_openclaw_config=workspace_path_in_openclaw_config,
     )
     request = _build_request_model(
         case_config=case_config,
@@ -390,6 +403,8 @@ def _build_request_model(
             "openclaw": {
                 "agent_id": agent_config.agent_id,
                 "container_image": run_profile.openclaw.image if run_profile.openclaw else None,
+                "docker_cli": run_profile.openclaw.docker_cli if run_profile.openclaw else None,
+                "execution": "docker",
             },
         },
     )
@@ -708,6 +723,40 @@ class _TraceBuilder:
                 content=content,
             )
         )
+
+
+def _remap_openclaw_paths_for_container(env: Mapping[str, str], *, workdir: str) -> dict[str, str]:
+    merged = dict(env)
+    merged["OPENCLAW_CONFIG_PATH"] = f"{workdir}/openclaw.json"
+    merged["OPENCLAW_STATE_DIR"] = f"{workdir}/state"
+    return merged
+
+
+def _docker_openclaw_argv(
+    *,
+    docker_cli: str,
+    image: str,
+    workdir: str,
+    config_path: Path,
+    env: Mapping[str, str],
+    inner_command: list[str],
+) -> list[str]:
+    host_root = config_path.parent.resolve()
+    container_env = _remap_openclaw_paths_for_container(env, workdir=workdir)
+    argv: list[str] = [
+        docker_cli,
+        "run",
+        "--rm",
+        "-v",
+        f"{host_root}:{workdir}:rw",
+        "-w",
+        workdir,
+    ]
+    for key, value in sorted(container_env.items()):
+        argv.extend(["-e", f"{key}={value}"])
+    argv.append(image)
+    argv.extend(inner_command)
+    return argv
 
 
 def _run_subprocess(

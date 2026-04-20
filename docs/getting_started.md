@@ -36,10 +36,13 @@ V1 now exposes these orchestration commands:
 - `pae report`
 
 **OpenClaw:** cases with `runner.type: openclaw` use the same commands. Choose a run profile
-that defines `openclaw` (`agent_id`, `image`, `timeout_seconds`) and keep the reusable agent
-under `configs/agents/<agent_id>/` (`agent.yaml` plus `workspace/`). The workflow resolves the
-agent into run fingerprints, executes the OpenClaw harness (CLI subprocess unless you inject a
-custom executor in library code), and persists artifacts for reuse like `llm_probe` runs.
+that defines `openclaw` (`agent_id`, `image`, `timeout_seconds`, optional `docker_cli`) and keep the
+reusable agent under `configs/agents/<agent_id>/` (`agent.yaml` plus `workspace/`). The workflow
+resolves the agent into run fingerprints, runs the OpenClaw harness **only via Docker** using that
+pinned image (`openclaw` CLI inside the container), and persists artifacts for reuse like
+`llm_probe` runs. The generated `openclaw.json` uses **OpenRouter-style** model refs
+(`openrouter/…` and `agents.defaults.model.primary`); set `OPENROUTER_API_KEY` (and any other
+required provider env) on the host before running.
 
 For **upstream OpenClaw** (install, gateway, channels, day-to-day config), see the official
 documentation: [docs.openclaw.ai](https://docs.openclaw.ai). This framework generates a **per-run**

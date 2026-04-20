@@ -17,6 +17,16 @@ from personal_agent_eval.config.suite_config import ModelConfig
 _OPENCLAW_MESSAGE_ROLES = {"system", "user", "assistant", "tool"}
 
 
+def openrouter_primary_model_ref(raw_model: str) -> str:
+    """Map a suite model slug to an OpenClaw OpenRouter ref ``openrouter/<provider>/<model>``."""
+    stripped = raw_model.strip()
+    if not stripped:
+        return raw_model
+    if stripped.startswith("openrouter/"):
+        return stripped
+    return f"openrouter/{stripped}"
+
+
 class ResolvedOpenClawMessage(ArtifactModel):
     """Resolved case message content used by an OpenClaw run."""
 
@@ -59,6 +69,8 @@ class ResolvedOpenClawConfig(ArtifactModel):
 
     agent_id: str
     requested_model: str
+    openclaw_primary_model_ref: str
+    openclaw_workspace_path_in_config: str
     container_image: str
     timeout_seconds: int = Field(gt=0)
     workspace_template_dir: Path
@@ -82,6 +94,7 @@ def resolve_openclaw_config(
     agent_config: OpenClawAgentConfig,
     workspace_dir: Path,
     state_dir: Path,
+    workspace_path_in_openclaw_config: str | None = None,
 ) -> ResolvedOpenClawConfig:
     """Resolve the effective OpenClaw execution config for one run."""
     if case_config.runner.type != "openclaw":
@@ -97,13 +110,25 @@ def resolve_openclaw_config(
     if agent_config.workspace_dir is None:
         raise ValueError("OpenClaw agent config must include a resolved workspace_dir.")
 
+    workspace_dir_resolved = workspace_dir.expanduser().resolve()
+    openclaw_workspace_path_in_config = (
+        workspace_path_in_openclaw_config
+        if workspace_path_in_openclaw_config is not None
+        else str(workspace_dir_resolved)
+    )
+
+    raw_requested = _resolve_requested_model(model_selection)
+    primary_ref = openrouter_primary_model_ref(raw_requested)
+
     return ResolvedOpenClawConfig(
         agent_id=agent_config.agent_id,
-        requested_model=_resolve_requested_model(model_selection),
+        requested_model=raw_requested,
+        openclaw_primary_model_ref=primary_ref,
+        openclaw_workspace_path_in_config=openclaw_workspace_path_in_config,
         container_image=run_profile.openclaw.image,
         timeout_seconds=run_profile.openclaw.timeout_seconds,
         workspace_template_dir=agent_config.workspace_dir,
-        workspace_dir=workspace_dir.expanduser().resolve(),
+        workspace_dir=workspace_dir_resolved,
         state_dir=state_dir.expanduser().resolve(),
         case_id=case_config.case_id,
         case_messages=_resolve_case_messages(case_config),
@@ -118,23 +143,54 @@ def resolve_openclaw_config(
 
 def render_openclaw_json(resolved_config: ResolvedOpenClawConfig) -> GeneratedOpenClawConfig:
     """Render the deterministic openclaw.json payload for ``resolved_config``."""
+    primary = resolved_config.openclaw_primary_model_ref
     agent_entry = dict(resolved_config.agent_fragment)
     agent_entry.setdefault("id", resolved_config.agent_id)
-    agent_entry["model"] = resolved_config.requested_model
+    agent_entry["model"] = primary
 
     agents_defaults = dict(resolved_config.agents_defaults_fragment)
-    agents_defaults["workspace"] = str(resolved_config.workspace_dir)
+    agents_defaults["workspace"] = resolved_config.openclaw_workspace_path_in_config
+    _merge_openrouter_agents_defaults_model(agents_defaults, primary)
+
+    models_fragment = _openrouter_normalize_models_fragment(
+        dict(resolved_config.model_defaults_fragment)
+    )
 
     generated = GeneratedOpenClawConfig(
         identity=dict(resolved_config.identity_fragment),
         models={
-            "default": resolved_config.requested_model,
-            **resolved_config.model_defaults_fragment,
+            "default": primary,
+            **models_fragment,
         },
         agents=GeneratedOpenClawAgents(defaults=agents_defaults, agent_list=[agent_entry]),
     )
     validate_generated_openclaw_config(generated)
     return generated
+
+
+def _merge_openrouter_agents_defaults_model(
+    agents_defaults: dict[str, Any],
+    primary: str,
+) -> None:
+    """Match OpenClaw ``agents.defaults.model.primary`` for the OpenRouter provider."""
+    existing = agents_defaults.get("model")
+    if isinstance(existing, Mapping):
+        block = dict(existing)
+        block["primary"] = primary
+        agents_defaults["model"] = block
+    else:
+        agents_defaults["model"] = {"primary": primary}
+
+
+def _openrouter_normalize_models_fragment(fragment: dict[str, Any]) -> dict[str, Any]:
+    out = dict(fragment)
+    fallbacks = out.get("fallbacks")
+    if isinstance(fallbacks, list):
+        out["fallbacks"] = [
+            openrouter_primary_model_ref(item) if isinstance(item, str) else item
+            for item in fallbacks
+        ]
+    return out
 
 
 def render_openclaw_json_text(resolved_config: ResolvedOpenClawConfig) -> str:

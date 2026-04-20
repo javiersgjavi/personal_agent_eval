@@ -215,6 +215,17 @@ def test_openclaw_run_fingerprint_uses_agent_identity_and_image_but_not_timeout(
         model_selection=model_selection,
         openclaw_agent_fingerprint=agent_input.fingerprint,
     )
+    changed_docker_cli_profile = run_profile.model_copy(
+        update={
+            "openclaw": run_profile.openclaw.model_copy(update={"docker_cli": "podman"}),
+        }
+    )
+    changed_docker_cli_input = build_run_fingerprint_input(
+        test_config=case_config,
+        run_profile=changed_docker_cli_profile,
+        model_selection=model_selection,
+        openclaw_agent_fingerprint=agent_input.fingerprint,
+    )
     changed_agent_input = build_run_fingerprint_input(
         test_config=case_config,
         run_profile=run_profile,
@@ -225,9 +236,12 @@ def test_openclaw_run_fingerprint_uses_agent_identity_and_image_but_not_timeout(
     assert base_input.payload.runner_config == {
         "agent_fingerprint": agent_input.fingerprint,
         "image": "ghcr.io/openclaw/openclaw-base:0.1.0",
+        "docker_cli": "docker",
+        "openclaw_primary_model_ref": "openrouter/openai/gpt-4o-mini",
     }
     assert base_input.fingerprint == changed_timeout_input.fingerprint
     assert base_input.fingerprint != changed_image_input.fingerprint
+    assert base_input.fingerprint != changed_docker_cli_input.fingerprint
     assert base_input.fingerprint != changed_agent_input.fingerprint
 
 
@@ -274,6 +288,15 @@ def test_run_profile_fingerprint_ignores_openclaw_timeout_but_changes_on_image()
 
     assert base_fingerprint == changed_timeout_fingerprint
     assert base_fingerprint != changed_image_fingerprint
+
+    changed_cli_fingerprint = build_run_profile_fingerprint(
+        run_profile=run_profile.model_copy(
+            update={
+                "openclaw": run_profile.openclaw.model_copy(update={"docker_cli": "podman"}),
+            }
+        )
+    )
+    assert base_fingerprint != changed_cli_fingerprint
 
 
 def test_evaluation_fingerprint_ignores_profile_id_but_changes_on_semantic_changes() -> None:

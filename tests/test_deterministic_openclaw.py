@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
+from helpers.docker_subprocess_stub import patch_openclaw_docker_run
 from personal_agent_eval.artifacts import (
     RunArtifact,
     RunArtifactIdentity,
@@ -24,12 +27,14 @@ from personal_agent_eval.config.test_config import (
 from personal_agent_eval.deterministic import evaluate_deterministic_checks
 from personal_agent_eval.domains.openclaw import run_openclaw_case
 from test_deterministic_evaluation import build_artifact
-from test_openclaw_runner import FakeOpenClawExecutor
 
 FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "config"
 
 
-def test_openclaw_workspace_file_present_harness_artifact(tmp_path: Path) -> None:
+def test_openclaw_workspace_file_present_harness_artifact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    patch_openclaw_docker_run(monkeypatch)
     case_path = tmp_path / "c.yaml"
     case_path.write_text(
         "\n".join(
@@ -61,7 +66,6 @@ def test_openclaw_workspace_file_present_harness_artifact(tmp_path: Path) -> Non
         run_profile=run_profile,
         model_selection=ModelConfig.model_validate({"model_id": "baseline_model"}),
         agent_config=agent_config,
-        executor=FakeOpenClawExecutor(),
         runtime_root=tmp_path / "run",
     )
     check = DeterministicCheck(
