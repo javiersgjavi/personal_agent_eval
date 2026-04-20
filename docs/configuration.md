@@ -357,22 +357,26 @@ the host environment so they can be passed into the container.
 ### Generated `openclaw.json`
 
 The benchmark resolves one effective OpenClaw config per run and then renders a minimal,
-deterministic `openclaw.json`.
+deterministic `openclaw.json` whose **root** matches OpenClaw’s strict schema (only `agents` at the
+top level; see [Configuration](https://docs.openclaw.ai/gateway/configuration)).
 
 Current merge and injection rules:
 
-1. start from the benchmark-safe base shape
-2. merge `agent.yaml` fragments:
-   - `openclaw.identity` -> `identity`
-   - `openclaw.agents_defaults` -> `agents.defaults`
-   - `openclaw.agent` -> the single `agents.list[0]` entry
-   - `openclaw.model_defaults` -> non-primary `models` settings such as `aliases` and `fallbacks`
-3. resolve the suite model the same way as `llm_probe` (`requested_model` → …), then map it to an
+1. merge `agent.yaml` fragments into the generated tree:
+   - `openclaw.agents_defaults` -> `agents.defaults` (legacy string `sandbox` values are coerced to
+     an object, e.g. `workspace-write` -> `{ "mode": "off" }`)
+   - `openclaw.agent` -> the single `agents.list[0]` entry (`prompt` is emitted as `systemPrompt`)
+   - `openclaw.model_defaults`: `fallbacks` -> `agents.defaults.model.fallbacks`; `aliases` ->
+     `agents.defaults.models[<primary>].alias` plus catalog entries for fallback models
+   - `openclaw.identity` is **not** written to `openclaw.json` (unknown at root in strict validation);
+     keep persona in `workspace/` (`IDENTITY.md`, `SOUL.md`, …)
+2. resolve the suite model the same way as `llm_probe` (`requested_model` → …), then map it to an
    **OpenRouter ref** `openrouter/<provider>/<model>` for:
-   - `models.default`
-   - `agents.list[0].model`
    - `agents.defaults.model.primary`
-   - string entries in `models.fallbacks` (when present)
+   - `agents.list[0].model`
+   - entries in `agents.defaults.model.fallbacks` (when present)
+3. build `agents.defaults.models` as the model allowlist map (primary + fallbacks) required by
+   upstream docs
 4. inject the ephemeral workspace path into `agents.defaults.workspace`
 
 The generated config does **not** treat the OpenClaw state directory as part of the
@@ -433,7 +437,7 @@ Initial supported fragment keys:
 
 | Field | Type | Description |
 |---|---|---|
-| `identity` | mapping | Optional identity fragment |
+| `identity` | mapping | Optional; not copied into generated `openclaw.json` (strict root schema); use workspace files |
 | `agents_defaults` | mapping | Partial object merged into `agents.defaults` |
 | `agent` | mapping | Partial object used to build the single `agents.list[]` entry |
 | `model_defaults` | mapping | Optional non-primary model defaults such as `aliases` and `fallbacks` |

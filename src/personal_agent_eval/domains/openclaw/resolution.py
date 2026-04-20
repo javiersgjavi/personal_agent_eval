@@ -50,18 +50,12 @@ class GeneratedOpenClawAgents(ArtifactModel):
 
 
 class GeneratedOpenClawConfig(ArtifactModel):
-    """Minimal generated openclaw.json contract for the first harness."""
+    """Generated ``openclaw.json`` matching OpenClaw's strict root schema (agents-only root)."""
 
-    identity: dict[str, Any] = Field(default_factory=dict)
-    models: dict[str, Any] = Field(default_factory=dict)
     agents: GeneratedOpenClawAgents
 
     def to_json_dict(self, *, round_floats: bool = True) -> dict[str, Any]:
-        return {
-            "identity": dict(self.identity),
-            "models": dict(self.models),
-            "agents": self.agents.to_json_dict(round_floats=round_floats),
-        }
+        return {"agents": self.agents.to_json_dict(round_floats=round_floats)}
 
 
 class ResolvedOpenClawConfig(ArtifactModel):
@@ -144,42 +138,81 @@ def resolve_openclaw_config(
 def render_openclaw_json(resolved_config: ResolvedOpenClawConfig) -> GeneratedOpenClawConfig:
     """Render the deterministic openclaw.json payload for ``resolved_config``."""
     primary = resolved_config.openclaw_primary_model_ref
-    agent_entry = dict(resolved_config.agent_fragment)
-    agent_entry.setdefault("id", resolved_config.agent_id)
-    agent_entry["model"] = primary
+    agent_entry = _build_openclaw_agent_list_entry(
+        fragment=dict(resolved_config.agent_fragment),
+        directory_agent_id=resolved_config.agent_id,
+        primary_model=primary,
+    )
 
     agents_defaults = dict(resolved_config.agents_defaults_fragment)
+    _normalize_legacy_agents_defaults(agents_defaults)
     agents_defaults["workspace"] = resolved_config.openclaw_workspace_path_in_config
-    _merge_openrouter_agents_defaults_model(agents_defaults, primary)
 
     models_fragment = _openrouter_normalize_models_fragment(
         dict(resolved_config.model_defaults_fragment)
     )
+    fallbacks = models_fragment.pop("fallbacks", None)
+    aliases = models_fragment.pop("aliases", None)
+
+    model_block: dict[str, Any] = {"primary": primary}
+    if isinstance(fallbacks, list) and fallbacks:
+        model_block["fallbacks"] = list(fallbacks)
+    agents_defaults["model"] = model_block
+    agents_defaults["models"] = _build_agents_defaults_models_catalog(
+        primary=primary,
+        fallbacks=fallbacks if isinstance(fallbacks, list) else [],
+        aliases=aliases,
+    )
 
     generated = GeneratedOpenClawConfig(
-        identity=dict(resolved_config.identity_fragment),
-        models={
-            "default": primary,
-            **models_fragment,
-        },
         agents=GeneratedOpenClawAgents(defaults=agents_defaults, agent_list=[agent_entry]),
     )
     validate_generated_openclaw_config(generated)
     return generated
 
 
-def _merge_openrouter_agents_defaults_model(
-    agents_defaults: dict[str, Any],
+def _build_openclaw_agent_list_entry(
+    *,
+    fragment: dict[str, Any],
+    directory_agent_id: str,
+    primary_model: str,
+) -> dict[str, Any]:
+    """Build ``agents.list[]`` entry; map legacy ``prompt`` to ``systemPrompt``."""
+    entry = dict(fragment)
+    entry.setdefault("id", directory_agent_id)
+    if "prompt" in entry:
+        entry["systemPrompt"] = entry.pop("prompt")
+    entry["model"] = primary_model
+    return entry
+
+
+def _normalize_legacy_agents_defaults(agents_defaults: dict[str, Any]) -> None:
+    """Coerce pre-strict-schema shortcuts (e.g. string sandbox) to valid objects."""
+    sandbox = agents_defaults.get("sandbox")
+    if isinstance(sandbox, str):
+        # Legacy YAML used string presets; strict schema expects an object. Full workspace access.
+        agents_defaults["sandbox"] = {"mode": "off"}
+
+
+def _build_agents_defaults_models_catalog(
+    *,
     primary: str,
-) -> None:
-    """Match OpenClaw ``agents.defaults.model.primary`` for the OpenRouter provider."""
-    existing = agents_defaults.get("model")
-    if isinstance(existing, Mapping):
-        block = dict(existing)
-        block["primary"] = primary
-        agents_defaults["model"] = block
-    else:
-        agents_defaults["model"] = {"primary": primary}
+    fallbacks: list[Any],
+    aliases: Any,
+) -> dict[str, Any]:
+    """Build ``agents.defaults.models`` allowlist map per OpenClaw docs."""
+    catalog: dict[str, Any] = {}
+    alias_label = "default"
+    if isinstance(aliases, Mapping):
+        for _slot, label in aliases.items():
+            if isinstance(label, str) and label.strip():
+                alias_label = label.strip()
+                break
+    catalog[primary] = {"alias": alias_label}
+    for fb in fallbacks:
+        if isinstance(fb, str) and fb.strip() and fb not in catalog:
+            catalog[fb] = {}
+    return catalog
 
 
 def _openrouter_normalize_models_fragment(fragment: dict[str, Any]) -> dict[str, Any]:
@@ -216,13 +249,17 @@ def validate_generated_openclaw_config(
     if len(generated.agents.agent_list) != 1:
         raise ValueError("Generated OpenClaw config currently supports exactly one agent entry.")
     agent_entry = generated.agents.agent_list[0]
-    model = agent_entry.get("model")
-    if not isinstance(model, str) or not model.strip():
+    list_model = agent_entry.get("model")
+    if not isinstance(list_model, str) or not list_model.strip():
         raise ValueError("Generated OpenClaw agent entry requires a non-empty primary model.")
-    default_model = generated.models.get("default")
-    if default_model != model:
+    model_block = generated.agents.defaults.get("model")
+    if not isinstance(model_block, Mapping):
+        raise ValueError("Generated OpenClaw config requires agents.defaults.model mapping.")
+    primary_model = model_block.get("primary")
+    if primary_model != list_model:
         raise ValueError(
-            "Generated OpenClaw config requires models.default to match agents.list[0].model."
+            "Generated OpenClaw config requires agents.defaults.model.primary to match "
+            "agents.list[0].model."
         )
     return generated
 
@@ -365,10 +402,4 @@ def _coerce_generated_payload(payload: Mapping[str, Any]) -> GeneratedOpenClawCo
         "defaults": agents.get("defaults", {}),
         "agent_list": agents.get("list", []),
     }
-    return GeneratedOpenClawConfig.model_validate(
-        {
-            "identity": payload.get("identity", {}),
-            "models": payload.get("models", {}),
-            "agents": normalized_agents,
-        }
-    )
+    return GeneratedOpenClawConfig.model_validate({"agents": normalized_agents})

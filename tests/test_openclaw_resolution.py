@@ -74,11 +74,14 @@ def test_render_openclaw_json_minimax_slug_uses_openrouter_ref(tmp_path: Path) -
     )
     assert resolved.openclaw_primary_model_ref == "openrouter/minimax/minimax-m2.7"
     generated = render_openclaw_json(resolved)
-    assert generated.models["default"] == "openrouter/minimax/minimax-m2.7"
+    assert generated.agents.defaults["model"]["primary"] == "openrouter/minimax/minimax-m2.7"
     assert generated.agents.defaults["model"] == {
         "primary": "openrouter/minimax/minimax-m2.7",
+        "fallbacks": ["openrouter/openai/gpt-4o-mini"],
     }
-    assert generated.models["fallbacks"] == ["openrouter/openai/gpt-4o-mini"]
+    assert generated.agents.defaults["models"]["openrouter/minimax/minimax-m2.7"]["alias"] == (
+        "benchmark-primary"
+    )
 
 
 def test_render_openclaw_json_is_deterministic_and_uses_requested_model(tmp_path: Path) -> None:
@@ -100,21 +103,24 @@ def test_render_openclaw_json_is_deterministic_and_uses_requested_model(tmp_path
     rendered_text = render_openclaw_json_text(resolved)
     or_primary = "openrouter/openai/gpt-4.1-mini"
 
-    assert generated.models["default"] == or_primary
-    assert generated.models["aliases"] == {"default": "benchmark-primary"}
-    assert generated.models["fallbacks"] == ["openrouter/openai/gpt-4o-mini"]
+    assert generated.agents.defaults["model"]["primary"] == or_primary
+    assert generated.agents.defaults["models"][or_primary] == {"alias": "benchmark-primary"}
+    assert generated.agents.defaults["model"]["fallbacks"] == ["openrouter/openai/gpt-4o-mini"]
     assert generated.agents.defaults["workspace"] == str((tmp_path / "workspace").resolve())
-    assert generated.agents.defaults["sandbox"] == "workspace-write"
-    assert generated.agents.defaults["model"] == {"primary": or_primary}
+    assert generated.agents.defaults["sandbox"] == {"mode": "off"}
+    assert generated.agents.defaults["model"] == {
+        "primary": or_primary,
+        "fallbacks": ["openrouter/openai/gpt-4o-mini"],
+    }
     assert generated.agents.agent_list == [
         {
             "id": "support-agent",
-            "prompt": "You are a benchmark fixture agent.",
+            "systemPrompt": "You are a benchmark fixture agent.",
             "model": or_primary,
         }
     ]
     assert "ephemeral-state" not in rendered_text
-    assert f'"default": "{or_primary}"' in rendered_text
+    assert f'"primary": "{or_primary}"' in rendered_text
     assert rendered_text == render_openclaw_json_text(resolved)
 
 
@@ -207,19 +213,21 @@ def test_validate_generated_openclaw_config_requires_one_agent_and_matching_defa
     with pytest.raises(ValueError, match="exactly one agent entry"):
         validate_generated_openclaw_config(
             {
-                "identity": {},
-                "models": {"default": "openai/gpt-4o-mini"},
-                "agents": {"defaults": {"workspace": "/tmp/ws"}, "list": []},
+                "agents": {
+                    "defaults": {"workspace": "/tmp/ws", "model": {"primary": "openai/gpt-4o-mini"}},
+                    "list": [],
+                },
             }
         )
 
-    with pytest.raises(ValueError, match="models.default to match"):
+    with pytest.raises(ValueError, match="agents.defaults.model.primary to match"):
         validate_generated_openclaw_config(
             {
-                "identity": {},
-                "models": {"default": "openai/gpt-4o-mini"},
                 "agents": {
-                    "defaults": {"workspace": "/tmp/ws"},
+                    "defaults": {
+                        "workspace": "/tmp/ws",
+                        "model": {"primary": "openai/gpt-4o-mini"},
+                    },
                     "list": [{"id": "agent", "model": "anthropic/claude"}],
                 },
             }
