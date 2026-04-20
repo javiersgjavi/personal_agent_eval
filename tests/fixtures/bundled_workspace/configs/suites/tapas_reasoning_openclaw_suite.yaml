@@ -1,10 +1,14 @@
+# DEBUG pendiente: el harness puede marcar run status=success aunque el turno OpenClaw quede
+# incompleto (p. ej. incomplete turn, lastCallUsage 0, mensaje genérico del agente). Revisar
+# OPENROUTER_API_KEY en el host/contenedor, slug del modelo en OpenRouter, y logs en
+# outputs/runs/.../openclaw_logs + openclaw_raw_trace.
 schema_version: 1
 suite_id: tapas_reasoning_openclaw_suite
 title: Tapas OpenClaw — X7 + H3 reference scenarios
 models:
   - model_id: minimax_m27
     requested_model: minimax/minimax-m2.7
-    label: minimax/minimax-m2.7 (OpenRouter)
+    label: minimax/minimax-m2.7
 case_selection:
   include_case_ids:
     - tapas_x7_openclaw
@@ -13,3 +17,8 @@ metadata:
   owner: qa
   agent: tapas
   run_profile: openclaw_tapas
+  debug:
+    openclaw_openrouter_turns: >
+      Pendiente depurar: éxito del runner no implica respuesta del modelo; inspeccionar
+      credenciales OpenRouter, id de modelo, truncación de bootstrap (AGENTS/TOOLS) y trazas
+      openclaw en outputs/runs/suit_tapas_reasoning_openclaw_suite/.
