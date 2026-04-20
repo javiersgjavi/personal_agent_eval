@@ -6,6 +6,7 @@ import copy
 from typing import Any
 
 from personal_agent_eval.artifacts import RunArtifact
+from personal_agent_eval.judge.openclaw_context import build_openclaw_judge_context
 
 
 def redact_run_artifact_for_judge(artifact: RunArtifact) -> dict[str, Any]:
@@ -13,7 +14,11 @@ def redact_run_artifact_for_judge(artifact: RunArtifact) -> dict[str, Any]:
 
     Structured fields that identify the evaluated model are **removed** (not replaced with
     placeholders): requested model, provider model id, suite ``model_selection`` snapshot,
-    ``runner_metadata``, and provider usage keys that echo the model id.
+    raw ``runner_metadata`` blobs, and provider usage keys that echo the model id.
+
+    For ``runner.type: openclaw``, a replacement ``runner_metadata.openclaw_judge_context`` is
+    attached with text excerpts of workspace diff, traces, logs, and key outputs so judges can
+    evaluate agent behavior without raw ``file://`` evidence references.
 
     Stored artifacts on disk are unchanged; only the judge-facing snapshot is stripped.
 
@@ -42,6 +47,9 @@ def redact_run_artifact_for_judge(artifact: RunArtifact) -> dict[str, Any]:
                 provider.pop("metadata", None)
 
     data.pop("runner_metadata", None)
+    openclaw_context = build_openclaw_judge_context(artifact)
+    if openclaw_context is not None:
+        data["runner_metadata"] = {"openclaw_judge_context": openclaw_context}
 
     usage = data.get("usage")
     if isinstance(usage, dict):

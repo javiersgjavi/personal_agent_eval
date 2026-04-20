@@ -140,13 +140,14 @@ Valid dimension names: `task`, `process`, `autonomy`, `closeness`, `efficiency`,
 
 | `kind` | Extra fields | Description |
 |---|---|---|
-| `final_response_present` | — | Passes when the run trace contains a non-empty final response |
+| `final_response_present` | — | Passes when the run trace contains a non-empty final output; for `openclaw`, also accepts the last assistant message in the trace or text from a key workspace output artifact |
 | `tool_call_count` | `count` (int ≥ 0) | Passes when the run recorded exactly `count` tool calls |
 | `file_exists` | `path` | Passes when the given path exists and is a regular file |
 | `file_contains` | `path`, `text` | Passes when the file exists and contains `text` |
 | `path_exists` | `path` | Passes when the given filesystem path exists (file or directory) |
 | `status_is` | `status` | Passes when the run's terminal status matches (`success`, `failed`, `timed_out`, `invalid`, `provider_error`) |
 | `output_artifact_present` | `artifact_id`?, `artifact_type`?, `uri`? | Passes when the run artifact records a matching output artifact (at least one matcher field required) |
+| `openclaw_workspace_file_present` | `relative_path`, `contains`? | For `runner.type: openclaw` only: passes when a recorded output artifact resolves to a workspace file whose path ends with `relative_path`; optional `contains` substring match on file text |
 
 Paths in declarative checks resolve relative to `test.yaml`.
 

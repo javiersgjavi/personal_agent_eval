@@ -18,6 +18,7 @@ from personal_agent_eval.config.test_config import (
     FileContainsCheck,
     FileExistsCheck,
     FinalResponsePresentCheck,
+    OpenClawWorkspaceFilePresentCheck,
     OutputArtifactPresentCheck,
     PathExistsCheck,
     PythonHook,
@@ -32,6 +33,11 @@ from personal_agent_eval.deterministic.models import (
     DeterministicEvaluationSummary,
     DeterministicHookContext,
     HookCheckResult,
+)
+from personal_agent_eval.deterministic.openclaw_checks import (
+    effective_final_response_text,
+    output_artifact_resolves_to_workspace_file,
+    read_output_artifact_text,
 )
 
 _HOOK_RESULT_ADAPTER = TypeAdapter(HookCheckResult)
@@ -152,6 +158,8 @@ class DeterministicEvaluator:
                 return self._check_status_is(check, declarative, artifact)
             if isinstance(declarative, OutputArtifactPresentCheck):
                 return self._check_output_artifact_present(check, declarative, artifact)
+            if isinstance(declarative, OpenClawWorkspaceFilePresentCheck):
+                return self._check_openclaw_workspace_file_present(check, declarative, artifact)
         except Exception as exc:
             return self._error_result(
                 check=check,
@@ -178,8 +186,7 @@ class DeterministicEvaluator:
             for event in artifact.trace
             if isinstance(event, FinalOutputTraceEvent) and event.content is not None
         ]
-        last_output = final_outputs[-1].content if final_outputs else None
-        normalized_output = "" if last_output is None else last_output.strip()
+        normalized_output = effective_final_response_text(artifact)
         passed = bool(normalized_output)
         return self._result(
             check=check,
@@ -190,6 +197,7 @@ class DeterministicEvaluator:
             outputs={
                 "final_output_count": len(final_outputs),
                 "content_length": len(normalized_output),
+                "runner_type": artifact.identity.runner_type,
             },
         )
 
@@ -317,6 +325,61 @@ class DeterministicEvaluator:
                 "artifact_type": declarative.artifact_type,
                 "uri": declarative.uri,
                 "matched_count": len(matches),
+            },
+        )
+
+    def _check_openclaw_workspace_file_present(
+        self,
+        check: DeterministicCheck,
+        declarative: OpenClawWorkspaceFilePresentCheck,
+        artifact: RunArtifact,
+    ) -> DeterministicCheckResult:
+        if artifact.identity.runner_type != "openclaw":
+            return self._result(
+                check=check,
+                kind=declarative.kind,
+                source="declarative",
+                passed=False,
+                message="openclaw_workspace_file_present applies only to runner.type='openclaw'.",
+                outputs={"relative_path": declarative.relative_path},
+            )
+        matches = [
+            ref
+            for ref in artifact.output_artifacts
+            if output_artifact_resolves_to_workspace_file(ref, declarative.relative_path)
+        ]
+        if not matches:
+            return self._result(
+                check=check,
+                kind=declarative.kind,
+                source="declarative",
+                passed=False,
+                message="No output artifact matched the configured workspace relative path.",
+                outputs={"relative_path": declarative.relative_path, "matched_count": 0},
+            )
+        if declarative.contains is None:
+            return self._result(
+                check=check,
+                kind=declarative.kind,
+                source="declarative",
+                passed=True,
+                message=None,
+                outputs={"relative_path": declarative.relative_path, "matched_count": len(matches)},
+            )
+        texts = [read_output_artifact_text(ref, max_bytes=512_000) or "" for ref in matches]
+        passed = any(declarative.contains in text for text in texts)
+        return self._result(
+            check=check,
+            kind=declarative.kind,
+            source="declarative",
+            passed=passed,
+            message=None
+            if passed
+            else "Matched workspace file did not contain the expected substring.",
+            outputs={
+                "relative_path": declarative.relative_path,
+                "matched_count": len(matches),
+                "contains": declarative.contains,
             },
         )
 

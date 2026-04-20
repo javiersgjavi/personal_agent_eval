@@ -182,6 +182,19 @@ class OutputArtifactPresentCheck(ConfigModel):
         return self
 
 
+class OpenClawWorkspaceFilePresentCheck(ConfigModel):
+    """Require a workspace file (OpenClaw key output) recorded on the run artifact.
+
+    Matches :class:`OutputArtifactRef` entries whose ``file://`` path ends with the given
+    ``relative_path`` (or shares the same basename). Intended for ``runner.type: openclaw`` runs
+    where outputs live as persisted file refs rather than case-relative paths.
+    """
+
+    kind: Literal["openclaw_workspace_file_present"]
+    relative_path: str = Field(min_length=1)
+    contains: str | None = None
+
+
 type DeclarativeCheck = Annotated[
     FinalResponsePresentCheck
     | ToolCallCountCheck
@@ -189,7 +202,8 @@ type DeclarativeCheck = Annotated[
     | FileContainsCheck
     | PathExistsCheck
     | StatusIsCheck
-    | OutputArtifactPresentCheck,
+    | OutputArtifactPresentCheck
+    | OpenClawWorkspaceFilePresentCheck,
     Field(discriminator="kind"),
 ]
 

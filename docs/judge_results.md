@@ -6,9 +6,13 @@ surface. It does not mutate the run artifact.
 When building the judge prompt, the framework embeds a **copy** of the run artifact from which
 **structured subject-model identity is omitted** (keys removed, not replaced with placeholders):
 for example `request.requested_model`, `request.metadata.model_selection`, `provider.provider_model_id`,
-`runner_metadata`, and provider-usage fields that echo a model id. The canonical artifact on disk
-is unchanged. Free-form text inside assistant messages could still mention a model name; only
-structured metadata is stripped.
+and provider-usage fields that echo a model id. Raw `runner_metadata` is also removed so opaque
+blobs cannot leak benchmark paths. **OpenClaw runs** are an exception: the copy may include
+`runner_metadata.openclaw_judge_context`, a compact summary (excerpts of workspace diff, session
+trace, logs, key workspace files, and agent/runtime labels) so the judge can assess process and
+artifacts without embedding raw `file://` refs from the stored evidence block. The canonical artifact
+on disk is unchanged. Free-form text inside assistant messages could still mention a model name;
+only structured metadata is stripped.
 
 ## Default system prompt
 
