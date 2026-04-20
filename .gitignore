@@ -134,7 +134,8 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
+# Environments (real API keys belong here only — never commit; CI runs
+# scripts/check_no_leaked_secrets.py on tracked files).
 .env
 .envrc
 .venv
