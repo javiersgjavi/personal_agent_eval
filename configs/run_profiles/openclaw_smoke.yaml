@@ -1,0 +1,10 @@
+schema_version: 1
+run_profile_id: openclaw_smoke
+title: OpenClaw smoke run profile
+openclaw:
+  agent_id: support_agent
+  image: ghcr.io/openclaw/openclaw-base:0.1.0
+  timeout_seconds: 300
+execution_policy:
+  max_concurrency: 1
+  fail_fast: true

@@ -1,0 +1,31 @@
+schema_version: 1
+case_id: openclaw_smoke
+title: OpenClaw smoke (repository example)
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: user
+      content: Produce report.md in the workspace.
+  context:
+    openclaw:
+      expected_artifact: report.md
+expectations:
+  hard_expectations:
+    - text: Produces a workspace report file.
+deterministic_checks:
+  - check_id: oc-final-response
+    dimensions:
+      - task
+    declarative:
+      kind: final_response_present
+  - check_id: oc-report-md
+    dimensions:
+      - process
+    declarative:
+      kind: openclaw_workspace_file_present
+      relative_path: report.md
+      contains: "# Report"
+tags:
+  - smoke
+  - openclaw

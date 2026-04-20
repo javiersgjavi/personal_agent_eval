@@ -41,6 +41,12 @@ under `configs/agents/<agent_id>/` (`agent.yaml` plus `workspace/`). The workflo
 agent into run fingerprints, executes the OpenClaw harness (CLI subprocess unless you inject a
 custom executor in library code), and persists artifacts for reuse like `llm_probe` runs.
 
+For **upstream OpenClaw** (install, gateway, channels, day-to-day config), see the official
+documentation: [docs.openclaw.ai](https://docs.openclaw.ai). This framework generates a **per-run**
+`openclaw.json` under a temporary directory; that is separate from a developer’s optional global
+config at `~/.openclaw/openclaw.json`. A minimal runnable layout lives under `configs/`; see
+[Minimal OpenClaw example](examples/minimal_openclaw.md).
+
 When working inside this repository, prefer running the CLI via `uv`:
 
 ```bash

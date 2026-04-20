@@ -27,7 +27,7 @@ class ResolvedOpenClawMessage(ArtifactModel):
 
 
 class GeneratedOpenClawAgents(ArtifactModel):
-    """Minimal generated OpenClaw agent block for V2."""
+    """Minimal generated OpenClaw ``agents`` block for rendered config."""
 
     defaults: dict[str, Any] = Field(default_factory=dict)
     agent_list: list[dict[str, Any]] = Field(default_factory=list)
@@ -146,7 +146,7 @@ def render_openclaw_json_text(resolved_config: ResolvedOpenClawConfig) -> str:
 def validate_generated_openclaw_config(
     payload: GeneratedOpenClawConfig | Mapping[str, Any],
 ) -> GeneratedOpenClawConfig:
-    """Validate the minimal generated openclaw.json payload used by V2."""
+    """Validate the minimal generated ``openclaw.json`` shape from the harness."""
     generated = (
         payload
         if isinstance(payload, GeneratedOpenClawConfig)

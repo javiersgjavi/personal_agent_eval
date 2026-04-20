@@ -386,6 +386,11 @@ The current benchmark harness runs OpenClaw in a minimal benchmark-owned flow:
 `timeout_seconds` is still enforced as a real wall-clock limit for execution, but it is
 treated as runtime control metadata rather than semantic reuse identity.
 
+**Upstream context:** OpenClaw is a self-hosted gateway and agent runtime; product documentation
+(install, configuration surfaces, channels) lives at [docs.openclaw.ai](https://docs.openclaw.ai).
+The benchmark only needs the `openclaw` CLI on `PATH` for real executions and uses the generated
+per-run config described above, not the interactive onboarding defaults from upstream docs.
+
 ---
 
 ## OpenClaw agent (`configs/agents/<agent_id>/agent.yaml`)

@@ -1,0 +1,12 @@
+schema_version: 1
+suite_id: openclaw_smoke_suite
+title: OpenClaw smoke suite (repository example)
+models:
+  - model_id: baseline_model
+    provider: openai
+    model_name: gpt-example
+case_selection:
+  include_case_ids:
+    - openclaw_smoke
+metadata:
+  owner: qa

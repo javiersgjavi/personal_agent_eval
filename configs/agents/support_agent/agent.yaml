@@ -1,0 +1,20 @@
+schema_version: 1
+agent_id: support_agent
+title: Support Agent (repository example)
+description: Minimal reusable OpenClaw agent for smoke runs and CI quality gates.
+tags:
+  - support
+  - openclaw
+openclaw:
+  identity:
+    name: Support Agent
+  agents_defaults:
+    sandbox: workspace-write
+  agent:
+    id: support-agent
+    prompt: You are a benchmark example agent.
+  model_defaults:
+    aliases:
+      default: benchmark-primary
+    fallbacks:
+      - openai/gpt-4o-mini

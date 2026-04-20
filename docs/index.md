@@ -41,3 +41,4 @@ The current implementation already includes:
 - [Hybrid evaluation](hybrid_evaluation.md)
 - [Reporting](reporting.md)
 - [Minimal llm_probe example](examples/minimal_llm_probe.md)
+- [Minimal OpenClaw example](examples/minimal_openclaw.md)

@@ -147,7 +147,7 @@ class ReuseAction(StrEnum):
 
 
 class ReuseDecision(ArtifactModel):
-    """Reusable summary that Step 10/11 can consume later."""
+    """Reuse decision comparing requested vs stored run and evaluation fingerprints."""
 
     requested_run_fingerprint: str = Field(pattern=FINGERPRINT_HEX_PATTERN)
     requested_evaluation_fingerprint: str = Field(pattern=FINGERPRINT_HEX_PATTERN)

@@ -1,4 +1,4 @@
-"""OpenClaw run evidence contract (Step 2): structured refs under runner_metadata."""
+"""OpenClaw run evidence: structured file refs under runner_metadata."""
 
 from __future__ import annotations
 
