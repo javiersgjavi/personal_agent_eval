@@ -1,9 +1,11 @@
 """OpenClaw domain helpers."""
 
 from personal_agent_eval.domains.openclaw.resolution import (
+    OPENCLAW_BOOTSTRAP_CHARS_PRACTICALLY_UNLIMITED,
     GeneratedOpenClawConfig,
     ResolvedOpenClawConfig,
     ResolvedOpenClawMessage,
+    normalize_openrouter_base_url,
     openrouter_primary_model_ref,
     render_openclaw_json,
     render_openclaw_json_text,
@@ -20,9 +22,11 @@ from personal_agent_eval.domains.openclaw.workspace import (
 )
 
 __all__ = [
+    "OPENCLAW_BOOTSTRAP_CHARS_PRACTICALLY_UNLIMITED",
     "OPENCLAW_DOCKER_WORKDIR",
     "GeneratedOpenClawConfig",
     "openrouter_primary_model_ref",
+    "normalize_openrouter_base_url",
     "MaterializedOpenClawWorkspace",
     "OPENCLAW_STANDARD_WORKSPACE_FILES",
     "OpenClawWorkspaceManifest",

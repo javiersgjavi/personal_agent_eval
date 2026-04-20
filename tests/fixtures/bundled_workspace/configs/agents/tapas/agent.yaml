@@ -10,6 +10,10 @@ openclaw:
     name: Tapas
   agents_defaults:
     sandbox: workspace-write
+    # OpenClaw has no "unlimited" bootstrap; use OPENCLAW_BOOTSTRAP_CHARS_PRACTICALLY_UNLIMITED
+    # so AGENTS.md / TOOLS.md / MEMORY.md inject in full (same bytes as on disk within caps).
+    bootstrapMaxChars: 9007199254740991
+    bootstrapTotalMaxChars: 9007199254740991
   agent:
     id: tapas
     prompt: >
@@ -18,5 +22,6 @@ openclaw:
   model_defaults:
     aliases:
       default: benchmark-primary
-    fallbacks:
-      - openai/gpt-4o-mini
+    # MiniMax via OpenRouter uses reasoning tokens; too-low completion budget => null content.
+    primary_params:
+      max_tokens: 16384

@@ -130,9 +130,40 @@ def test_run_openclaw_case_uses_docker_cli(
     assert calls[0][0] == "docker"
     assert "run" in calls[0]
     assert "ghcr.io/openclaw/openclaw:2026.4.15" in calls[0]
-    assert "OPENCLAW_CONFIG_PATH=/work/openclaw.json" in calls[0]
+    assert "--env-file" in calls[0]
+    env_file = Path(calls[0][calls[0].index("--env-file") + 1])
+    assert "OPENCLAW_CONFIG_PATH=/work/openclaw.json" in env_file.read_text(encoding="utf-8")
     generated = (tmp_path / "runtime-docker" / "openclaw.json").read_text(encoding="utf-8")
     assert '"/work/workspace"' in generated
+
+
+def test_run_openclaw_case_extracts_final_output_from_stderr(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fake_run(argv: list[str], **kwargs: object) -> SimpleNamespace:
+        if "validate" in argv:
+            return SimpleNamespace(returncode=0, stdout='{"ok":true}\n', stderr="")
+        return SimpleNamespace(returncode=0, stdout="", stderr='{"content": "from-stderr"}')
+
+    monkeypatch.setattr("personal_agent_eval.domains.openclaw.runner.subprocess.run", fake_run)
+
+    case_config = _write_openclaw_case(tmp_path)
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "openclaw.yaml")
+    agent_config = load_openclaw_agent(FIXTURES_ROOT / "configs" / "agents" / "support_agent")
+    artifact = run_openclaw_case(
+        run_id="run_stderr_output",
+        suite_id="example_suite",
+        case_config=case_config,
+        run_profile=run_profile,
+        model_selection=ModelConfig.model_validate(
+            {"model_id": "baseline_model", "requested_model": "openai/gpt-4o-mini"}
+        ),
+        agent_config=agent_config,
+        runtime_root=tmp_path / "runtime-stderr",
+    )
+
+    assert artifact.trace[-1].event_type == "final_output"
+    assert artifact.trace[-1].content == "from-stderr"
 
 
 def _write_openclaw_case(tmp_path: Path) -> CaseConfig:

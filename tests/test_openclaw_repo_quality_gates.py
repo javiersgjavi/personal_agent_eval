@@ -11,12 +11,14 @@ from personal_agent_eval.config import (
     load_suite_config,
     load_test_config,
 )
-from personal_agent_eval.domains.openclaw import materialize_openclaw_workspace
 from personal_agent_eval.domains.openclaw.resolution import (
+    OPENCLAW_BOOTSTRAP_CHARS_PRACTICALLY_UNLIMITED,
     openrouter_primary_model_ref,
     render_openclaw_json,
     resolve_openclaw_config,
 )
+from personal_agent_eval.domains.openclaw.runner import _openclaw_cli_agent_id
+from personal_agent_eval.domains.openclaw.workspace import materialize_openclaw_workspace
 from personal_agent_eval.fingerprints import (
     build_openclaw_agent_fingerprint_input,
     build_run_fingerprint_input,
@@ -41,8 +43,15 @@ def test_repo_openclaw_smoke_suite_expands() -> None:
 def test_repo_support_agent_loads() -> None:
     agent = load_openclaw_agent(BUNDLED_WORKSPACE_ROOT / "configs" / "agents" / "support_agent")
     assert agent.agent_id == "support_agent"
+    assert _openclaw_cli_agent_id(agent) == "support-agent"
     assert agent.workspace_dir is not None
     assert (agent.workspace_dir / "AGENTS.md").is_file()
+
+
+def test_repo_openclaw_smoke_gpt4o_mini_suite_expands() -> None:
+    expanded = expand_suite(BUNDLED_WORKSPACE_ROOT, "openclaw_smoke_gpt4o_mini_suite")
+    assert len(expanded) == 1
+    assert expanded[0].case_id == "openclaw_smoke"
 
 
 def test_repo_tapas_agent_loads() -> None:
@@ -50,6 +59,49 @@ def test_repo_tapas_agent_loads() -> None:
     assert agent.agent_id == "tapas"
     assert agent.workspace_dir is not None
     assert (agent.workspace_dir / "AGENTS.md").is_file()
+    defaults = agent.openclaw.agents_defaults or {}
+    assert defaults.get("bootstrapMaxChars") == OPENCLAW_BOOTSTRAP_CHARS_PRACTICALLY_UNLIMITED
+    assert defaults.get("bootstrapTotalMaxChars") == OPENCLAW_BOOTSTRAP_CHARS_PRACTICALLY_UNLIMITED
+    assert agent.openclaw.model_defaults is not None
+    assert agent.openclaw.model_defaults.fallbacks == []
+    assert agent.openclaw.model_defaults.primary_params == {"max_tokens": 16384}
+
+
+def test_repo_tapas_rendered_openclaw_json_preserves_bootstrap_caps(tmp_path: Path) -> None:
+    case = load_test_config(
+        BUNDLED_WORKSPACE_ROOT / "configs" / "cases" / "tapas_h3_openclaw" / "test.yaml"
+    )
+    run_profile = load_run_profile(
+        BUNDLED_WORKSPACE_ROOT / "configs" / "run_profiles" / "openclaw_tapas.yaml"
+    )
+    suite = load_suite_config(
+        BUNDLED_WORKSPACE_ROOT / "configs" / "suites" / "tapas_reasoning_openclaw_suite.yaml"
+    )
+    agent = load_openclaw_agent(BUNDLED_WORKSPACE_ROOT / "configs" / "agents" / "tapas")
+    assert agent.workspace_dir is not None
+    materialized = materialize_openclaw_workspace(
+        template_dir=agent.workspace_dir,
+        workspace_dir=tmp_path / "ws",
+    )
+    resolved = resolve_openclaw_config(
+        case_config=case,
+        run_profile=run_profile,
+        model_selection=suite.models[0],
+        agent_config=agent,
+        workspace_dir=materialized.workspace_dir,
+        state_dir=tmp_path / "state",
+        workspace_path_in_openclaw_config="/work/workspace",
+    )
+    generated = render_openclaw_json(resolved)
+    d = generated.agents.defaults
+    assert d["bootstrapMaxChars"] == OPENCLAW_BOOTSTRAP_CHARS_PRACTICALLY_UNLIMITED
+    assert d["bootstrapTotalMaxChars"] == OPENCLAW_BOOTSTRAP_CHARS_PRACTICALLY_UNLIMITED
+    primary = "openrouter/minimax/minimax-m2.7"
+    assert d["models"][primary]["params"] == {"max_tokens": 16384}
+    assert d["model"] == {"primary": primary}
+    openrouter = generated.models["providers"]["openrouter"]
+    assert openrouter["baseUrl"] == "https://openrouter.ai/api/v1"
+    assert [model["id"] for model in openrouter["models"]] == ["minimax/minimax-m2.7"]
 
 
 def test_repo_openclaw_run_profile_has_openclaw_block() -> None:
@@ -164,40 +216,3 @@ def test_tapas_openclaw_cases_are_discovered() -> None:
     cases = discover_cases(BUNDLED_WORKSPACE_ROOT)
     assert cases["tapas_x7_openclaw"].config.runner.type == "openclaw"
     assert cases["tapas_h3_openclaw"].config.runner.type == "openclaw"
-
-
-def test_tapas_reasoning_suite_resolves_minimax_for_openclaw(tmp_path: Path) -> None:
-    """Tapas H3/X7 suite uses a real OpenRouter slug (not gpt-example) so runs can call the API."""
-    suite = load_suite_config(
-        BUNDLED_WORKSPACE_ROOT / "configs" / "suites" / "tapas_reasoning_openclaw_suite.yaml"
-    )
-    assert len(suite.models) == 1
-    model = suite.models[0]
-    assert model.model_id == "minimax_m27"
-    raw = model.model_dump(mode="json").get("requested_model") or ""
-    assert openrouter_primary_model_ref(raw) == "openrouter/minimax/minimax-m2.7"
-
-    case = load_test_config(
-        BUNDLED_WORKSPACE_ROOT / "configs" / "cases" / "tapas_h3_openclaw" / "test.yaml"
-    )
-    run_profile = load_run_profile(
-        BUNDLED_WORKSPACE_ROOT / "configs" / "run_profiles" / "openclaw_tapas.yaml"
-    )
-    agent = load_openclaw_agent(BUNDLED_WORKSPACE_ROOT / "configs" / "agents" / "tapas")
-    assert agent.workspace_dir is not None
-    materialized = materialize_openclaw_workspace(
-        template_dir=agent.workspace_dir,
-        workspace_dir=tmp_path / "ws",
-    )
-    resolved = resolve_openclaw_config(
-        case_config=case,
-        run_profile=run_profile,
-        model_selection=model,
-        agent_config=agent,
-        workspace_dir=materialized.workspace_dir,
-        state_dir=tmp_path / "state",
-    )
-    assert resolved.openclaw_primary_model_ref == "openrouter/minimax/minimax-m2.7"
-    generated = render_openclaw_json(resolved)
-    assert generated.agents.defaults["model"]["primary"] == "openrouter/minimax/minimax-m2.7"
-    assert generated.agents.agent_list[0]["model"] == "openrouter/minimax/minimax-m2.7"

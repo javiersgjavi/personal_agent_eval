@@ -12,6 +12,7 @@ from personal_agent_eval.config import (
 from personal_agent_eval.config.suite_config import ModelConfig
 from personal_agent_eval.config.test_config import TestConfig as CaseConfig
 from personal_agent_eval.domains.openclaw import (
+    normalize_openrouter_base_url,
     openrouter_primary_model_ref,
     render_openclaw_json,
     render_openclaw_json_text,
@@ -75,13 +76,14 @@ def test_render_openclaw_json_minimax_slug_uses_openrouter_ref(tmp_path: Path) -
     assert resolved.openclaw_primary_model_ref == "openrouter/minimax/minimax-m2.7"
     generated = render_openclaw_json(resolved)
     assert generated.agents.defaults["model"]["primary"] == "openrouter/minimax/minimax-m2.7"
-    assert generated.agents.defaults["model"] == {
-        "primary": "openrouter/minimax/minimax-m2.7",
-        "fallbacks": ["openrouter/openai/gpt-4o-mini"],
-    }
+    assert generated.agents.defaults["model"] == {"primary": "openrouter/minimax/minimax-m2.7"}
     assert generated.agents.defaults["models"]["openrouter/minimax/minimax-m2.7"]["alias"] == (
         "benchmark-primary"
     )
+    openrouter = generated.models["providers"]["openrouter"]
+    assert openrouter["baseUrl"] == "https://openrouter.ai/api/v1"
+    assert openrouter["apiKey"] == "OPENROUTER_API_KEY"
+    assert [model["id"] for model in openrouter["models"]] == ["minimax/minimax-m2.7"]
 
 
 def test_render_openclaw_json_is_deterministic_and_uses_requested_model(tmp_path: Path) -> None:
@@ -104,14 +106,16 @@ def test_render_openclaw_json_is_deterministic_and_uses_requested_model(tmp_path
     or_primary = "openrouter/openai/gpt-4.1-mini"
 
     assert generated.agents.defaults["model"]["primary"] == or_primary
-    assert generated.agents.defaults["models"][or_primary] == {"alias": "benchmark-primary"}
-    assert generated.agents.defaults["model"]["fallbacks"] == ["openrouter/openai/gpt-4o-mini"]
+    assert generated.agents.defaults["models"][or_primary] == {
+        "alias": "benchmark-primary",
+        "params": {"max_tokens": 8192},
+    }
     assert generated.agents.defaults["workspace"] == str((tmp_path / "workspace").resolve())
     assert generated.agents.defaults["sandbox"] == {"mode": "off"}
-    assert generated.agents.defaults["model"] == {
-        "primary": or_primary,
-        "fallbacks": ["openrouter/openai/gpt-4o-mini"],
-    }
+    assert generated.agents.defaults["model"] == {"primary": or_primary}
+    assert generated.models["providers"]["openrouter"]["baseUrl"] == (
+        "https://openrouter.ai/api/v1"
+    )
     assert generated.agents.agent_list == [
         {
             "id": "support-agent",
@@ -121,6 +125,7 @@ def test_render_openclaw_json_is_deterministic_and_uses_requested_model(tmp_path
     ]
     assert "ephemeral-state" not in rendered_text
     assert f'"primary": "{or_primary}"' in rendered_text
+    assert '"baseUrl": "https://openrouter.ai/api/v1"' in rendered_text
     assert rendered_text == render_openclaw_json_text(resolved)
 
 
@@ -188,6 +193,15 @@ def test_openrouter_primary_model_ref_idempotent() -> None:
     assert openrouter_primary_model_ref("openrouter/x/y") == "openrouter/x/y"
 
 
+def test_normalize_openrouter_base_url_repairs_legacy_path() -> None:
+    assert normalize_openrouter_base_url("https://openrouter.ai/v1") == (
+        "https://openrouter.ai/api/v1"
+    )
+    assert normalize_openrouter_base_url("https://openrouter.ai/api/v1") == (
+        "https://openrouter.ai/api/v1"
+    )
+
+
 def test_resolve_openclaw_config_container_workspace_path(tmp_path: Path) -> None:
     case_config = _write_openclaw_case(tmp_path, source_messages=False)
     run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "openclaw.yaml")
@@ -214,7 +228,10 @@ def test_validate_generated_openclaw_config_requires_one_agent_and_matching_defa
         validate_generated_openclaw_config(
             {
                 "agents": {
-                    "defaults": {"workspace": "/tmp/ws", "model": {"primary": "openai/gpt-4o-mini"}},
+                    "defaults": {
+                        "workspace": "/tmp/ws",
+                        "model": {"primary": "openai/gpt-4o-mini"},
+                    },
                     "list": [],
                 },
             }

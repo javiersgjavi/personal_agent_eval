@@ -15,6 +15,14 @@ from personal_agent_eval.config import OpenClawAgentConfig, RunProfileConfig, Te
 from personal_agent_eval.config.suite_config import ModelConfig
 
 _OPENCLAW_MESSAGE_ROLES = {"system", "user", "assistant", "tool"}
+_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+_OPENROUTER_DEFAULT_CONTEXT_WINDOW = 200_000
+_OPENROUTER_DEFAULT_MAX_TOKENS = 16_384
+
+# OpenClaw only accepts positive ints for bootstrap caps (no "unlimited" in schema). This matches
+# JavaScript Number.MAX_SAFE_INTEGER so Node/OpenClaw can apply it without precision loss — large
+# enough that workspace bootstrap files are injected in full for any practical on-disk size.
+OPENCLAW_BOOTSTRAP_CHARS_PRACTICALLY_UNLIMITED: int = 9_007_199_254_740_991
 
 
 def openrouter_primary_model_ref(raw_model: str) -> str:
@@ -25,6 +33,19 @@ def openrouter_primary_model_ref(raw_model: str) -> str:
     if stripped.startswith("openrouter/"):
         return stripped
     return f"openrouter/{stripped}"
+
+
+def normalize_openrouter_base_url(raw_url: str | None) -> str:
+    """Normalize OpenRouter base URLs to the documented ``/api/v1`` form."""
+    if raw_url is None:
+        return _OPENROUTER_BASE_URL
+    stripped = raw_url.strip()
+    if not stripped:
+        return _OPENROUTER_BASE_URL
+    normalized = stripped.rstrip("/")
+    normalized = normalized.replace("https://openrouter.ai/v1", _OPENROUTER_BASE_URL, 1)
+    normalized = normalized.replace("http://openrouter.ai/v1", "http://openrouter.ai/api/v1", 1)
+    return normalized
 
 
 class ResolvedOpenClawMessage(ArtifactModel):
@@ -50,12 +71,16 @@ class GeneratedOpenClawAgents(ArtifactModel):
 
 
 class GeneratedOpenClawConfig(ArtifactModel):
-    """Generated ``openclaw.json`` matching OpenClaw's strict root schema (agents-only root)."""
+    """Generated ``openclaw.json`` matching the shipped OpenClaw root schema."""
 
     agents: GeneratedOpenClawAgents
+    models: dict[str, Any] = Field(default_factory=dict)
 
     def to_json_dict(self, *, round_floats: bool = True) -> dict[str, Any]:
-        return {"agents": self.agents.to_json_dict(round_floats=round_floats)}
+        payload = {"agents": self.agents.to_json_dict(round_floats=round_floats)}
+        if self.models:
+            payload["models"] = dict(self.models)
+        return payload
 
 
 class ResolvedOpenClawConfig(ArtifactModel):
@@ -153,6 +178,10 @@ def render_openclaw_json(resolved_config: ResolvedOpenClawConfig) -> GeneratedOp
     )
     fallbacks = models_fragment.pop("fallbacks", None)
     aliases = models_fragment.pop("aliases", None)
+    raw_primary_params = models_fragment.pop("primary_params", None)
+    primary_params: dict[str, Any] | None = None
+    if isinstance(raw_primary_params, Mapping) and raw_primary_params:
+        primary_params = dict(raw_primary_params)
 
     model_block: dict[str, Any] = {"primary": primary}
     if isinstance(fallbacks, list) and fallbacks:
@@ -162,10 +191,16 @@ def render_openclaw_json(resolved_config: ResolvedOpenClawConfig) -> GeneratedOp
         primary=primary,
         fallbacks=fallbacks if isinstance(fallbacks, list) else [],
         aliases=aliases,
+        primary_params=primary_params,
     )
 
     generated = GeneratedOpenClawConfig(
         agents=GeneratedOpenClawAgents(defaults=agents_defaults, agent_list=[agent_entry]),
+        models=_build_openrouter_provider_overrides(
+            primary=primary,
+            fallbacks=fallbacks if isinstance(fallbacks, list) else [],
+            primary_params=primary_params,
+        ),
     )
     validate_generated_openclaw_config(generated)
     return generated
@@ -199,6 +234,7 @@ def _build_agents_defaults_models_catalog(
     primary: str,
     fallbacks: list[Any],
     aliases: Any,
+    primary_params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build ``agents.defaults.models`` allowlist map per OpenClaw docs."""
     catalog: dict[str, Any] = {}
@@ -208,7 +244,10 @@ def _build_agents_defaults_models_catalog(
             if isinstance(label, str) and label.strip():
                 alias_label = label.strip()
                 break
-    catalog[primary] = {"alias": alias_label}
+    primary_entry: dict[str, Any] = {"alias": alias_label}
+    if primary_params:
+        primary_entry["params"] = dict(primary_params)
+    catalog[primary] = primary_entry
     for fb in fallbacks:
         if isinstance(fb, str) and fb.strip() and fb not in catalog:
             catalog[fb] = {}
@@ -224,6 +263,74 @@ def _openrouter_normalize_models_fragment(fragment: dict[str, Any]) -> dict[str,
             for item in fallbacks
         ]
     return out
+
+
+def _build_openrouter_provider_overrides(
+    *,
+    primary: str,
+    fallbacks: list[str],
+    primary_params: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Emit ``models.providers.openrouter`` to override OpenClaw's broken default base URL."""
+    refs = [primary, *fallbacks]
+    models: list[dict[str, Any]] = []
+    for ref in refs:
+        model_entry = _build_openrouter_provider_model_entry(
+            ref,
+            max_tokens_override=primary_params.get("max_tokens")
+            if ref == primary and isinstance(primary_params, Mapping)
+            else None,
+        )
+        if model_entry is not None:
+            models.append(model_entry)
+    if not models:
+        return {}
+    return {
+        "mode": "merge",
+        "providers": {
+            "openrouter": {
+                "baseUrl": normalize_openrouter_base_url(_OPENROUTER_BASE_URL),
+                "apiKey": "OPENROUTER_API_KEY",
+                "api": "openai-completions",
+                "models": models,
+            }
+        },
+    }
+
+
+def _build_openrouter_provider_model_entry(
+    model_ref: str,
+    *,
+    max_tokens_override: Any = None,
+) -> dict[str, Any] | None:
+    """Build one minimal ``models.providers.openrouter.models[]`` entry."""
+    if not isinstance(model_ref, str):
+        return None
+    stripped = model_ref.strip()
+    if not stripped.startswith("openrouter/"):
+        return None
+    provider_model_id = stripped.removeprefix("openrouter/")
+    if not provider_model_id:
+        return None
+    max_tokens = (
+        int(max_tokens_override)
+        if isinstance(max_tokens_override, int) and max_tokens_override > 0
+        else _OPENROUTER_DEFAULT_MAX_TOKENS
+    )
+    return {
+        "id": provider_model_id,
+        "name": provider_model_id,
+        "reasoning": _model_ref_likely_uses_reasoning(provider_model_id),
+        "input": ["text", "image"],
+        "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+        "contextWindow": _OPENROUTER_DEFAULT_CONTEXT_WINDOW,
+        "maxTokens": max_tokens,
+    }
+
+
+def _model_ref_likely_uses_reasoning(provider_model_id: str) -> bool:
+    lowered = provider_model_id.lower()
+    return any(token in lowered for token in ("reason", "thinking", "minimax"))
 
 
 def render_openclaw_json_text(resolved_config: ResolvedOpenClawConfig) -> str:

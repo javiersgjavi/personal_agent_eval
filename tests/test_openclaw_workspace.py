@@ -82,6 +82,37 @@ def test_materialize_openclaw_workspace_manifest_is_deterministic(tmp_path: Path
     )
 
 
+def test_materialize_openclaw_workspace_preserves_large_utf8_files_intact(
+    tmp_path: Path,
+) -> None:
+    """Large AGENTS.md / TOOLS.md copy byte-for-byte (OpenClaw reads them from the workspace)."""
+    template_dir = tmp_path / "template"
+    template_dir.mkdir()
+    # > typical OpenClaw default bootstrap per-file caps; materialization must not truncate.
+    large_agents = ("δημοτικό\n" * 8_000) + "END_AGENTS\n"
+    large_tools = ("Z" * 35_000) + "\nEND_TOOLS\n"
+    (template_dir / "AGENTS.md").write_text(large_agents, encoding="utf-8")
+    (template_dir / "TOOLS.md").write_text(large_tools, encoding="utf-8")
+
+    materialized = materialize_openclaw_workspace(
+        template_dir=template_dir,
+        workspace_dir=tmp_path / "workspace-out",
+    )
+
+    out_agents = materialized.workspace_dir / "AGENTS.md"
+    out_tools = materialized.workspace_dir / "TOOLS.md"
+    assert out_agents.read_bytes() == large_agents.encode("utf-8")
+    assert out_tools.read_bytes() == large_tools.encode("utf-8")
+    assert out_agents.read_text(encoding="utf-8") == large_agents
+    assert out_tools.read_text(encoding="utf-8") == large_tools
+
+    by_path = {e.relative_path: e for e in materialized.manifest.entries}
+    assert by_path["AGENTS.md"].size_bytes == len(large_agents.encode("utf-8"))
+    assert by_path["TOOLS.md"].size_bytes == len(large_tools.encode("utf-8"))
+    assert by_path["AGENTS.md"].source == "template"
+    assert by_path["TOOLS.md"].source == "template"
+
+
 def test_materialize_openclaw_workspace_rejects_non_empty_destination(tmp_path: Path) -> None:
     template_dir = tmp_path / "template"
     template_dir.mkdir()

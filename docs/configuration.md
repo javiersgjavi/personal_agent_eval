@@ -351,14 +351,20 @@ execution_policy:
 
 `runner_defaults` and `model_overrides` continue to apply to `llm_probe`. OpenClaw uses
 the dedicated `openclaw` block instead of encoding runtime selection in free-form keys. Execution is
-**Docker/OCI-only** for OpenClaw cases; provider keys (e.g. `OPENROUTER_API_KEY`) must be present in
-the host environment so they can be passed into the container.
+**Docker/OCI-only** for OpenClaw cases. The harness writes a sidecar env file (next to the generated
+`openclaw.json`) and runs `docker run --env-file …` so provider credentials and proxy settings reach
+the container reliably (avoids huge `docker -e` lists and `ARG_MAX` issues). By default it forwards
+every `OPENROUTER_*` variable plus common proxy/TLS keys and a small set of alternate provider API
+keys (e.g. `OPENAI_API_KEY` for OpenRouter fallbacks). Set
+`PERSONAL_AGENT_EVAL_OPENCLAW_DOCKER_FULL_ENV=1` on the host to forward the entire host environment
+instead (legacy).
 
 ### Generated `openclaw.json`
 
 The benchmark resolves one effective OpenClaw config per run and then renders a minimal,
-deterministic `openclaw.json` whose **root** matches OpenClaw’s strict schema (only `agents` at the
-top level; see [Configuration](https://docs.openclaw.ai/gateway/configuration)).
+deterministic `openclaw.json` whose **root** matches OpenClaw’s strict schema (`agents`, plus a
+small `models.providers.openrouter` override; see
+[Configuration](https://docs.openclaw.ai/gateway/configuration)).
 
 Current merge and injection rules:
 
@@ -367,18 +373,35 @@ Current merge and injection rules:
      an object, e.g. `workspace-write` -> `{ "mode": "off" }`)
    - `openclaw.agent` -> the single `agents.list[0]` entry (`prompt` is emitted as
      `systemPromptOverride`)
-   - `openclaw.model_defaults`: `fallbacks` -> `agents.defaults.model.fallbacks`; `aliases` ->
-     `agents.defaults.models[<primary>].alias` plus catalog entries for fallback models
+   - `openclaw.model_defaults`: `aliases` ->
+     `agents.defaults.models[<primary>].alias`
    - `openclaw.identity` is **not** written to `openclaw.json` (unknown at root in strict validation);
      keep persona in `workspace/` (`IDENTITY.md`, `SOUL.md`, …)
 2. resolve the suite model the same way as `llm_probe` (`requested_model` → …), then map it to an
    **OpenRouter ref** `openrouter/<provider>/<model>` for:
    - `agents.defaults.model.primary`
    - `agents.list[0].model`
-   - entries in `agents.defaults.model.fallbacks` (when present)
-3. build `agents.defaults.models` as the model allowlist map (primary + fallbacks) required by
+3. build `agents.defaults.models` as the model allowlist map for the selected primary model required by
    upstream docs
-4. inject the ephemeral workspace path into `agents.defaults.workspace`
+4. inject `models.providers.openrouter` with the documented `https://openrouter.ai/api/v1`
+   base URL and a minimal catalog for the allowed OpenRouter model so OpenClaw does not fall back
+   to its broken `/v1` default for this provider path
+5. inject the ephemeral workspace path into `agents.defaults.workspace`
+
+Benchmark policy note:
+`openclaw.model_defaults.fallbacks` is not supported. Containerized benchmark runs must resolve to
+exactly one model. If a run is supposed to evaluate `minimax/minimax-m2.7`, allowing a fallback
+such as `openai/gpt-4o-mini` makes the result ambiguous because OpenClaw may answer with a
+different model from the one the suite selected. The loader rejects agent configs that declare
+fallbacks for this reason.
+
+Compatibility note:
+OpenClaw image behavior around OpenRouter provider resolution has changed across 2026 releases. The
+benchmark currently keeps this explicit OpenRouter provider override as a compatibility shim because
+some images persisted or merged a legacy `https://openrouter.ai/v1` base URL and then produced
+empty turns (`payloads=0`, `replayInvalid`, `livenessState=abandoned`). If future OpenClaw images
+fix this upstream, this section may need to be revisited so the benchmark does not carry redundant
+or conflicting provider overrides longer than necessary.
 
 The generated config does **not** treat the OpenClaw state directory as part of the
 workspace. The ephemeral `OPENCLAW_STATE_DIR` remains a separate runtime surface and is not
@@ -441,10 +464,14 @@ Initial supported fragment keys:
 | `identity` | mapping | Optional; not copied into generated `openclaw.json` (strict root schema); use workspace files |
 | `agents_defaults` | mapping | Partial object merged into `agents.defaults` |
 | `agent` | mapping | Partial object used to build the single `agents.list[]` entry |
-| `model_defaults` | mapping | Optional non-primary model defaults such as `aliases` and `fallbacks` |
+| `model_defaults` | mapping | `aliases` and optional `primary_params` (merged into `agents.defaults.models[<primary>].params`, e.g. `max_tokens` for reasoning-heavy OpenRouter models); `fallbacks` are rejected |
 
 The loader rejects primary-model override keys in these fragments; the effective benchmark
 model must still come from suite or CLI model selection.
+
+`openclaw.agent.id` (when set) is the id written to `agents.list[0].id` **and** the value passed
+to `openclaw agent --agent`. It may differ from the directory / `agent_id` slug (for example
+`agent_id: support_agent` with `openclaw.agent.id: support-agent`).
 
 ### Workspace contract
 

@@ -41,6 +41,7 @@ from personal_agent_eval.config import OpenClawAgentConfig, RunProfileConfig, Te
 from personal_agent_eval.config.suite_config import ModelConfig
 from personal_agent_eval.domains.openclaw.resolution import (
     ResolvedOpenClawConfig,
+    normalize_openrouter_base_url,
     render_openclaw_json_text,
     resolve_openclaw_config,
 )
@@ -50,6 +51,46 @@ MessageRole = Literal["system", "user", "assistant", "tool"]
 
 # In-container workdir; must stay aligned with workspace_path_in_openclaw_config for Docker runs.
 OPENCLAW_DOCKER_WORKDIR = "/work"
+
+
+def _openclaw_cli_agent_id(agent_config: OpenClawAgentConfig) -> str:
+    """Return the CLI agent id; it must match ``agents.list[].id`` in ``openclaw.json``."""
+    fragment = agent_config.openclaw.agent
+    if fragment and isinstance(fragment.get("id"), str):
+        stripped = fragment["id"].strip()
+        if stripped:
+            return stripped
+    return agent_config.agent_id
+
+# Sidecar env file for ``docker run --env-file`` (avoids ARG_MAX vs. many ``-e`` flags).
+_DOCKER_ENV_FILE_NAME = ".pae-openclaw.docker.env"
+
+# Opt-in: forward entire host env (legacy; wide envs need ``--env-file``, not per-``-e`` flags).
+_OPENCLAW_DOCKER_FULL_ENV_FLAG = "PERSONAL_AGENT_EVAL_OPENCLAW_DOCKER_FULL_ENV"
+
+# Exact host keys forwarded besides every ``OPENROUTER_*`` (fallback providers, TLS, proxies).
+_OPENCLAW_DOCKER_HOST_ENV_EXACT: frozenset[str] = frozenset(
+    {
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "NO_PROXY",
+        "ALL_PROXY",
+        "no_proxy",
+        "FTP_PROXY",
+        "SSL_CERT_FILE",
+        "REQUESTS_CA_BUNDLE",
+        "NODE_EXTRA_CA_CERTS",
+        "CURL_CA_BUNDLE",
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "GOOGLE_API_KEY",
+        "AZURE_OPENAI_API_KEY",
+        "MISTRAL_API_KEY",
+        "GROQ_API_KEY",
+        "XAI_API_KEY",
+        "COHERE_API_KEY",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,6 +263,21 @@ def run_openclaw_case(
 
     generated_config_path.write_text(render_openclaw_json_text(resolved_config), encoding="utf-8")
     env = _build_openclaw_environment(config_path=generated_config_path, state_dir=state_dir)
+    trace_builder.add_runner_event(
+        name="openclaw_container_env",
+        detail=(
+            "Host env forwarded into OpenClaw container "
+            "(filtered: OpenRouter, providers, proxy/TLS)."
+        ),
+        metadata={
+            "mode": "full_host"
+            if os.environ.get(_OPENCLAW_DOCKER_FULL_ENV_FLAG) == "1"
+            else "filtered",
+            "env_file": _DOCKER_ENV_FILE_NAME,
+            "openrouter_api_key_set": bool(os.environ.get("OPENROUTER_API_KEY", "").strip()),
+            "forwarded_var_count": len(env),
+        },
+    )
     validation_result = executor.validate_config(config_path=generated_config_path, env=env)
     _append_command_log(
         command_log_path,
@@ -274,22 +330,27 @@ def run_openclaw_case(
         )
 
     task_message = _render_task_message(resolved_config)
+    cli_agent_id = _openclaw_cli_agent_id(agent_config)
     trace_builder.add_runner_event(
         name="agent_invoked",
         detail="Running OpenClaw local agent turn.",
-        metadata={"agent_id": resolved_config.agent_id},
+        metadata={
+            "agent_id": cli_agent_id,
+            "agent_directory_id": agent_config.agent_id,
+        },
     )
     run_result = executor.run_agent(
-        agent_id=resolved_config.agent_id,
+        agent_id=cli_agent_id,
         message=task_message,
         config_path=generated_config_path,
         env=env,
         timeout_seconds=run_profile.openclaw.timeout_seconds,
     )
     _append_command_log(command_log_path, command_name="run_agent", result=run_result)
-    _write_text_payload(raw_trace_path, run_result.stdout or run_result.stderr)
+    run_payload_text = run_result.stdout or run_result.stderr
+    _write_text_payload(raw_trace_path, run_payload_text)
 
-    final_output = _extract_final_output(run_result.stdout)
+    final_output = _extract_final_output(run_payload_text)
     if final_output is not None:
         trace_builder.add_final_output(final_output)
 
@@ -371,11 +432,45 @@ def _prepare_runtime_root(runtime_root: Path | None) -> Path:
 
 def _build_openclaw_environment(*, config_path: Path, state_dir: Path) -> dict[str, str]:
     state_dir.mkdir(parents=True, exist_ok=True)
-    return {
-        **os.environ,
-        "OPENCLAW_CONFIG_PATH": str(config_path),
-        "OPENCLAW_STATE_DIR": str(state_dir),
-    }
+    base = _host_environment_for_openclaw_container()
+    base["OPENCLAW_CONFIG_PATH"] = str(config_path)
+    base["OPENCLAW_STATE_DIR"] = str(state_dir)
+    return base
+
+
+def _host_environment_for_openclaw_container() -> dict[str, str]:
+    """Select host vars to inject into the OpenClaw OCI container.
+
+    Passing every ``os.environ`` entry as ``docker -e`` can exceed ``ARG_MAX``. We use
+    ``--env-file`` and a focused set: all ``OPENROUTER_*`` keys, common alternate provider keys
+    for fallbacks, and proxy/TLS variables.
+    """
+    if os.environ.get(_OPENCLAW_DOCKER_FULL_ENV_FLAG) == "1":
+        return {
+            key: value
+            for key, value in os.environ.items()
+            if isinstance(value, str) and "\n" not in value and "\x00" not in value
+        }
+    out: dict[str, str] = {}
+    for key, value in os.environ.items():
+        if not isinstance(value, str) or "\n" in value or "\x00" in value:
+            continue
+        if key.startswith("OPENROUTER_") or key in _OPENCLAW_DOCKER_HOST_ENV_EXACT:
+            out[key] = value
+    if "OPENROUTER_BASE_URL" in out:
+        out["OPENROUTER_BASE_URL"] = normalize_openrouter_base_url(out["OPENROUTER_BASE_URL"])
+    return out
+
+
+def _write_docker_env_file(path: Path, env: Mapping[str, str]) -> None:
+    """Write ``docker --env-file`` format (KEY=value lines, UTF-8)."""
+    parts: list[str] = []
+    for key in sorted(env.keys()):
+        value = env[key]
+        if "\n" in value or "\x00" in value:
+            continue
+        parts.append(f"{key}={value}\n")
+    path.write_text("".join(parts), encoding="utf-8")
 
 
 def _build_request_model(
@@ -743,6 +838,8 @@ def _docker_openclaw_argv(
 ) -> list[str]:
     host_root = config_path.parent.resolve()
     container_env = _remap_openclaw_paths_for_container(env, workdir=workdir)
+    env_file_host = host_root / _DOCKER_ENV_FILE_NAME
+    _write_docker_env_file(env_file_host, container_env)
     argv: list[str] = [
         docker_cli,
         "run",
@@ -751,9 +848,9 @@ def _docker_openclaw_argv(
         f"{host_root}:{workdir}:rw",
         "-w",
         workdir,
+        "--env-file",
+        str(env_file_host),
     ]
-    for key, value in sorted(container_env.items()):
-        argv.extend(["-e", f"{key}={value}"])
     argv.append(image)
     argv.extend(inner_command)
     return argv

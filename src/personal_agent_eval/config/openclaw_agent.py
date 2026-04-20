@@ -34,6 +34,9 @@ class OpenClawModelDefaults(ConfigModel):
 
     fallbacks: list[str] = Field(default_factory=list)
     aliases: dict[str, str] = Field(default_factory=dict)
+    #: Merged into ``agents.defaults.models[<primary openrouter ref>].params``
+    #: (OpenClaw provider API).
+    primary_params: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _validate_primary_model_is_not_overridden(self) -> Self:
@@ -44,6 +47,11 @@ class OpenClawModelDefaults(ConfigModel):
             raise ValueError(
                 "openclaw.model_defaults cannot override the primary benchmark model "
                 f"via keys: {formatted}."
+            )
+        if self.fallbacks:
+            raise ValueError(
+                "openclaw.model_defaults.fallbacks is not supported for benchmark OpenClaw runs; "
+                "containerized model evaluations must resolve to exactly one model."
             )
         return self
 

@@ -96,6 +96,7 @@ def test_load_openclaw_agent_from_fixture_directory() -> None:
     assert config.openclaw.identity == {"name": "Support Agent"}
     assert config.openclaw.model_defaults is not None
     assert config.openclaw.model_defaults.aliases == {"default": "benchmark-primary"}
+    assert config.openclaw.model_defaults.fallbacks == []
 
 
 def test_load_evaluation_profile_from_fixture() -> None:
@@ -478,6 +479,31 @@ def test_load_openclaw_agent_rejects_primary_model_override(tmp_path: Path) -> N
     )
 
     with pytest.raises(ConfigError, match="primary benchmark model"):
+        load_openclaw_agent(agent_dir)
+
+
+def test_load_openclaw_agent_rejects_fallbacks(tmp_path: Path) -> None:
+    agent_dir = tmp_path / "support_agent"
+    workspace_dir = agent_dir / "workspace"
+    workspace_dir.mkdir(parents=True)
+    (workspace_dir / "AGENTS.md").write_text("placeholder\n", encoding="utf-8")
+    (agent_dir / "agent.yaml").write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "agent_id: support_agent",
+                "title: Support agent",
+                "openclaw:",
+                "  model_defaults:",
+                "    fallbacks:",
+                "      - openai/gpt-4o-mini",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="fallbacks is not supported"):
         load_openclaw_agent(agent_dir)
 
 

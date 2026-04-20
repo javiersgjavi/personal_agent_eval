@@ -1,0 +1,12 @@
+schema_version: 1
+suite_id: openclaw_smoke_gpt4o_mini_suite
+title: OpenClaw smoke with valid OpenRouter model (debug)
+models:
+  - model_id: gpt4o_mini_smoke
+    requested_model: openai/gpt-4o-mini
+    label: openai/gpt-4o-mini
+case_selection:
+  include_case_ids:
+    - openclaw_smoke
+metadata:
+  owner: qa

@@ -17,5 +17,5 @@ openclaw:
   model_defaults:
     aliases:
       default: benchmark-primary
-    fallbacks:
-      - openai/gpt-4o-mini
+    primary_params:
+      max_tokens: 8192

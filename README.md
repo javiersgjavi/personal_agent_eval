@@ -15,6 +15,10 @@ V1 focuses on `llm_probe` and provides:
 `openclaw` is part of the design, but it is a later runtime extension rather than a V1
 execution target.
 
+For benchmark-owned OpenClaw runs, the effective model must stay exact: OpenClaw agent configs in
+this repo do not support `fallbacks`. If a suite selects `minimax/minimax-m2.7`, the run must not
+silently answer with a different provider/model.
+
 ## Status
 
 Implemented in the current V1 codebase:
