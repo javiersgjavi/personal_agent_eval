@@ -47,6 +47,7 @@ from personal_agent_eval.judge.system_prompt import (
     resolve_judge_system_prompt_details,
     resolve_judge_system_prompt_text,
 )
+from personal_agent_eval.reporting.final_result_summary import render_failed_evaluation_markdown
 from personal_agent_eval.storage import (
     EvaluationStorageManifest,
     FilesystemStorage,
@@ -511,6 +512,34 @@ class WorkflowOrchestrator:
             except Exception as exc:
                 run_u = _usage_from_run_artifact(run_artifact)
                 eval_u = _usage_from_judge_result(judge_result)
+                warnings = _deduplicate(
+                    [
+                        *_run_warnings(run_artifact),
+                        *judge_result.warnings,
+                        (
+                            "Unable to compute final evaluation result: "
+                            f"{type(exc).__name__}: {exc}"
+                        ),
+                    ]
+                )
+                self._storage.write_case_summary_text(
+                    suite_id=suite_config.suite_id,
+                    run_profile_fingerprint=run_profile_fingerprint,
+                    evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+                    evaluation_fingerprint=evaluation_fingerprint,
+                    model_id=model.model_id,
+                    case_id=case_manifest.case_id,
+                    repetition_index=repetition_index,
+                    content=render_failed_evaluation_markdown(
+                        case_id=case_manifest.case_id,
+                        run_id=run_artifact.identity.run_id,
+                        run_status=run_artifact.status.value,
+                        evaluation_status="failed",
+                        deterministic_result=deterministic_result,
+                        judge_result=judge_result,
+                        warnings=warnings,
+                    ),
+                )
                 return WorkflowCaseResult(
                     model_id=model.model_id,
                     case_id=case_manifest.case_id,
@@ -526,15 +555,7 @@ class WorkflowOrchestrator:
                     run_usage=run_u,
                     evaluation_usage=eval_u,
                     usage=_combine_usage(run_u, eval_u),
-                    warnings=_deduplicate(
-                        [
-                            *_run_warnings(run_artifact),
-                            (
-                                "Unable to recompute final evaluation result: "
-                                f"{type(exc).__name__}: {exc}"
-                            ),
-                        ]
-                    ),
+                    warnings=warnings,
                     **_storage_fields_for_run_row(
                         self._storage,
                         suite_id=suite_config.suite_id,
@@ -595,6 +616,34 @@ class WorkflowOrchestrator:
             except Exception as exc:
                 run_u = _usage_from_run_artifact(run_artifact)
                 eval_u = _usage_from_judge_result(judge_result)
+                warnings = _deduplicate(
+                    [
+                        *_run_warnings(run_artifact),
+                        *judge_result.warnings,
+                        (
+                            "Unable to compute final evaluation result: "
+                            f"{type(exc).__name__}: {exc}"
+                        ),
+                    ]
+                )
+                self._storage.write_case_summary_text(
+                    suite_id=suite_config.suite_id,
+                    run_profile_fingerprint=run_profile_fingerprint,
+                    evaluation_profile_id=evaluation_profile.evaluation_profile_id,
+                    evaluation_fingerprint=evaluation_fingerprint,
+                    model_id=model.model_id,
+                    case_id=case_manifest.case_id,
+                    repetition_index=repetition_index,
+                    content=render_failed_evaluation_markdown(
+                        case_id=case_manifest.case_id,
+                        run_id=run_artifact.identity.run_id,
+                        run_status=run_artifact.status.value,
+                        evaluation_status="failed",
+                        deterministic_result=deterministic_result,
+                        judge_result=judge_result,
+                        warnings=warnings,
+                    ),
+                )
                 return WorkflowCaseResult(
                     model_id=model.model_id,
                     case_id=case_manifest.case_id,
@@ -610,16 +659,7 @@ class WorkflowOrchestrator:
                     run_usage=run_u,
                     evaluation_usage=eval_u,
                     usage=_combine_usage(run_u, eval_u),
-                    warnings=_deduplicate(
-                        [
-                            *_run_warnings(run_artifact),
-                            *judge_result.warnings,
-                            (
-                                "Unable to compute final evaluation result: "
-                                f"{type(exc).__name__}: {exc}"
-                            ),
-                        ]
-                    ),
+                    warnings=warnings,
                     **_storage_fields_for_run_row(
                         self._storage,
                         suite_id=suite_config.suite_id,

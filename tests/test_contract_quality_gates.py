@@ -385,6 +385,7 @@ def test_storage_layout_is_frozen_and_isolates_results_per_run_fingerprint(tmp_p
         / "eval_profile_judge_default_eeeeee"
         / "openai_gpt-example"
         / case_id
+        / "raw_outputs"
         / "judge_1.json"
     )
     assert storage.case_final_result_path(
@@ -404,6 +405,7 @@ def test_storage_layout_is_frozen_and_isolates_results_per_run_fingerprint(tmp_p
         / "eval_profile_judge_default_eeeeee"
         / "anthropic_other-model"
         / case_id
+        / "raw_outputs"
         / "final_result_1.json"
     )
     assert (

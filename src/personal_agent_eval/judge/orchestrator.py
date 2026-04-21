@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from dataclasses import dataclass
 from statistics import median
 from typing import Any, Protocol, cast
 
@@ -21,7 +22,19 @@ from personal_agent_eval.judge.models import (
     RawJudgeRunResult,
 )
 from personal_agent_eval.judge.openrouter import JudgeInvocation
-from personal_agent_eval.judge.subject_redaction import redact_run_artifact_for_judge
+from personal_agent_eval.judge.subject_view import (
+    build_judge_subject_view,
+    render_judge_user_text,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class JudgePromptBundle:
+    """Structured judge prompt payload plus rendered messages."""
+
+    messages: tuple[dict[str, str], ...]
+    user_payload: dict[str, Any]
+    user_text: str
 
 
 class JudgeClient(Protocol):
@@ -56,7 +69,7 @@ class JudgeOrchestrator:
         if max_retries < 0:
             raise ValueError("'max_retries' must be greater than or equal to 0.")
 
-        base_messages = build_judge_messages(
+        prompt_bundle = build_judge_prompt_bundle(
             judge_name=judge_name,
             judge_model=judge_model,
             test_config=test_config,
@@ -73,10 +86,11 @@ class JudgeOrchestrator:
                 judge_name=judge_name,
                 judge_model=judge_model,
                 repetition_index=repetition_index,
-                base_messages=base_messages,
+                base_messages=prompt_bundle.messages,
                 raw_results=raw_results,
                 max_retries=max_retries,
                 timeout_seconds=timeout_seconds,
+                prompt_payload=prompt_bundle.user_payload,
             )
             iteration_results.append(result)
 
@@ -97,6 +111,7 @@ class JudgeOrchestrator:
         raw_results: list[RawJudgeRunResult],
         max_retries: int,
         timeout_seconds: float | None,
+        prompt_payload: dict[str, Any],
     ) -> NormalizedJudgeIterationResult:
         warnings: list[str] = []
         attempt_statuses: list[JudgeIterationStatus] = []
@@ -109,6 +124,7 @@ class JudgeOrchestrator:
                 repetition_index=repetition_index,
                 attempt_index=attempt_index,
                 messages=base_messages,
+                prompt_payload=prompt_payload,
                 timeout_seconds=timeout_seconds,
             )
             raw_result = self._client.run_once(invocation)
@@ -204,15 +220,31 @@ class JudgeOrchestrator:
                 raw_result_ref=raw_result.raw_result_ref,
             )
 
-        warnings = _collect_evidence_warnings(parsed.evidence)
+        dimensions = JudgeDimensions(
+            task=parsed.dimensions.task.score,
+            process=parsed.dimensions.process.score,
+            autonomy=parsed.dimensions.autonomy.score,
+            closeness=parsed.dimensions.closeness.score,
+            efficiency=parsed.dimensions.efficiency.score,
+            spark=parsed.dimensions.spark.score,
+        )
+        evidence = JudgeEvidence(
+            task=parsed.dimensions.task.evidence,
+            process=parsed.dimensions.process.evidence,
+            autonomy=parsed.dimensions.autonomy.evidence,
+            closeness=parsed.dimensions.closeness.evidence,
+            efficiency=parsed.dimensions.efficiency.evidence,
+            spark=parsed.dimensions.spark.evidence,
+        )
+        warnings = _collect_evidence_warnings(evidence)
         return NormalizedJudgeIterationResult(
             judge_name=raw_result.judge_name,
             judge_model=raw_result.judge_model,
             repetition_index=raw_result.repetition_index,
             status=JudgeIterationStatus.SUCCESS,
-            dimensions=parsed.dimensions,
+            dimensions=dimensions,
             summary=parsed.summary,
-            evidence=parsed.evidence,
+            evidence=evidence,
             warnings=warnings,
             raw_result_ref=raw_result.raw_result_ref,
         )
@@ -237,30 +269,35 @@ def build_judge_messages(
     deterministic_summary: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, str], ...]:
     """Build the strict JSON prompt contract for one judge."""
+    return build_judge_prompt_bundle(
+        judge_name=judge_name,
+        judge_model=judge_model,
+        test_config=test_config,
+        run_artifact=run_artifact,
+        deterministic_summary=deterministic_summary,
+        system_prompt=system_prompt,
+    ).messages
+
+
+def build_judge_prompt_bundle(
+    *,
+    judge_name: str,
+    judge_model: str,
+    test_config: TestConfig,
+    run_artifact: RunArtifact,
+    system_prompt: str,
+    deterministic_summary: Mapping[str, Any] | None = None,
+) -> JudgePromptBundle:
+    """Build the judge prompt payload and the rendered prompt messages."""
     deterministic_payload = None
     if deterministic_summary is not None:
         deterministic_payload = dict(deterministic_summary)
 
-    case_payload = test_config.model_dump(mode="json")
-    case_payload["source_path"] = (
-        str(test_config.source_path) if test_config.source_path is not None else None
+    user_payload = build_judge_subject_view(
+        test_config=test_config,
+        run_artifact=run_artifact,
+        deterministic_summary=deterministic_payload,
     )
-
-    user_payload = {
-        "judge_name": judge_name,
-        "judge_model": judge_model,
-        "dimensions": [
-            "task",
-            "process",
-            "autonomy",
-            "closeness",
-            "efficiency",
-            "spark",
-        ],
-        "case_context": case_payload,
-        "run_artifact": redact_run_artifact_for_judge(run_artifact),
-        "deterministic_summary": deterministic_payload,
-    }
 
     system_message = {
         "role": "system",
@@ -268,9 +305,13 @@ def build_judge_messages(
     }
     user_message = {
         "role": "user",
-        "content": json.dumps(user_payload, indent=2, sort_keys=True),
+        "content": render_judge_user_text(user_payload),
     }
-    return (system_message, user_message)
+    return JudgePromptBundle(
+        messages=(system_message, user_message),
+        user_payload=user_payload,
+        user_text=user_message["content"],
+    )
 
 
 def aggregate_judge_results(

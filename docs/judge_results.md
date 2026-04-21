@@ -3,21 +3,31 @@
 Judge orchestration consumes an existing `RunArtifact` and produces a separate evaluation
 surface. It does not mutate the run artifact.
 
-When building the judge prompt, the framework embeds a **copy** of the run artifact from which
-**structured subject-model identity is omitted** (keys removed, not replaced with placeholders):
-for example `request.requested_model`, `request.metadata.model_selection`, `provider.provider_model_id`,
-and provider-usage fields that echo a model id. Raw `runner_metadata` is also removed so opaque
-blobs cannot leak benchmark paths. **OpenClaw runs** are an exception: the copy may include
-`runner_metadata.openclaw_judge_context`, a compact summary (excerpts of workspace diff, session
-trace, logs, key workspace files, and agent/runtime labels) so the judge can assess process and
-artifacts without embedding raw `file://` refs from the stored evidence block. The canonical artifact
-on disk is unchanged. Free-form text inside assistant messages could still mention a model name;
-only structured metadata is stripped.
+When building the judge prompt, the framework no longer embeds a near-raw copy of the
+`RunArtifact`. Instead it builds a normalized **subject view** with three sections:
+
+- `evaluation_target`
+- `subject_response`
+- `execution_evidence`
+
+This strips structured subject-model identity and noisy runner metadata, while preserving the
+observable evidence the judge actually needs: task messages, final output, visible assistant
+messages, tool calls/results, deterministic-check summaries, material failures, and relevant
+artifacts. For OpenClaw runs, runner-specific evidence is summarized into the same normalized
+shape instead of exposing raw `file://` references or large opaque blobs.
+
+The judge still receives two messages:
+
+1. a `system` prompt with the scoring contract
+2. a `user` prompt rendered as human-readable text from the structured subject view
+
+The structured subject view is persisted separately for reproducibility, but the provider-facing
+`user` message is the rendered text form.
 
 ## Default system prompt
 
-The judge **system** message (instructions to return JSON with `dimensions`, `summary`, and
-`evidence`) is resolved in this order:
+The judge **system** message (instructions to return JSON with `summary` first, then
+`dimensions`, where each dimension carries `evidence` and `score`) is resolved in this order:
 
 1. **`judge_system_prompt`** in the evaluation profile YAML (multiline string; lines joined with spaces), or
 2. **`judge_system_prompt_path`** in the same YAML (path to a UTF-8 `.txt` file, relative to that YAML), or
@@ -76,22 +86,32 @@ while the normalized layer still shows one logical iteration with status `failed
   "judge_model": "minimax/minimax-m2.7",
   "repetition_index": 0,
   "status": "success",
-  "dimensions": {
-    "task": 8.0,
-    "process": 7.0,
-    "autonomy": 7.5,
-    "closeness": 6.5,
-    "efficiency": 6.0,
-    "spark": 6.0
-  },
   "summary": "The answer completed the task cleanly.",
-  "evidence": {
-    "task": ["Created the expected output."],
-    "process": ["The trace completed without interruption."],
-    "autonomy": [],
-    "closeness": [],
-    "efficiency": [],
-    "spark": []
+  "dimensions": {
+    "task": {
+      "evidence": ["Created the expected output."],
+      "score": 8.0
+    },
+    "process": {
+      "evidence": ["The trace completed without interruption."],
+      "score": 7.0
+    },
+    "autonomy": {
+      "evidence": [],
+      "score": 7.5
+    },
+    "closeness": {
+      "evidence": [],
+      "score": 6.5
+    },
+    "efficiency": {
+      "evidence": [],
+      "score": 6.0
+    },
+    "spark": {
+      "evidence": [],
+      "score": 6.0
+    }
   },
   "warnings": [],
   "raw_result_ref": "raw_001"

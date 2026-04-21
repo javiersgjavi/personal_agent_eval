@@ -1,6 +1,4 @@
 from __future__ import annotations
-
-import json
 from pathlib import Path
 
 import pytest
@@ -9,7 +7,7 @@ from helpers.docker_subprocess_stub import patch_openclaw_docker_run
 from personal_agent_eval.config import load_openclaw_agent, load_run_profile, load_test_config
 from personal_agent_eval.config.suite_config import ModelConfig
 from personal_agent_eval.domains.openclaw import run_openclaw_case
-from personal_agent_eval.judge.orchestrator import build_judge_messages
+from personal_agent_eval.judge.orchestrator import build_judge_prompt_bundle
 from personal_agent_eval.judge.subject_redaction import redact_run_artifact_for_judge
 
 FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "config"
@@ -103,7 +101,7 @@ def test_build_judge_messages_embeds_openclaw_context(
         agent_config=agent_config,
         runtime_root=tmp_path / "rt2",
     )
-    messages = build_judge_messages(
+    bundle = build_judge_prompt_bundle(
         judge_name="j1",
         judge_model="m1",
         test_config=case_config,
@@ -111,6 +109,9 @@ def test_build_judge_messages_embeds_openclaw_context(
         system_prompt="Return JSON only.",
         deterministic_summary={"passed": True},
     )
-    payload = json.loads(messages[1]["content"])
-    run_part = payload["run_artifact"]
-    assert "openclaw_judge_context" in run_part.get("runner_metadata", {})
+    payload = bundle.user_payload
+    artifacts = payload["execution_evidence"]["artifacts"]
+    assert artifacts
+    assert any(item.get("basename") == "report.md" for item in artifacts)
+    material_failures = payload["execution_evidence"]["material_failures"]
+    assert material_failures == []

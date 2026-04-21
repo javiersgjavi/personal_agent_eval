@@ -136,6 +136,9 @@ Each entry is a `DeterministicCheck`:
 
 Valid dimension names: `task`, `process`, `autonomy`, `closeness`, `efficiency`, `spark`.
 
+For a compact inventory of the built-in checks currently implemented, see
+[Deterministic checks](deterministic_checks.md).
+
 #### Declarative check kinds
 
 | `kind` | Extra fields | Description |

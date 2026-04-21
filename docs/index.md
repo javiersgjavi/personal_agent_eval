@@ -36,6 +36,7 @@ The current implementation already includes:
 - [Getting started](getting_started.md)
 - [Config Model](config_model.md) — visual overview of how the four config types relate
 - [Configuration](configuration.md)
+- [Deterministic checks](deterministic_checks.md)
 - [Run artifacts](run_artifacts.md)
 - [Judge results](judge_results.md)
 - [Hybrid evaluation](hybrid_evaluation.md)

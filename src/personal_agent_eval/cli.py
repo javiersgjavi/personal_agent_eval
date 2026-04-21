@@ -284,11 +284,34 @@ def build_default_runtime(suite_path: str | Path) -> WorkflowOrchestrator:
 
 
 def load_workspace_dotenv(workspace_root: Path) -> bool:
-    """Load `.env` from the workspace root into process environment."""
-    dotenv_path = workspace_root / ".env"
-    if not dotenv_path.is_file():
+    """Load `.env` for the CLI.
+
+    Policy: if we are inside a git repository, the repository root is the canonical configuration
+    boundary for `.env` (shared secrets and environment defaults). When no enclosing git repository
+    exists, fall back to the resolved workspace root derived from `--suite`.
+
+    We keep `override=False` so explicit environment variables remain authoritative.
+    """
+    git_root = _discover_git_root(workspace_root)
+    if git_root is not None:
+        repo_dotenv = git_root / ".env"
+        if repo_dotenv.is_file():
+            return bool(load_dotenv(dotenv_path=repo_dotenv, override=False))
         return False
-    return bool(load_dotenv(dotenv_path=dotenv_path, override=False))
+
+    workspace_dotenv = workspace_root / ".env"
+    if not workspace_dotenv.is_file():
+        return False
+    return bool(load_dotenv(dotenv_path=workspace_dotenv, override=False))
+
+
+def _discover_git_root(start: Path) -> Path | None:
+    """Return the nearest ancestor directory that contains a `.git` directory."""
+    current = start.expanduser().resolve()
+    for candidate in (current, *current.parents):
+        if (candidate / ".git").is_dir():
+            return candidate
+    return None
 
 
 def workspace_root_from_config_path(config_path: Path) -> Path:

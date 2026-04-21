@@ -45,22 +45,14 @@ class FakeRunClient:
 class FakeJudgeClient:
     def run_once(self, invocation: Any) -> RawJudgeRunResult:
         parsed_response = {
-            "dimensions": {
-                "task": 8.0,
-                "process": 7.0,
-                "autonomy": 6.0,
-                "closeness": 6.5,
-                "efficiency": 7.5,
-                "spark": 5.5,
-            },
             "summary": "The run completed correctly.",
-            "evidence": {
-                "task": ["Produced the expected answer."],
-                "process": ["The trace ended successfully."],
-                "autonomy": ["No unnecessary escalation."],
-                "closeness": ["The answer matched the task closely."],
-                "efficiency": ["The run used a small number of turns."],
-                "spark": ["The answer was acceptable."],
+            "dimensions": {
+                "task": {"evidence": ["Produced the expected answer."], "score": 8.0},
+                "process": {"evidence": ["The trace ended successfully."], "score": 7.0},
+                "autonomy": {"evidence": ["No unnecessary escalation."], "score": 6.0},
+                "closeness": {"evidence": ["The answer matched the task closely."], "score": 6.5},
+                "efficiency": {"evidence": ["The run used a small number of turns."], "score": 7.5},
+                "spark": {"evidence": ["The answer was acceptable."], "score": 5.5},
             },
         }
         return RawJudgeRunResult(
@@ -71,6 +63,7 @@ class FakeJudgeClient:
             attempt_index=invocation.attempt_index,
             status=JudgeIterationStatus.SUCCESS,
             request_messages=[dict(message) for message in invocation.messages],
+            prompt_payload=invocation.prompt_payload,
             response_content=json.dumps(parsed_response),
             parsed_response=parsed_response,
         )
@@ -86,6 +79,7 @@ class AlwaysInvalidJudgeClient:
             attempt_index=invocation.attempt_index,
             status=JudgeIterationStatus.SUCCESS,
             request_messages=[dict(message) for message in invocation.messages],
+            prompt_payload=invocation.prompt_payload,
             response_content="not json",
             parsed_response=None,
         )
@@ -157,6 +151,45 @@ def test_run_eval_persists_resolved_judge_prompt_in_evaluation_manifest(tmp_path
 
     assert manifest.judge_system_prompt_source == expected_prompt["source"]
     assert manifest.judge_system_prompt == expected_prompt["text"]
+    prompt_user_path = storage.case_judge_prompt_user_path(
+        "example_suite",
+        run_profile_fingerprint,
+        "default",
+        evaluation_fingerprint,
+        result.results[0].model_id,
+        result.results[0].case_id,
+        0,
+    )
+    prompt_debug_path = storage.case_judge_prompt_debug_path(
+        "example_suite",
+        run_profile_fingerprint,
+        "default",
+        evaluation_fingerprint,
+        result.results[0].model_id,
+        result.results[0].case_id,
+        0,
+    )
+    summary_path = storage.case_summary_path(
+        "example_suite",
+        run_profile_fingerprint,
+        "default",
+        evaluation_fingerprint,
+        result.results[0].model_id,
+        result.results[0].case_id,
+        0,
+    )
+    assert prompt_user_path.is_file()
+    assert prompt_debug_path.is_file()
+    assert summary_path.is_file()
+    prompt_payload = json.loads(prompt_user_path.read_text(encoding="utf-8"))
+    assert prompt_payload["schema_version"] == 2
+    assert "run_artifact" not in prompt_payload
+    assert "judge_name" not in prompt_payload
+    assert "judge_model" not in prompt_payload
+    prompt_text = prompt_debug_path.read_text(encoding="utf-8")
+    assert "SYSTEM PROMPT:" in prompt_text
+    assert "USER PROMPT:" in prompt_text
+    assert summary_path.read_text(encoding="utf-8").startswith("# Final Evaluation Summary")
 
 
 def test_eval_recomputes_only_missing_final_result(tmp_path: Path) -> None:
@@ -187,7 +220,17 @@ def test_eval_recomputes_only_missing_final_result(tmp_path: Path) -> None:
         target.case_id,
         0,
     )
+    summary_path = storage.case_summary_path(
+        "example_suite",
+        run_profile_fingerprint,
+        "default",
+        target.evaluation_fingerprint,
+        target.model_id,
+        target.case_id,
+        0,
+    )
     final_result_path.unlink()
+    summary_path.unlink()
 
     result = workflow.evaluate(
         suite_path=workspace_root / "configs" / "suites" / "example_suite.yaml",
@@ -208,6 +251,7 @@ def test_eval_recomputes_only_missing_final_result(tmp_path: Path) -> None:
     assert recomputed.run_action is RunAction.REUSED
     assert recomputed.evaluation_action is EvaluationAction.FINAL_RECOMPUTED
     assert untouched.evaluation_action is EvaluationAction.REUSED
+    assert summary_path.is_file()
 
 
 def test_report_reads_existing_artifacts_without_reexecution(tmp_path: Path) -> None:
@@ -312,6 +356,25 @@ def test_run_eval_marks_evaluation_failed_when_judge_produces_no_successful_iter
     assert all(item.evaluation_action is EvaluationAction.EXECUTED for item in result.results)
     assert all(item.evaluation_status == "failed" for item in result.results)
     assert all(item.final_score is None for item in result.results)
+    run_profile_fingerprint = build_run_profile_fingerprint(
+        run_profile=load_run_profile(workspace_root / "configs" / "run_profiles" / "default.yaml")
+    )
+    evaluation_fingerprint = result.results[0].evaluation_fingerprint
+    assert evaluation_fingerprint is not None
+    storage = FilesystemStorage(workspace_root)
+    summary_path = storage.case_summary_path(
+        "example_suite",
+        run_profile_fingerprint,
+        "default",
+        evaluation_fingerprint,
+        result.results[0].model_id,
+        result.results[0].case_id,
+        0,
+    )
+    assert summary_path.is_file()
+    summary_text = summary_path.read_text(encoding="utf-8")
+    assert "Final score: `not available`" in summary_text
+    assert "Judge output:" in summary_text
 
 
 def _build_openclaw_workspace(tmp_path: Path) -> Path:

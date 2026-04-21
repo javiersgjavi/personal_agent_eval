@@ -1,6 +1,4 @@
 from __future__ import annotations
-
-import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,6 +12,8 @@ from personal_agent_eval.artifacts.run_artifact import (
     FinalOutputTraceEvent,
     MessageTraceEvent,
     TraceEvent,
+    ToolCallTraceEvent,
+    ToolResultTraceEvent,
 )
 from personal_agent_eval.config import load_evaluation_profile
 from personal_agent_eval.config.test_config import load_test_config
@@ -21,6 +21,7 @@ from personal_agent_eval.judge import (
     JudgeIterationStatus,
     JudgeOrchestrator,
     RawJudgeRunResult,
+    build_judge_prompt_bundle,
     build_judge_messages,
 )
 from personal_agent_eval.judge.system_prompt import resolve_judge_system_prompt_text
@@ -48,8 +49,29 @@ def _build_artifact() -> RunArtifact:
             role="user",
             content="Please complete the task.",
         ),
-        FinalOutputTraceEvent(
+        MessageTraceEvent(
             sequence=1,
+            event_type="message",
+            role="assistant",
+            content="I will use a tool first.",
+        ),
+        ToolCallTraceEvent(
+            sequence=2,
+            event_type="tool_call",
+            call_id="call_1",
+            tool_name="search",
+            raw_arguments={"q": "example"},
+            parsed_arguments={"q": "example"},
+        ),
+        ToolResultTraceEvent(
+            sequence=3,
+            event_type="tool_result",
+            call_id="call_1",
+            status="success",
+            output={"results": ["alpha", "beta"]},
+        ),
+        FinalOutputTraceEvent(
+            sequence=4,
             event_type="final_output",
             content="Task completed with a concise answer.",
         ),
@@ -102,34 +124,26 @@ def _valid_contract(
     spark: float = 3.0,
     empty_evidence_dimension: str | None = None,
 ) -> dict[str, object]:
-    evidence = {
-        "task": ["Completed the task."],
-        "process": ["Followed a clear process."],
-        "autonomy": ["Did not need extra guidance."],
-        "closeness": ["Stayed close to the request."],
-        "efficiency": ["Could be shorter."],
-        "spark": ["Included one useful touch."],
+    dimensions = {
+        "task": {"evidence": ["Completed the task."], "score": task},
+        "process": {"evidence": ["Followed a clear process."], "score": process},
+        "autonomy": {"evidence": ["Did not need extra guidance."], "score": autonomy},
+        "closeness": {"evidence": ["Stayed close to the request."], "score": closeness},
+        "efficiency": {"evidence": ["Could be shorter."], "score": efficiency},
+        "spark": {"evidence": ["Included one useful touch."], "score": spark},
     }
     if empty_evidence_dimension is not None:
-        evidence[empty_evidence_dimension] = []
+        dimensions[empty_evidence_dimension]["evidence"] = []
     return {
-        "dimensions": {
-            "task": task,
-            "process": process,
-            "autonomy": autonomy,
-            "closeness": closeness,
-            "efficiency": efficiency,
-            "spark": spark,
-        },
         "summary": "Helpful overall result.",
-        "evidence": evidence,
+        "dimensions": dimensions,
     }
 
 
 def test_build_judge_messages_includes_case_artifact_and_deterministic_summary() -> None:
     config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
 
-    messages = build_judge_messages(
+    bundle = build_judge_prompt_bundle(
         judge_name="rubric_judge",
         judge_model="openai/gpt-5-mini",
         test_config=config,
@@ -137,12 +151,16 @@ def test_build_judge_messages_includes_case_artifact_and_deterministic_summary()
         system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
         deterministic_summary={"passed": True, "failed_checks": 0},
     )
+    messages = bundle.messages
 
     assert len(messages) == 2
     assert "strict evaluation judge" in messages[0]["content"]
-    payload = json.loads(messages[1]["content"])
-    assert payload["judge_name"] == "rubric_judge"
-    assert payload["dimensions"] == [
+    assert "EVALUATION TARGET" in messages[1]["content"]
+    assert "Problem statement" not in messages[1]["content"]
+    assert "SUBJECT RESPONSE" in messages[1]["content"]
+    payload = bundle.user_payload
+    assert payload["schema_version"] == 2
+    assert payload["evaluation_target"]["dimensions"] == [
         "task",
         "process",
         "autonomy",
@@ -150,15 +168,44 @@ def test_build_judge_messages_includes_case_artifact_and_deterministic_summary()
         "efficiency",
         "spark",
     ]
-    assert payload["case_context"]["case_id"] == "example_case"
-    assert payload["run_artifact"]["identity"]["run_id"] == "run-judge-001"
-    assert payload["deterministic_summary"] == {"passed": True, "failed_checks": 0}
-    req = payload["run_artifact"]["request"]
-    assert "requested_model" not in req
-    assert "runner_metadata" not in payload["run_artifact"]
+    assert "case_id" not in payload["evaluation_target"]
+    assert "title" not in payload["evaluation_target"]
+    assert payload["subject_response"]["final_output"]["text"] == "Task completed with a concise answer."
+    assert payload["subject_response"]["assistant_visible_messages"][0]["text_excerpt"] == (
+        "I will use a tool first."
+    )
+    assert payload["evaluation_target"]["task_messages"][0]["role"] == "system"
+    assert "name" not in payload["evaluation_target"]["task_messages"][0]
+    user_messages = [
+        message
+        for message in payload["evaluation_target"]["task_messages"]
+        if message["content"] == "Summarize the attached context."
+    ]
+    assert len(user_messages) == 1
+    assert "role" not in user_messages[0]
+    assert "name" not in user_messages[0]
+    assert payload["execution_evidence"]["deterministic_summary"] == {
+        "passed": True,
+        "failed_checks": 0,
+    }
+    assert payload["execution_evidence"]["process_trace"][0]["role"] == "assistant"
+    assert (
+        payload["execution_evidence"]["process_trace"][0]["content"]["text_excerpt"]
+        == "I will use a tool first."
+    )
+    assert payload["execution_evidence"]["process_trace"][1]["kind"] == "tool_call"
+    assert payload["execution_evidence"]["process_trace"][2]["kind"] == "tool_result"
+    assert (
+        payload["execution_evidence"]["process_trace"][2]["output_summary"]["content_type"]
+        == "search_results"
+    )
+    assert len(payload["execution_evidence"]["process_trace"]) == 3
+    assert "judge_name" not in payload
+    assert "judge_model" not in payload
+    assert "run_artifact" not in payload
 
 
-def test_build_judge_messages_omits_subject_model_identity_from_run_artifact() -> None:
+def test_build_judge_messages_filters_raw_run_artifact_fields() -> None:
     artifact = _build_artifact()
     artifact = artifact.model_copy(
         update={
@@ -182,7 +229,7 @@ def test_build_judge_messages_omits_subject_model_identity_from_run_artifact() -
         }
     )
     config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
-    messages = build_judge_messages(
+    bundle = build_judge_prompt_bundle(
         judge_name="rubric_judge",
         judge_model="openai/gpt-5-mini",
         test_config=config,
@@ -190,15 +237,195 @@ def test_build_judge_messages_omits_subject_model_identity_from_run_artifact() -
         system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
         deterministic_summary=None,
     )
-    payload = json.loads(messages[1]["content"])
-    ra = payload["run_artifact"]
-    assert "requested_model" not in ra["request"]
-    assert "model_selection" not in ra["request"].get("metadata", {})
-    assert "attachments" in ra["request"]["metadata"]
-    assert ra["provider"].get("provider_model_id") is None
-    assert "model" not in (ra["provider"].get("metadata") or {})
-    assert "runner_metadata" not in ra
-    assert "model" not in (ra["usage"].get("raw_provider_usage") or {})
+    payload = bundle.user_payload
+    assert "run_artifact" not in payload
+    assert "provider" not in payload["subject_response"]
+    assert payload["subject_response"]["tool_activity_summary"]["tools_used"] == ["search"]
+    assert payload["execution_evidence"]["material_failures"] == []
+
+
+def test_build_judge_messages_summarizes_search_outputs_without_breaking_on_unknown_shapes() -> None:
+    artifact = _build_artifact().model_copy(
+        update={
+            "trace": [
+                *list(_build_artifact().trace[:3]),
+                ToolResultTraceEvent(
+                    sequence=3,
+                    event_type="tool_result",
+                    call_id="call_1",
+                    status="success",
+                    output={
+                        "query": "benchmark judge prompt",
+                        "results": [
+                            {
+                                "title": "Judge docs",
+                                "url": "https://docs.example.com/judge",
+                                "snippet": "Long snippet",
+                            },
+                            {
+                                "title": "Prompt design",
+                                "url": "https://blog.example.org/prompts",
+                                "snippet": "Another snippet",
+                            },
+                        ],
+                    },
+                ),
+                FinalOutputTraceEvent(
+                    sequence=4,
+                    event_type="final_output",
+                    content="done",
+                ),
+            ]
+        }
+    )
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
+    payload = build_judge_prompt_bundle(
+        judge_name="rubric_judge",
+        judge_model="openai/gpt-5-mini",
+        test_config=config,
+        run_artifact=artifact,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
+        deterministic_summary=None,
+    ).user_payload
+    summary = payload["execution_evidence"]["process_trace"][2]["output_summary"]
+    assert summary["content_type"] == "search_results"
+    assert summary["query"] == "benchmark judge prompt"
+    assert "docs.example.com" in summary["top_sources"]
+
+
+def test_build_judge_messages_normalizes_html_and_unknown_tool_outputs_resiliently() -> None:
+    artifact = _build_artifact().model_copy(
+        update={
+            "trace": [
+                MessageTraceEvent(
+                    sequence=0,
+                    event_type="message",
+                    role="assistant",
+                    content="using tools",
+                ),
+                ToolCallTraceEvent(
+                    sequence=1,
+                    event_type="tool_call",
+                    call_id="call_html",
+                    tool_name="fetch_page",
+                    raw_arguments={"url": "https://example.com"},
+                    parsed_arguments={"url": "https://example.com"},
+                ),
+                ToolResultTraceEvent(
+                    sequence=2,
+                    event_type="tool_result",
+                    call_id="call_html",
+                    status="success",
+                    output="<!doctype html><html><body>" + ("x" * 3000) + "</body></html>",
+                ),
+                ToolCallTraceEvent(
+                    sequence=3,
+                    event_type="tool_call",
+                    call_id="call_unknown",
+                    tool_name="weird_tool",
+                    raw_arguments={},
+                    parsed_arguments={},
+                ),
+                ToolResultTraceEvent(
+                    sequence=4,
+                    event_type="tool_result",
+                    call_id="call_unknown",
+                    status="success",
+                    output=object(),
+                ),
+                FinalOutputTraceEvent(
+                    sequence=5,
+                    event_type="final_output",
+                    content="done",
+                ),
+            ]
+        }
+    )
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
+    payload = build_judge_prompt_bundle(
+        judge_name="rubric_judge",
+        judge_model="openai/gpt-5-mini",
+        test_config=config,
+        run_artifact=artifact,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
+        deterministic_summary=None,
+    ).user_payload
+    html_summary = payload["execution_evidence"]["process_trace"][2]["output_summary"]
+    unknown_summary = payload["execution_evidence"]["process_trace"][4]["output_summary"]
+    assert html_summary["content_type"] == "html"
+    assert html_summary["truncated"] is True
+    assert unknown_summary["content_type"] == "object"
+
+
+def test_build_judge_messages_extracts_visible_text_from_openclaw_embedded_json() -> None:
+    embedded = (
+        "[agent/embedded] workspace bootstrap file AGENTS.md is 10 chars\\n"
+        "{"
+        "\"payloads\":[{\"text\":\"Respuesta visible final\"}],"
+        "\"finalPromptText\":\"[1] user\\nEnunciado\","
+        "\"finalAssistantVisibleText\":\"Respuesta visible final\""
+        "}"
+    )
+    artifact = _build_artifact().model_copy(
+        update={
+            "trace": [
+                MessageTraceEvent(
+                    sequence=0,
+                    event_type="message",
+                    role="user",
+                    content="Please complete the task.",
+                ),
+                FinalOutputTraceEvent(
+                    sequence=1,
+                    event_type="final_output",
+                    content=embedded,
+                ),
+            ]
+        }
+    )
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
+    payload = build_judge_prompt_bundle(
+        judge_name="rubric_judge",
+        judge_model="openai/gpt-5-mini",
+        test_config=config,
+        run_artifact=artifact,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
+        deterministic_summary=None,
+    ).user_payload
+    assert payload["subject_response"]["final_output"]["text"] == "Respuesta visible final"
+    assert payload["execution_evidence"]["process_trace"] == []
+
+
+def test_build_judge_messages_preserves_utf8_in_prompt_text() -> None:
+    artifact = _build_artifact().model_copy(
+        update={
+            "trace": [
+                MessageTraceEvent(
+                    sequence=0,
+                    event_type="message",
+                    role="assistant",
+                    content="Importe recomendado: 10.000€",
+                ),
+                FinalOutputTraceEvent(
+                    sequence=1,
+                    event_type="final_output",
+                    content="Importe recomendado: 10.000€",
+                ),
+            ]
+        }
+    )
+    config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
+    user_message = build_judge_messages(
+        judge_name="rubric_judge",
+        judge_model="openai/gpt-5-mini",
+        test_config=config,
+        run_artifact=artifact,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
+        deterministic_summary=None,
+    )[1]["content"]
+    assert "10.000€" in user_message
+    assert "EVALUATION TARGET" in user_message
+    assert "\\u20ac" not in user_message
 
 
 def test_orchestrator_records_successful_iteration_and_aggregation() -> None:

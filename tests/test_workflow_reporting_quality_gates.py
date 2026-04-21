@@ -52,22 +52,14 @@ class CountingJudgeClient:
     def run_once(self, invocation: Any) -> RawJudgeRunResult:
         self._counter["judge_calls"] += 1
         parsed_response = {
-            "dimensions": {
-                "task": 8.0,
-                "process": 7.0,
-                "autonomy": 6.0,
-                "closeness": 6.5,
-                "efficiency": 7.5,
-                "spark": 5.5,
-            },
             "summary": "The run completed correctly.",
-            "evidence": {
-                "task": ["Produced the expected answer."],
-                "process": ["The trace ended successfully."],
-                "autonomy": ["No unnecessary escalation."],
-                "closeness": ["The answer matched the task closely."],
-                "efficiency": ["The run used a small number of turns."],
-                "spark": ["The answer was acceptable."],
+            "dimensions": {
+                "task": {"evidence": ["Produced the expected answer."], "score": 8.0},
+                "process": {"evidence": ["The trace ended successfully."], "score": 7.0},
+                "autonomy": {"evidence": ["No unnecessary escalation."], "score": 6.0},
+                "closeness": {"evidence": ["The answer matched the task closely."], "score": 6.5},
+                "efficiency": {"evidence": ["The run used a small number of turns."], "score": 7.5},
+                "spark": {"evidence": ["The answer was acceptable."], "score": 5.5},
             },
         }
         return RawJudgeRunResult(

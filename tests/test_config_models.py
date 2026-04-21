@@ -502,7 +502,6 @@ def test_load_openclaw_agent_rejects_fallbacks(tmp_path: Path) -> None:
         + "\n",
         encoding="utf-8",
     )
-
     with pytest.raises(ConfigError, match="fallbacks is not supported"):
         load_openclaw_agent(agent_dir)
 

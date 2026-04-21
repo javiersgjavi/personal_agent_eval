@@ -91,7 +91,7 @@ def test_storage_derives_v1_paths() -> None:
         "example_case",
         0,
     ) == Path(
-        "/tmp/personal-agent-eval/outputs/evaluations/suit_example_suite/evaluation_profile_aaaaaa/eval_profile_judge_default_bbbbbb/example_model/example_case/judge_1.json"
+        "/tmp/personal-agent-eval/outputs/evaluations/suit_example_suite/evaluation_profile_aaaaaa/eval_profile_judge_default_bbbbbb/example_model/example_case/raw_outputs/judge_1.json"
     )
     assert storage.case_final_result_path(
         suite_id,
@@ -102,7 +102,29 @@ def test_storage_derives_v1_paths() -> None:
         "example_case",
         1,
     ) == Path(
-        "/tmp/personal-agent-eval/outputs/evaluations/suit_example_suite/evaluation_profile_aaaaaa/eval_profile_judge_default_bbbbbb/example_model/example_case/final_result_2.json"
+        "/tmp/personal-agent-eval/outputs/evaluations/suit_example_suite/evaluation_profile_aaaaaa/eval_profile_judge_default_bbbbbb/example_model/example_case/raw_outputs/final_result_2.json"
+    )
+    assert storage.case_judge_prompt_user_path(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        evaluation_fingerprint,
+        model_name,
+        "example_case",
+        0,
+    ) == Path(
+        "/tmp/personal-agent-eval/outputs/evaluations/suit_example_suite/evaluation_profile_aaaaaa/eval_profile_judge_default_bbbbbb/example_model/example_case/raw_outputs/judge_1.prompt.user.json"
+    )
+    assert storage.case_judge_prompt_debug_path(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        evaluation_fingerprint,
+        model_name,
+        "example_case",
+        0,
+    ) == Path(
+        "/tmp/personal-agent-eval/outputs/evaluations/suit_example_suite/evaluation_profile_aaaaaa/eval_profile_judge_default_bbbbbb/example_model/example_case/judge_1.prompt.debug.md"
     )
 
 
@@ -305,6 +327,52 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
         == judge_result
     )
     assert (
+        storage.case_judge_prompt_user_path(
+            suite_id,
+            run_profile_fingerprint,
+            evaluation_profile_id,
+            evaluation_fingerprint,
+            model_name,
+            "example_case",
+            0,
+        ).read_text(encoding="utf-8")
+        .startswith("{\n  \"evaluation_target\":")
+    )
+    assert (
+        storage.case_judge_prompt_debug_path(
+            suite_id,
+            run_profile_fingerprint,
+            evaluation_profile_id,
+            evaluation_fingerprint,
+            model_name,
+            "example_case",
+            0,
+        ).read_text(encoding="utf-8")
+        .startswith("SYSTEM PROMPT:\n")
+    )
+    summary_text = storage.case_summary_path(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        evaluation_fingerprint,
+        model_name,
+        "example_case",
+        0,
+    ).read_text(encoding="utf-8")
+    assert summary_text.startswith("# Final Evaluation Summary")
+    judge_json = storage.case_judge_path(
+        suite_id,
+        run_profile_fingerprint,
+        evaluation_profile_id,
+        evaluation_fingerprint,
+        model_name,
+        "example_case",
+        0,
+    ).read_text(encoding="utf-8")
+    assert judge_json.index('"dimensions"') < judge_json.index('"summary"')
+    assert judge_json.index('"summary"') < judge_json.index('"evidence"')
+    assert "\\u20ac" not in judge_json
+    assert (
         storage.read_case_final_result(
             suite_id=suite_id,
             run_profile_fingerprint=run_profile_fingerprint,
@@ -402,6 +470,11 @@ def _build_judge_result() -> AggregatedJudgeResult:
                 repetition_index=0,
                 attempt_index=0,
                 status=JudgeIterationStatus.SUCCESS,
+                request_messages=[
+                    {"role": "system", "content": "Return JSON only."},
+                    {"role": "user", "content": "EVALUATION TARGET\nDimensions: task"},
+                ],
+                prompt_payload={"schema_version": 2, "evaluation_target": {"dimensions": ["task"]}},
                 response_content="{}",
             )
         ],

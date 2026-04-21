@@ -19,6 +19,7 @@ from personal_agent_eval.artifacts import (
 from personal_agent_eval.artifacts.run_artifact import ArtifactModel, RunArtifact
 from personal_agent_eval.fingerprints import EvaluationFingerprintInput, RunFingerprintInput
 from personal_agent_eval.judge.models import AggregatedJudgeResult
+from personal_agent_eval.reporting.final_result_summary import render_final_result_markdown
 from personal_agent_eval.storage.models import (
     EvaluationCaseStorageManifest,
     EvaluationIterationRecord,
@@ -269,7 +270,75 @@ class FilesystemStorage:
                 model_id,
                 case_id,
             )
+            / "raw_outputs"
             / f"judge_{repetition_index + 1}.json"
+        )
+
+    def case_judge_prompt_user_path(
+        self,
+        suite_id: str,
+        run_profile_fingerprint: str,
+        evaluation_profile_id: str,
+        evaluation_fingerprint: str,
+        model_id: str,
+        case_id: str,
+        repetition_index: int,
+    ) -> Path:
+        return (
+            self.evaluation_case_path(
+                suite_id,
+                run_profile_fingerprint,
+                evaluation_profile_id,
+                evaluation_fingerprint,
+                model_id,
+                case_id,
+            )
+            / "raw_outputs"
+            / f"judge_{repetition_index + 1}.prompt.user.json"
+        )
+
+    def case_judge_prompt_debug_path(
+        self,
+        suite_id: str,
+        run_profile_fingerprint: str,
+        evaluation_profile_id: str,
+        evaluation_fingerprint: str,
+        model_id: str,
+        case_id: str,
+        repetition_index: int,
+    ) -> Path:
+        return (
+            self.evaluation_case_path(
+                suite_id,
+                run_profile_fingerprint,
+                evaluation_profile_id,
+                evaluation_fingerprint,
+                model_id,
+                case_id,
+            )
+            / f"judge_{repetition_index + 1}.prompt.debug.md"
+        )
+
+    def case_summary_path(
+        self,
+        suite_id: str,
+        run_profile_fingerprint: str,
+        evaluation_profile_id: str,
+        evaluation_fingerprint: str,
+        model_id: str,
+        case_id: str,
+        repetition_index: int,
+    ) -> Path:
+        return (
+            self.evaluation_case_path(
+                suite_id,
+                run_profile_fingerprint,
+                evaluation_profile_id,
+                evaluation_fingerprint,
+                model_id,
+                case_id,
+            )
+            / f"summary_{repetition_index + 1}.md"
         )
 
     def case_final_result_path(
@@ -291,6 +360,7 @@ class FilesystemStorage:
                 model_id,
                 case_id,
             )
+            / "raw_outputs"
             / f"final_result_{repetition_index + 1}.json"
         )
 
@@ -549,6 +619,7 @@ class FilesystemStorage:
                 repetition_index,
             ),
             result,
+            sort_keys=False,
         )
         self._upsert_evaluation_case_manifest(
             suite_id=suite_id,
@@ -560,6 +631,16 @@ class FilesystemStorage:
             case_id=case_id,
             repetition_index=repetition_index,
             run_fingerprint=run_fingerprint,
+        )
+        self._persist_case_judge_prompt(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            evaluation_profile_id=evaluation_profile_id,
+            evaluation_fingerprint=evaluation_fingerprint,
+            model_id=model_id,
+            case_id=case_id,
+            repetition_index=repetition_index,
+            result=result,
         )
         return path
 
@@ -654,6 +735,18 @@ class FilesystemStorage:
             ),
             result,
         )
+        self._write_text(
+            self.case_summary_path(
+                suite_id,
+                run_profile_fingerprint,
+                evaluation_profile_id,
+                evaluation_fingerprint,
+                model_id,
+                result.case_id,
+                repetition_index,
+            ),
+            render_final_result_markdown(result),
+        )
         self._upsert_evaluation_case_manifest(
             suite_id=suite_id,
             run_profile_id=run_profile_id,
@@ -666,6 +759,31 @@ class FilesystemStorage:
             run_fingerprint=run_fingerprint,
         )
         return path
+
+    def write_case_summary_text(
+        self,
+        *,
+        suite_id: str,
+        run_profile_fingerprint: str,
+        evaluation_profile_id: str,
+        evaluation_fingerprint: str,
+        model_id: str,
+        case_id: str,
+        repetition_index: int,
+        content: str,
+    ) -> Path:
+        return self._write_text(
+            self.case_summary_path(
+                suite_id,
+                run_profile_fingerprint,
+                evaluation_profile_id,
+                evaluation_fingerprint,
+                model_id,
+                case_id,
+                repetition_index,
+            ),
+            content,
+        )
 
     def has_case_final_result(
         self,
@@ -856,6 +974,79 @@ class FilesystemStorage:
         )
         return with_openclaw_run_evidence(updated_artifact, persisted_evidence)
 
+    def _persist_case_judge_prompt(
+        self,
+        *,
+        suite_id: str,
+        run_profile_fingerprint: str,
+        evaluation_profile_id: str,
+        evaluation_fingerprint: str,
+        model_id: str,
+        case_id: str,
+        repetition_index: int,
+        result: AggregatedJudgeResult,
+    ) -> None:
+        raw_result = next(
+            (item for item in result.raw_results if item.request_messages),
+            None,
+        )
+        if raw_result is None:
+            return
+        system_text: str | None = None
+        user_text: str | None = None
+        for message in raw_result.request_messages:
+            role = message.get("role")
+            content = message.get("content")
+            if not isinstance(content, str):
+                continue
+            if role == "system" and system_text is None:
+                system_text = content
+            elif role == "user" and user_text is None:
+                user_text = content
+        if system_text is not None or user_text is not None:
+            debug_sections: list[str] = []
+            if system_text is not None:
+                debug_sections.extend(
+                    [
+                        "SYSTEM PROMPT:",
+                        system_text,
+                    ]
+                )
+            if user_text is not None:
+                if debug_sections:
+                    debug_sections.append("")
+                debug_sections.extend(
+                    [
+                        "USER PROMPT:",
+                        user_text,
+                    ]
+                )
+            self._write_text(
+                self.case_judge_prompt_debug_path(
+                    suite_id,
+                    run_profile_fingerprint,
+                    evaluation_profile_id,
+                    evaluation_fingerprint,
+                    model_id,
+                    case_id,
+                    repetition_index,
+                ),
+                "\n".join(debug_sections).rstrip() + "\n",
+            )
+        if raw_result.prompt_payload is not None:
+            self._write_text(
+                self.case_judge_prompt_user_path(
+                    suite_id,
+                    run_profile_fingerprint,
+                    evaluation_profile_id,
+                    evaluation_fingerprint,
+                    model_id,
+                    case_id,
+                    repetition_index,
+                ),
+                json.dumps(raw_result.prompt_payload, indent=2, sort_keys=True, ensure_ascii=False),
+            )
+
     def _persist_optional_output_artifact_ref(
         self,
         *,
@@ -946,12 +1137,26 @@ class FilesystemStorage:
             )
         return True
 
-    def _write_model(self, path: Path, model: ArtifactModel) -> Path:
+    def _write_model(self, path: Path, model: ArtifactModel, *, sort_keys: bool = True) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            json.dumps(model.to_json_dict(), indent=2, sort_keys=True) + "\n",
+            json.dumps(
+                model.to_json_dict(),
+                indent=2,
+                sort_keys=sort_keys,
+                ensure_ascii=False,
+            )
+            + "\n",
             encoding="utf-8",
         )
+        return path
+
+    def _write_text(self, path: Path, content: str) -> Path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if content.endswith("\n"):
+            path.write_text(content, encoding="utf-8")
+        else:
+            path.write_text(content + "\n", encoding="utf-8")
         return path
 
     def _read_model(self, path: Path, model_type: type[ArtifactModelT]) -> ArtifactModelT:

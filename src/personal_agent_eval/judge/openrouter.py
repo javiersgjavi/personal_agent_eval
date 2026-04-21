@@ -27,6 +27,7 @@ class JudgeInvocation:
     repetition_index: int
     attempt_index: int
     messages: tuple[dict[str, str], ...]
+    prompt_payload: dict[str, object] | None = None
     timeout_seconds: float | None = None
 
     @property
@@ -94,6 +95,7 @@ class OpenRouterJudgeClient:
                 attempt_index=invocation.attempt_index,
                 status=JudgeIterationStatus.FAILED,
                 request_messages=request_messages,
+                prompt_payload=invocation.prompt_payload,
                 error_code="configuration_error",
                 error_message=str(exc),
             )
@@ -113,6 +115,7 @@ class OpenRouterJudgeClient:
                 attempt_index=invocation.attempt_index,
                 status=JudgeIterationStatus.FAILED,
                 request_messages=request_messages,
+                prompt_payload=invocation.prompt_payload,
                 error_code="unexpected_error",
                 error_message=f"{exc.__class__.__name__}: {exc}",
             )
@@ -136,6 +139,7 @@ class OpenRouterJudgeClient:
             attempt_index=invocation.attempt_index,
             status=JudgeIterationStatus.SUCCESS,
             request_messages=request_messages,
+            prompt_payload=invocation.prompt_payload,
             response_content=response_content,
             parsed_response=parsed_response,
             provider_name=response.provider_name,
@@ -163,6 +167,7 @@ class OpenRouterJudgeClient:
             attempt_index=invocation.attempt_index,
             status=status,
             request_messages=request_messages,
+            prompt_payload=invocation.prompt_payload,
             error_code=exc.code,
             error_message=str(exc),
             warnings=[f"retryable={exc.retryable}"],

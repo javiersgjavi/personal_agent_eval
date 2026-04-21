@@ -83,8 +83,8 @@ keeps two layers:
 - raw judge attempt results, which preserve each provider call and any provider-facing
   failures
 - normalized judge iteration results, which map one logical repetition onto a stable status
-  and structured fields for `dimensions`, `summary`, `evidence`, `warnings`, and
-  `raw_result_ref`
+  and structured fields for `summary`, `dimensions` (with per-dimension `evidence` and
+  `score`), `warnings`, and `raw_result_ref`
 
 Aggregated judge results operate across repetitions for one judge. The default aggregation
 method is the median across successful iterations only. Failed or excluded iterations remain
@@ -148,17 +148,24 @@ outputs/evaluations/suit_<suite_id>/evaluation_profile_<run_profile_fingerprint_
   <model_id>/
     <case_id>/
       manifest.json
-      judge_1.json
-      final_result_1.json
-      judge_2.json
-      final_result_2.json
+      summary_1.md
+      judge_1.prompt.debug.md
+      raw_outputs/
+        judge_1.json
+        judge_1.prompt.user.json
+        final_result_1.json
       ...
 ```
 
 Within one evaluation `<model_id>/<case_id>/` directory:
 
-- `judge_N.json` is the aggregated judge result for repetition `N`
-- `final_result_N.json` is the final hybrid evaluation result for repetition `N`
+- `summary_N.md` is the human-readable evaluation summary for repetition `N`
+- `judge_N.prompt.debug.md` is the human-readable judge prompt debug view containing both the
+  system prompt and the rendered user prompt
+- `raw_outputs/judge_N.json` is the aggregated judge result for repetition `N`
+- `raw_outputs/judge_N.prompt.user.json` is the structured subject-view payload used to render
+  the judge user prompt
+- `raw_outputs/final_result_N.json` is the final hybrid evaluation result for repetition `N`
 - `manifest.json` maps repetition indices back to the full `run_fingerprint` and
   `evaluation_fingerprint`
 

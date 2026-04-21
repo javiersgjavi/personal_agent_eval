@@ -136,7 +136,8 @@ def test_openrouter_smoke_run_eval_executes_real_provider_and_judge_requests(
     assert judge_result.raw_results[0].parsed_response is not None
     judge_contract = JudgeOutputContract.model_validate(judge_result.raw_results[0].parsed_response)
     assert judge_contract.summary.strip()
-    assert judge_contract.dimensions.task is not None
+    assert judge_contract.dimensions.task.evidence is not None
+    assert judge_contract.dimensions.task.score is not None
 
     final_result = storage.read_case_final_result(
         suite_id="openrouter_full_e2e_suite",

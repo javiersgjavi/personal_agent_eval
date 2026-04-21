@@ -42,6 +42,24 @@ class JudgeEvidence(ArtifactModel):
     spark: list[str] = Field(default_factory=list)
 
 
+class JudgeDimensionAssessment(ArtifactModel):
+    """Per-dimension judge assessment with evidence before the score."""
+
+    evidence: list[str] = Field(default_factory=list)
+    score: float
+
+
+class JudgeDimensionAssessments(ArtifactModel):
+    """Per-dimension assessments expected from the judge."""
+
+    task: JudgeDimensionAssessment
+    process: JudgeDimensionAssessment
+    autonomy: JudgeDimensionAssessment
+    closeness: JudgeDimensionAssessment
+    efficiency: JudgeDimensionAssessment
+    spark: JudgeDimensionAssessment
+
+
 class RawJudgeRunResult(ArtifactModel):
     """Raw provider-facing result for one judge attempt."""
 
@@ -53,6 +71,7 @@ class RawJudgeRunResult(ArtifactModel):
     attempt_index: int = Field(ge=0)
     status: JudgeIterationStatus
     request_messages: list[dict[str, Any]] = Field(default_factory=list)
+    prompt_payload: dict[str, Any] | None = None
     response_content: str | None = None
     parsed_response: dict[str, Any] | None = None
     provider_name: str | None = None
@@ -85,7 +104,7 @@ class NormalizedJudgeIterationResult(ArtifactModel):
         if self.status is JudgeIterationStatus.SUCCESS:
             if self.dimensions is None or self.evidence is None or self.summary is None:
                 raise ValueError(
-                    "Successful judge iterations require dimensions, summary, and evidence."
+                    "Successful judge iterations require summary and normalized dimensions/evidence."
                 )
             if self.raw_result_ref is None:
                 raise ValueError("Successful judge iterations require a raw_result_ref.")
@@ -123,6 +142,5 @@ class AggregatedJudgeResult(ArtifactModel):
 class JudgeOutputContract(ArtifactModel):
     """Strict JSON contract expected from the judge model."""
 
-    dimensions: JudgeDimensions
     summary: str = Field(min_length=1)
-    evidence: JudgeEvidence
+    dimensions: JudgeDimensionAssessments

@@ -3,6 +3,8 @@
 from personal_agent_eval.judge.models import (
     AggregatedJudgeResult,
     JudgeDimensions,
+    JudgeDimensionAssessment,
+    JudgeDimensionAssessments,
     JudgeEvidence,
     JudgeIterationStatus,
     JudgeOutputContract,
@@ -14,11 +16,14 @@ from personal_agent_eval.judge.orchestrator import (
     JudgeOrchestrator,
     aggregate_judge_results,
     build_judge_messages,
+    build_judge_prompt_bundle,
 )
 
 __all__ = [
     "AggregatedJudgeResult",
     "JudgeDimensions",
+    "JudgeDimensionAssessment",
+    "JudgeDimensionAssessments",
     "JudgeEvidence",
     "JudgeInvocation",
     "JudgeIterationStatus",
@@ -29,4 +34,5 @@ __all__ = [
     "RawJudgeRunResult",
     "aggregate_judge_results",
     "build_judge_messages",
+    "build_judge_prompt_bundle",
 ]
