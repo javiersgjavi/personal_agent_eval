@@ -23,6 +23,29 @@ expectations:
     - text: Includes the literal marker openclaw-tool-example in report.md.
   soft_expectations:
     - text: Final response briefly confirms the artifact creation.
+rubric:
+  version: 1
+  scale:
+    min: 0
+    max: 10
+    anchors:
+      "10": report.md exists with the exact required lines (title, date from command, marker); final response briefly confirms creation.
+      "7": Mostly complete; minor formatting/clarity issues.
+      "4": Missing required content/marker or unclear confirmation.
+      "0": No attempt / irrelevant / empty output.
+  criteria:
+    - name: Required artifact content
+      what_good_looks_like: report.md contains the title, a date line obtained via a command, and the literal marker line.
+      what_bad_looks_like: report.md missing or missing required lines/marker.
+    - name: Tool-grounded evidence
+      what_good_looks_like: Uses tools to obtain the date and write the file; avoids unsupported claims.
+      what_bad_looks_like: Claims file/date without evidence.
+    - name: Brief confirmation
+      what_good_looks_like: Final response confirms creation briefly.
+      what_bad_looks_like: No confirmation or overly verbose response.
+  scoring_instructions: >
+    Use this rubric to set overall.score. If a hard expectation or deterministic check fails,
+    cap overall.score (typically <= 4). Cite 1–3 decisive facts in overall.evidence.
 deterministic_checks:
   - check_id: openclaw-tool-example-final
     dimensions:

@@ -61,6 +61,7 @@ class CountingJudgeClient:
                 "efficiency": {"evidence": ["The run used a small number of turns."], "score": 7.5},
                 "spark": {"evidence": ["The answer was acceptable."], "score": 5.5},
             },
+            "overall": {"evidence": ["Overall: task mostly satisfied."], "score": 7.0},
         }
         return RawJudgeRunResult(
             raw_result_ref=invocation.raw_result_ref,

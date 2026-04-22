@@ -60,6 +60,13 @@ class JudgeDimensionAssessments(ArtifactModel):
     spark: JudgeDimensionAssessment
 
 
+class JudgeOverallAssessment(ArtifactModel):
+    """Overall judge assessment with evidence before the score."""
+
+    evidence: list[str] = Field(default_factory=list)
+    score: float = Field(ge=0, le=10)
+
+
 class RawJudgeRunResult(ArtifactModel):
     """Raw provider-facing result for one judge attempt."""
 
@@ -96,6 +103,8 @@ class NormalizedJudgeIterationResult(ArtifactModel):
     dimensions: JudgeDimensions | None = None
     summary: str | None = None
     evidence: JudgeEvidence | None = None
+    overall_score: float | None = Field(default=None, ge=0, le=10)
+    overall_evidence: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     raw_result_ref: str | None = None
 
@@ -107,6 +116,8 @@ class NormalizedJudgeIterationResult(ArtifactModel):
                     "Successful judge iterations require summary and normalized "
                     "dimensions/evidence."
                 )
+            if self.overall_score is None:
+                raise ValueError("Successful judge iterations require an overall_score.")
             if self.raw_result_ref is None:
                 raise ValueError("Successful judge iterations require a raw_result_ref.")
         return self
@@ -128,6 +139,8 @@ class AggregatedJudgeResult(ArtifactModel):
     dimensions: JudgeDimensions | None = None
     summary: str | None = None
     evidence: JudgeEvidence | None = None
+    overall_score: float | None = Field(default=None, ge=0, le=10)
+    overall_evidence: list[str] = Field(default_factory=list)
     iteration_results: list[NormalizedJudgeIterationResult] = Field(default_factory=list)
     raw_results: list[RawJudgeRunResult] = Field(default_factory=list)
 
@@ -145,3 +158,4 @@ class JudgeOutputContract(ArtifactModel):
 
     summary: str = Field(min_length=1)
     dimensions: JudgeDimensionAssessments
+    overall: JudgeOverallAssessment

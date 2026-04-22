@@ -24,6 +24,29 @@ expectations:
     - text: Creates /tmp/pae_llm_probe_tool_example.txt and confirms the saved text.
   soft_expectations:
     - text: Response is brief and clearly confirms the final file content.
+rubric:
+  version: 1
+  scale:
+    min: 0
+    max: 10
+    anchors:
+      "10": Executes the required tool steps; file contains the exact marker; final answer confirms content briefly.
+      "7": Mostly correct with minor clarity issues.
+      "4": Partial completion; missing a required step or confirmation.
+      "0": No attempt / irrelevant / empty output.
+  criteria:
+    - name: Tool-grounded correctness
+      what_good_looks_like: Uses exec_shell/write_file/read_file and reports the observed file contents.
+      what_bad_looks_like: Invents results or skips required tool steps.
+    - name: Artifact correctness
+      what_good_looks_like: /tmp/pae_llm_probe_tool_example.txt exists and contains the marker line.
+      what_bad_looks_like: File missing or wrong content.
+    - name: Concise confirmation
+      what_good_looks_like: Confirms actions and final content in 2–4 lines.
+      what_bad_looks_like: Overly verbose or unclear confirmation.
+  scoring_instructions: >
+    Use this rubric to set overall.score. If a hard expectation or deterministic check fails,
+    cap overall.score (typically <= 4).
 deterministic_checks:
   - check_id: llm-probe-tool-example-final
     dimensions:

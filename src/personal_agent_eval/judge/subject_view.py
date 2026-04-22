@@ -84,6 +84,13 @@ def render_judge_user_text(subject_view: dict[str, Any]) -> str:
                 if isinstance(item, str) and item.strip():
                     lines.append(f"- {item.strip()}")
 
+    rubric = subject_view.get("evaluation_target", {}).get("rubric")
+    if isinstance(rubric, dict):
+        rubric_text = _render_rubric_table(rubric)
+        if rubric_text:
+            lines.append("")
+            lines.extend(rubric_text)
+
     deterministic_checks = subject_view.get("evaluation_target", {}).get("deterministic_checks", [])
     if isinstance(deterministic_checks, list) and deterministic_checks:
         lines.append("")
@@ -200,6 +207,24 @@ def _build_evaluation_target(test_config: TestConfig) -> dict[str, Any]:
             _serialize_check(check) for check in test_config.deterministic_checks
         ],
     }
+    if test_config.rubric is not None:
+        target["rubric"] = {
+            "version": test_config.rubric.version,
+            "scale": {
+                "min": test_config.rubric.scale.min,
+                "max": test_config.rubric.scale.max,
+                "anchors": dict(test_config.rubric.scale.anchors),
+            },
+            "criteria": [
+                {
+                    "name": criterion.name,
+                    "what_good_looks_like": criterion.what_good_looks_like,
+                    "what_bad_looks_like": criterion.what_bad_looks_like,
+                }
+                for criterion in test_config.rubric.criteria
+            ],
+            "scoring_instructions": test_config.rubric.scoring_instructions,
+        }
     attachment_names = [path.name for path in test_config.input.attachments]
     if attachment_names:
         target["attachments"] = attachment_names
@@ -354,6 +379,83 @@ def _serialize_check(check: Any) -> dict[str, Any]:
         payload["kind"] = "python_hook"
         payload["callable_name"] = check.python_hook.callable_name
     return payload
+
+
+def _render_rubric_table(rubric: dict[str, Any]) -> list[str]:
+    scale = rubric.get("scale")
+    criteria = rubric.get("criteria")
+    scoring_instructions = rubric.get("scoring_instructions")
+
+    lines: list[str] = []
+    lines.append("Rubric (optional guidance)")
+
+    if isinstance(scale, dict):
+        min_score = scale.get("min")
+        max_score = scale.get("max")
+        anchors = scale.get("anchors")
+        header_note = ""
+        if isinstance(min_score, int | float) and isinstance(max_score, int | float):
+            header_note = f" — overall score {min_score:g}–{max_score:g}"
+        lines[-1] = lines[-1] + header_note
+
+        if isinstance(anchors, dict) and anchors:
+            lines.append("")
+            lines.append("Scale anchors")
+            lines.append("| Score | Meaning |")
+            lines.append("|------:|---------|")
+            for score, meaning in sorted(
+                ((str(k), v) for k, v in anchors.items() if isinstance(v, str) and v.strip()),
+                key=lambda item: _safe_float_sort_key(item[0]),
+                reverse=True,
+            ):
+                lines.append(f"| {_escape_table_cell(score)} | {_escape_table_cell(meaning)} |")
+
+    if isinstance(criteria, list) and criteria:
+        rendered_rows: list[tuple[str, str, str]] = []
+        for item in criteria:
+            if not isinstance(item, dict):
+                continue
+            name = item.get("name")
+            good = item.get("what_good_looks_like")
+            bad = item.get("what_bad_looks_like")
+            if not all(isinstance(value, str) and value.strip() for value in (name, good, bad)):
+                continue
+            rendered_rows.append((name.strip(), good.strip(), bad.strip()))
+
+        if rendered_rows:
+            lines.append("")
+            lines.append("Criteria")
+            lines.append("| Criterion | What “high” looks like | What “low” looks like |")
+            lines.append("|---|---|---|")
+            for name, good, bad in rendered_rows:
+                lines.append(
+                    "| "
+                    + " | ".join(
+                        _escape_table_cell(cell)
+                        for cell in (name, good, bad)
+                    )
+                    + " |"
+                )
+
+    if isinstance(scoring_instructions, str) and scoring_instructions.strip():
+        lines.append("")
+        lines.append("Scoring instruction")
+        lines.extend(_indent_block(scoring_instructions.strip(), prefix="- "))
+
+    if len(lines) == 1:
+        return []
+    return lines
+
+
+def _escape_table_cell(text: str) -> str:
+    return text.replace("|", "\\|").replace("\n", "<br>")
+
+
+def _safe_float_sort_key(value: str) -> float:
+    try:
+        return float(value)
+    except Exception:
+        return float("-inf")
 
 
 def _build_subject_response(run_artifact: RunArtifact) -> dict[str, Any]:

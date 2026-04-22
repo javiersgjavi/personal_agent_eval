@@ -138,6 +138,7 @@ def test_v1_final_evaluation_result_shape_remains_stable() -> None:
         "judge_dimensions",
         "final_dimensions",
         "dimension_resolutions",
+        "judge_overall",
         "final_score",
         "summary",
         "security",
@@ -566,6 +567,7 @@ def _build_final_result(
             efficiency=task_resolution,
             spark=task_resolution,
         ),
+        judge_overall={"score": final_score, "evidence": ["Overall evidence"]},
         final_score=final_score,
         summary=HybridAggregationSummary(
             deterministic_passed_checks=1,
@@ -603,6 +605,8 @@ def _build_judge_result() -> AggregatedJudgeResult:
         dimensions=dimensions,
         summary="Looks good.",
         evidence=evidence,
+        overall_score=7.5,
+        overall_evidence=["Overall evidence"],
         raw_result_ref="raw_001",
     )
     return AggregatedJudgeResult(
@@ -616,6 +620,8 @@ def _build_judge_result() -> AggregatedJudgeResult:
         dimensions=dimensions,
         summary="Looks good.",
         evidence=evidence,
+        overall_score=7.5,
+        overall_evidence=["Overall evidence"],
         iteration_results=[iteration],
         raw_results=[
             RawJudgeRunResult(

@@ -24,6 +24,26 @@ expectations:
     - text: Includes an official Python URL in report.md.
   soft_expectations:
     - text: Final response summarizes the result briefly.
+rubric:
+  version: 1
+  scale:
+    min: 0
+    max: 10
+    anchors:
+      "10": report.md exists with an official Python URL and a brief justification; final response summarizes in 2–3 lines.
+      "7": Mostly complete; minor omissions or clarity issues.
+      "4": Missing a required artifact/content or weak sourcing/justification.
+      "0": No attempt / irrelevant / empty output.
+  criteria:
+    - name: Required artifact
+      what_good_looks_like: report.md is created and contains the required sections and an official URL.
+      what_bad_looks_like: report.md missing or does not include an official Python URL.
+    - name: Justification and summary
+      what_good_looks_like: Includes a short reliability justification; final answer is brief and accurate.
+      what_bad_looks_like: No justification or verbose/unclear final response.
+  scoring_instructions: >
+    Use this rubric to set overall.score. If a hard expectation or deterministic check fails,
+    cap overall.score (typically <= 4). Cite 1–3 decisive facts in overall.evidence.
 deterministic_checks:
   - check_id: openclaw-browser-example-final
     dimensions:

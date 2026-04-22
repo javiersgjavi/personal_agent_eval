@@ -245,6 +245,8 @@ class JudgeOrchestrator:
             dimensions=dimensions,
             summary=parsed.summary,
             evidence=evidence,
+            overall_score=parsed.overall.score,
+            overall_evidence=parsed.overall.evidence,
             warnings=warnings,
             raw_result_ref=raw_result.raw_result_ref,
         )
@@ -335,6 +337,8 @@ def aggregate_judge_results(
     dimensions: JudgeDimensions | None = None
     summary: str | None = None
     evidence: JudgeEvidence | None = None
+    overall_score: float | None = None
+    overall_evidence: list[str] = []
     warnings: list[str] = []
 
     if successful:
@@ -360,6 +364,8 @@ def aggregate_judge_results(
             efficiency=_merge_evidence(successful, "efficiency"),
             spark=_merge_evidence(successful, "spark"),
         )
+        overall_score = float(median([cast(float, r.overall_score) for r in successful]))
+        overall_evidence = _merge_overall_evidence(successful)
 
     if excluded_repetition_indices:
         warnings.append(
@@ -384,6 +390,8 @@ def aggregate_judge_results(
         dimensions=dimensions,
         summary=summary,
         evidence=evidence,
+        overall_score=overall_score,
+        overall_evidence=overall_evidence,
         iteration_results=iteration_results,
         raw_results=raw_results,
     )
@@ -409,6 +417,19 @@ def _merge_evidence(
             if entry not in seen:
                 merged.append(entry)
                 seen.add(entry)
+    return merged
+
+
+def _merge_overall_evidence(results: list[NormalizedJudgeIterationResult]) -> list[str]:
+    merged: list[str] = []
+    seen: set[str] = set()
+    for result in results:
+        for entry in result.overall_evidence:
+            stripped = entry.strip()
+            if not stripped or stripped in seen:
+                continue
+            merged.append(stripped)
+            seen.add(stripped)
     return merged
 
 

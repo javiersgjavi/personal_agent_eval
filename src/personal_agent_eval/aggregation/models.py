@@ -58,6 +58,13 @@ class HybridAggregationSummary(ArtifactModel):
     judge_failed_iterations: int = Field(ge=0)
 
 
+class OverallAssessment(ArtifactModel):
+    """Overall evaluation score and brief supporting evidence."""
+
+    score: float = Field(ge=0, le=10)
+    evidence: list[str] = Field(default_factory=list)
+
+
 class FinalEvaluationResult(ArtifactModel):
     """Final hybrid evaluation artifact for one run/case pair."""
 
@@ -68,6 +75,7 @@ class FinalEvaluationResult(ArtifactModel):
     judge_dimensions: DimensionScores = Field(default_factory=DimensionScores)
     final_dimensions: DimensionScores = Field(default_factory=DimensionScores)
     dimension_resolutions: DimensionResolutions
+    judge_overall: OverallAssessment | None = None
     final_score: float = Field(ge=0, le=10)
     summary: HybridAggregationSummary
     security: SecurityBlock = Field(default_factory=SecurityBlock)

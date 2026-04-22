@@ -259,9 +259,13 @@ Hybrid aggregation produces the final evaluation result:
     "efficiency": 6.0,
     "spark": 6.0
   },
+  "judge_overall": {
+    "score": 7.13,
+    "evidence": ["Meets hard constraints", "Clear and actionable plan"]
+  },
   "final_dimensions": {
-    "task": 8.6,
-    "process": 8.2,
+    "task": 8.0,
+    "process": 7.0,
     "autonomy": 7.5,
     "closeness": 6.5,
     "efficiency": 6.0,

@@ -23,6 +23,29 @@ expectations:
     - text: Includes an official Python source URL in the final answer.
   soft_expectations:
     - text: Response is concise and readable.
+rubric:
+  version: 1
+  scale:
+    min: 0
+    max: 10
+    anchors:
+      "10": Uses web_search and cites an official Python URL; concise, correct, and justified.
+      "7": Meets the essentials but is missing minor details or clarity.
+      "4": Partially meets the task; weak sourcing or unclear answer.
+      "0": No attempt / irrelevant / empty output.
+  criteria:
+    - name: Task completion
+      what_good_looks_like: Includes the requested title/page, an official URL, and a brief reliability justification.
+      what_bad_looks_like: Missing key requested items (e.g., no official URL).
+    - name: Evidence grounding
+      what_good_looks_like: Uses web_search and bases claims on retrieved evidence.
+      what_bad_looks_like: Relies on training memory or makes unsupported claims.
+    - name: Clarity and brevity
+      what_good_looks_like: Short, readable bullets; no unnecessary text.
+      what_bad_looks_like: Verbose or hard to scan.
+  scoring_instructions: >
+    Use this rubric to set overall.score. If a hard expectation or deterministic check fails,
+    cap overall.score (typically <= 4). Cite 1–3 decisive facts in overall.evidence.
 deterministic_checks:
   - check_id: llm-probe-browser-example-final
     dimensions:

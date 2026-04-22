@@ -11,13 +11,16 @@ from personal_agent_eval.judge.models import AggregatedJudgeResult
 
 def render_final_result_markdown(result: FinalEvaluationResult) -> str:
     """Render a human-readable Markdown summary for one final evaluation result."""
+    overall_note = ""
+    if result.judge_overall is not None:
+        overall_note = " (judge overall)"
     lines: list[str] = [
         "# Final Evaluation Summary",
         "",
         "## Overview",
         f"- Case: `{result.case_id}`",
         f"- Run: `{result.run_id}`",
-        f"- Final score: `{_format_score(result.final_score)}`",
+        f"- Final score{overall_note}: `{_format_score(result.final_score)}`",
         f"- Judge output snapshot: {_format_dimension_snapshot(result.judge_dimensions)}",
         f"- Security verdict: `{result.security.verdict}`",
         (
@@ -32,6 +35,14 @@ def render_final_result_markdown(result: FinalEvaluationResult) -> str:
             f"{result.summary.deterministic_error_checks} error"
         ),
     ]
+
+    if result.judge_overall is not None and result.judge_overall.evidence:
+        lines.extend(
+            [
+                "- Judge overall evidence:",
+                *[f"  - {entry}" for entry in result.judge_overall.evidence if entry.strip()],
+            ]
+        )
 
     if result.warnings:
         lines.extend(

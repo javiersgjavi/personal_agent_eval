@@ -189,6 +189,11 @@ dimensions:
 
 Key fields: `judges`, `dimensions`, `security_policy`, `anchors`.
 
+!!! note "Overall score"
+    In V1, the top-level `final_score` comes directly from the judge's overall assessment
+    (`judge_overall.score`). Per-dimension policies remain useful for observability, but do not
+    determine `final_score`.
+
 ---
 
 ## Campaign storage layout

@@ -22,6 +22,25 @@ expectations:
   soft_expectations:
     - text: Uses concise wording
       weight: 0.5
+rubric:
+  version: 1
+  scale:
+    min: 0
+    max: 10
+    anchors:
+      "10": Fully satisfies the intent and key constraints.
+      "7": Mostly successful with minor issues.
+      "4": Major gaps or violations.
+      "0": No attempt or irrelevant output.
+  criteria:
+    - name: Completeness
+      what_good_looks_like: Covers all requested items.
+      what_bad_looks_like: Misses key requested items.
+    - name: Correctness
+      what_good_looks_like: Claims are supported by the provided evidence.
+      what_bad_looks_like: Hallucinations or unsupported claims.
+  scoring_instructions: >
+    Use the rubric to set overall.score. If a hard expectation fails, cap overall.score (typically <= 4).
 deterministic_checks:
   - check_id: final-response-present
     dimensions:

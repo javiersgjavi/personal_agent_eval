@@ -140,6 +140,10 @@ def _valid_contract(
     return {
         "summary": "Helpful overall result.",
         "dimensions": dimensions,
+        "overall": {
+            "evidence": ["Overall: acceptable result."],
+            "score": 7.0,
+        },
     }
 
 

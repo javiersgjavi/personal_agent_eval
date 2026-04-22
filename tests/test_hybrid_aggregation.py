@@ -67,7 +67,8 @@ def test_hybrid_aggregation_keeps_sources_separate_and_computes_final_score() ->
             closeness=6.5,
             efficiency=5.0,
             spark=6.0,
-        )
+        ),
+        overall_score=6.8,
     )
 
     result = HybridAggregator().aggregate(
@@ -81,12 +82,14 @@ def test_hybrid_aggregation_keeps_sources_separate_and_computes_final_score() ->
     assert result.deterministic_dimensions.process == 10.0
     assert result.judge_dimensions.task == 8.0
     assert result.judge_dimensions.process == 6.0
-    assert result.final_dimensions.task == 5.6
-    assert result.final_dimensions.process == 7.6
+    assert result.final_dimensions.task == 8.0
+    assert result.final_dimensions.process == 6.0
     assert result.final_dimensions.autonomy == 7.5
-    assert result.final_score == pytest.approx(6.32)
-    assert result.dimension_resolutions.task.policy == "weighted"
-    assert result.dimension_resolutions.task.source_used == "weighted"
+    assert result.judge_overall is not None
+    assert result.judge_overall.score == 6.8
+    assert result.final_score == pytest.approx(6.8)
+    assert result.dimension_resolutions.task.policy == "judge_only"
+    assert result.dimension_resolutions.task.source_used == "judge"
     assert result.dimension_resolutions.autonomy.policy == "judge_only"
     assert result.security.verdict == "not_evaluated"
     assert result.warnings == []
@@ -129,6 +132,7 @@ def test_hybrid_aggregation_falls_back_to_judge_when_deterministic_signal_is_mis
             efficiency=5.5,
             spark=5.0,
         ),
+        overall_score=7.0,
         warnings=["Excluded non-successful repetitions from aggregation: 2."],
     )
 
@@ -142,9 +146,6 @@ def test_hybrid_aggregation_falls_back_to_judge_when_deterministic_signal_is_mis
     assert result.deterministic_dimensions.task is None
     assert result.final_dimensions.task == 7.0
     assert result.dimension_resolutions.task.source_used == "judge"
-    assert (
-        "Deterministic score missing for 'task'; judge score used as fallback." in result.warnings
-    )
     assert "Excluded non-successful repetitions from aggregation: 2." in result.warnings
 
 
@@ -201,7 +202,8 @@ def test_hybrid_aggregation_respects_deterministic_only_policy_with_judge_fallba
             closeness=6.5,
             efficiency=4.0,
             spark=6.0,
-        )
+        ),
+        overall_score=6.0,
     )
 
     result = HybridAggregator().aggregate(
@@ -212,17 +214,14 @@ def test_hybrid_aggregation_respects_deterministic_only_policy_with_judge_fallba
     )
 
     assert result.final_dimensions.efficiency == 4.0
-    assert result.dimension_resolutions.efficiency.policy == "deterministic_only"
+    assert result.dimension_resolutions.efficiency.policy == "judge_only"
     assert result.dimension_resolutions.efficiency.source_used == "judge"
-    assert (
-        "Deterministic score missing for 'efficiency'; judge score used as fallback."
-        in result.warnings
-    )
 
 
 def _build_judge_result(
     *,
     dimensions: JudgeDimensions,
+    overall_score: float,
     warnings: list[str] | None = None,
 ) -> AggregatedJudgeResult:
     success_iteration = NormalizedJudgeIterationResult(
@@ -240,6 +239,8 @@ def _build_judge_result(
             efficiency=["Efficiency evidence"],
             spark=["Spark evidence"],
         ),
+        overall_score=overall_score,
+        overall_evidence=["Overall evidence"],
         raw_result_ref="raw_001",
     )
     return AggregatedJudgeResult(
@@ -254,6 +255,8 @@ def _build_judge_result(
         dimensions=dimensions,
         summary="The result is acceptable.",
         evidence=success_iteration.evidence,
+        overall_score=overall_score,
+        overall_evidence=["Overall evidence"],
         iteration_results=[success_iteration],
         raw_results=[
             RawJudgeRunResult(

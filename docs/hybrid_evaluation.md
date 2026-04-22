@@ -19,6 +19,9 @@ The final hybrid layer makes the policy explicit instead of hiding it.
 
 ## Final Result Shape
 
+V1 note: the final score is now taken directly from the judge's **overall** assessment
+(`overall.score`). Per-dimension values are preserved for observability and debugging.
+
 ```json
 {
   "case_id": "example_case",
@@ -39,15 +42,19 @@ The final hybrid layer makes the policy explicit instead of hiding it.
     "efficiency": 5.0,
     "spark": 6.0
   },
+  "judge_overall": {
+    "score": 6.8,
+    "evidence": ["Violates Monday PM constraint", "Identifies Atlas conflict clearly"]
+  },
   "final_dimensions": {
-    "task": 5.6,
-    "process": 7.6,
+    "task": 8.0,
+    "process": 6.0,
     "autonomy": 7.5,
     "closeness": 6.5,
     "efficiency": 5.0,
     "spark": 6.0
   },
-  "final_score": 6.32,
+  "final_score": 6.8,
   "security": {
     "verdict": "not_evaluated",
     "warnings": []
@@ -58,7 +65,10 @@ The final hybrid layer makes the policy explicit instead of hiding it.
 
 ## Per-Dimension Policy
 
-V1 supports these policies:
+V1 preserves per-dimension resolution metadata and deterministic scoring inputs, but the
+**final score is not computed via a weighted blend of dimensions**.
+
+The per-dimension policies below are kept for compatibility and future use:
 
 - `judge_only`
 - `deterministic_only`
@@ -70,6 +80,9 @@ That means the judge remains the prevailing source unless a dimension explicitly
 policy.
 
 ## Example Aggregation Config
+
+Note: this config affects the per-dimension `final_dimensions` and `dimension_resolutions`, but
+does not change how `final_score` is computed in V1 (it comes from `judge_overall.score`).
 
 ```yaml
 final_aggregation:

@@ -453,6 +453,8 @@ def _build_judge_result() -> AggregatedJudgeResult:
             efficiency=["Efficiency evidence"],
             spark=["Spark evidence"],
         ),
+        overall_score=6.5,
+        overall_evidence=["Overall evidence"],
         raw_result_ref="raw_001",
     )
     return AggregatedJudgeResult(
@@ -466,6 +468,8 @@ def _build_judge_result() -> AggregatedJudgeResult:
         dimensions=iteration.dimensions,
         summary="The result is acceptable.",
         evidence=iteration.evidence,
+        overall_score=6.5,
+        overall_evidence=["Overall evidence"],
         iteration_results=[iteration],
         raw_results=[
             RawJudgeRunResult(
@@ -521,6 +525,7 @@ def _build_final_result() -> FinalEvaluationResult:
             efficiency=resolution,
             spark=resolution,
         ),
+        judge_overall={"score": 6.5, "evidence": ["Overall evidence"]},
         final_score=6.5,
         summary=HybridAggregationSummary(
             deterministic_passed_checks=0,

@@ -606,11 +606,15 @@ Controls how multiple judge iterations are collapsed into a single per-dimension
 Defines how judge scores and deterministic check scores are combined into one final
 score per dimension.
 
+V1 note: these settings affect per-dimension `final_dimensions` and `dimension_resolutions`.
+The top-level `final_score` is taken directly from the judge overall score
+(`judge_overall.score`) when available.
+
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `default_policy` | `"judge_only"` | no | `"judge_only"` | Fallback policy for dimensions not explicitly overridden |
 | `dimensions` | `FinalAggregationDimensions` | no | all `judge_only` | Per-dimension policy overrides |
-| `final_score_weights` | `FinalScoreWeights` | no | all `1.0` | Relative weight of each dimension in the final score |
+| `final_score_weights` | `FinalScoreWeights` | no | all `1.0` | Relative weight of each dimension (informational in V1; not used to compute top-level `final_score`) |
 
 #### Per-dimension policy (`FinalDimensionAggregationConfig`)
 
@@ -625,8 +629,9 @@ back to the judge score and emits a warning.
 
 #### `final_score_weights` (per dimension)
 
-Six dimension weights control the final composite score. All default to `1.0`.
-At least one must be > 0.
+Six dimension weights historically controlled the final composite score. In V1, they are kept
+for compatibility and reporting, but are not used to compute the top-level `final_score` (which
+comes from `judge_overall.score`).
 
 | Dimension | Default |
 |---|---|

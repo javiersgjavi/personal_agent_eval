@@ -105,6 +105,37 @@ class Expectations(ConfigModel):
     soft_expectations: list[Expectation] = Field(default_factory=list)
 
 
+class RubricScale(ConfigModel):
+    """Optional judge rubric scale definition."""
+
+    min: float = Field(default=0, ge=0)
+    max: float = Field(default=10, ge=0)
+    anchors: dict[str, str] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _validate_scale(self) -> RubricScale:
+        if self.max <= self.min:
+            raise ValueError("'rubric.scale.max' must be greater than 'rubric.scale.min'.")
+        return self
+
+
+class RubricCriterion(ConfigModel):
+    """One rubric criterion (general guidance, not a deterministic check)."""
+
+    name: str = Field(min_length=1)
+    what_good_looks_like: str = Field(min_length=1)
+    what_bad_looks_like: str = Field(min_length=1)
+
+
+class Rubric(ConfigModel):
+    """Optional general rubric shown to the judge."""
+
+    version: Literal[1] = 1
+    scale: RubricScale = Field(default_factory=RubricScale)
+    criteria: list[RubricCriterion] = Field(default_factory=list)
+    scoring_instructions: str | None = None
+
+
 class _ResolvedPathCheck(ConfigModel):
     """Base model for declarative checks that resolve a local path."""
 
@@ -282,6 +313,7 @@ class TestConfig(ConfigModel):
     runner: RunnerConfig
     input: TestInput
     expectations: Expectations = Field(default_factory=Expectations)
+    rubric: Rubric | None = None
     deterministic_checks: list[DeterministicCheck] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
