@@ -758,6 +758,7 @@ dev = [
     { name = "ty" },
 ]
 docs = [
+    { name = "mkdocs" },
     { name = "mkdocs-material" },
 ]
 
@@ -780,7 +781,10 @@ dev = [
     { name = "ruff", specifier = ">=0.11.0" },
     { name = "ty", specifier = ">=0.0.1a6" },
 ]
-docs = [{ name = "mkdocs-material", specifier = ">=9.5" }]
+docs = [
+    { name = "mkdocs", specifier = ">=1.6,<2" },
+    { name = "mkdocs-material", specifier = ">=9.5,<10" },
+]
 
 [[package]]
 name = "pillow"
