@@ -1,0 +1,298 @@
+[agent/embedded] incomplete turn detected: runId=6dba8531-fb39-41e6-940c-6e7e54606dbe sessionId=6dba8531-fb39-41e6-940c-6e7e54606dbe stopReason=stop payloads=0 — surfacing error to user
+{
+  "payloads": [
+    {
+      "text": "⚠️ Agent couldn't generate a response. Please try again.",
+      "mediaUrl": null
+    }
+  ],
+  "meta": {
+    "durationMs": 12550,
+    "agentMeta": {
+      "sessionId": "6dba8531-fb39-41e6-940c-6e7e54606dbe",
+      "provider": "openrouter",
+      "model": "openai/gpt-4o-mini",
+      "lastCallUsage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "aborted": false,
+    "systemPromptReport": {
+      "source": "run",
+      "generatedAt": 1776707658158,
+      "sessionId": "6dba8531-fb39-41e6-940c-6e7e54606dbe",
+      "sessionKey": "agent:tapas:main",
+      "provider": "openrouter",
+      "model": "openai/gpt-4o-mini",
+      "workspaceDir": "/work/workspace",
+      "bootstrapMaxChars": 9007199254740991,
+      "bootstrapTotalMaxChars": 9007199254740991,
+      "bootstrapTruncation": {
+        "warningMode": "once",
+        "warningShown": false,
+        "truncatedFiles": 0,
+        "nearLimitFiles": 0,
+        "totalNearLimit": false
+      },
+      "sandbox": {
+        "mode": "off",
+        "sandboxed": false
+      },
+      "systemPrompt": {
+        "chars": 127,
+        "projectContextChars": 0,
+        "nonProjectContextChars": 127
+      },
+      "injectedWorkspaceFiles": [
+        {
+          "name": "AGENTS.md",
+          "path": "/work/workspace/AGENTS.md",
+          "missing": false,
+          "rawChars": 82,
+          "injectedChars": 82,
+          "truncated": false
+        },
+        {
+          "name": "SOUL.md",
+          "path": "/work/workspace/SOUL.md",
+          "missing": false,
+          "rawChars": 24,
+          "injectedChars": 24,
+          "truncated": false
+        },
+        {
+          "name": "TOOLS.md",
+          "path": "/work/workspace/TOOLS.md",
+          "missing": false,
+          "rawChars": 146,
+          "injectedChars": 146,
+          "truncated": false
+        },
+        {
+          "name": "IDENTITY.md",
+          "path": "/work/workspace/IDENTITY.md",
+          "missing": false,
+          "rawChars": 149,
+          "injectedChars": 149,
+          "truncated": false
+        },
+        {
+          "name": "USER.md",
+          "path": "/work/workspace/USER.md",
+          "missing": false,
+          "rawChars": 145,
+          "injectedChars": 145,
+          "truncated": false
+        },
+        {
+          "name": "HEARTBEAT.md",
+          "path": "/work/workspace/HEARTBEAT.md",
+          "missing": false,
+          "rawChars": 192,
+          "injectedChars": 192,
+          "truncated": false
+        },
+        {
+          "name": "BOOTSTRAP.md",
+          "path": "/work/workspace/BOOTSTRAP.md",
+          "missing": true,
+          "rawChars": 0,
+          "injectedChars": 51,
+          "truncated": false
+        }
+      ],
+      "skills": {
+        "promptChars": 3342,
+        "entries": [
+          {
+            "name": "healthcheck",
+            "blockChars": 456
+          },
+          {
+            "name": "node-connect",
+            "blockChars": 506
+          },
+          {
+            "name": "skill-creator",
+            "blockChars": 724
+          },
+          {
+            "name": "taskflow",
+            "blockChars": 508
+          },
+          {
+            "name": "taskflow-inbox-triage",
+            "blockChars": 383
+          },
+          {
+            "name": "weather",
+            "blockChars": 381
+          }
+        ]
+      },
+      "tools": {
+        "listChars": 0,
+        "schemaChars": 26304,
+        "entries": [
+          {
+            "name": "read",
+            "summaryChars": 298,
+            "schemaChars": 304,
+            "propertiesCount": 3
+          },
+          {
+            "name": "edit",
+            "summaryChars": 326,
+            "schemaChars": 834,
+            "propertiesCount": 2
+          },
+          {
+            "name": "write",
+            "summaryChars": 127,
+            "schemaChars": 225,
+            "propertiesCount": 2
+          },
+          {
+            "name": "exec",
+            "summaryChars": 539,
+            "schemaChars": 1098,
+            "propertiesCount": 12
+          },
+          {
+            "name": "process",
+            "summaryChars": 416,
+            "schemaChars": 961,
+            "propertiesCount": 12
+          },
+          {
+            "name": "canvas",
+            "summaryChars": 106,
+            "schemaChars": 661,
+            "propertiesCount": 18
+          },
+          {
+            "name": "nodes",
+            "summaryChars": 118,
+            "schemaChars": 1589,
+            "propertiesCount": 32
+          },
+          {
+            "name": "cron",
+            "summaryChars": 3726,
+            "schemaChars": 6700,
+            "propertiesCount": 13
+          },
+          {
+            "name": "message",
+            "summaryChars": 89,
+            "schemaChars": 5613,
+            "propertiesCount": 105
+          },
+          {
+            "name": "tts",
+            "summaryChars": 152,
+            "schemaChars": 223,
+            "propertiesCount": 2
+          },
+          {
+            "name": "gateway",
+            "summaryChars": 494,
+            "schemaChars": 497,
+            "propertiesCount": 12
+          },
+          {
+            "name": "agents_list",
+            "summaryChars": 118,
+            "schemaChars": 33,
+            "propertiesCount": 0
+          },
+          {
+            "name": "sessions_list",
+            "summaryChars": 177,
+            "schemaChars": 212,
+            "propertiesCount": 4
+          },
+          {
+            "name": "sessions_history",
+            "summaryChars": 180,
+            "schemaChars": 161,
+            "propertiesCount": 3
+          },
+          {
+            "name": "sessions_send",
+            "summaryChars": 208,
+            "schemaChars": 274,
+            "propertiesCount": 5
+          },
+          {
+            "name": "sessions_yield",
+            "summaryChars": 97,
+            "schemaChars": 60,
+            "propertiesCount": 1
+          },
+          {
+            "name": "sessions_spawn",
+            "summaryChars": 302,
+            "schemaChars": 1333,
+            "propertiesCount": 18
+          },
+          {
+            "name": "subagents",
+            "summaryChars": 105,
+            "schemaChars": 191,
+            "propertiesCount": 4
+          },
+          {
+            "name": "session_status",
+            "summaryChars": 336,
+            "schemaChars": 89,
+            "propertiesCount": 2
+          },
+          {
+            "name": "web_search",
+            "summaryChars": 188,
+            "schemaChars": 1222,
+            "propertiesCount": 10
+          },
+          {
+            "name": "web_fetch",
+            "summaryChars": 129,
+            "schemaChars": 374,
+            "propertiesCount": 3
+          },
+          {
+            "name": "image",
+            "summaryChars": 260,
+            "schemaChars": 342,
+            "propertiesCount": 6
+          },
+          {
+            "name": "browser",
+            "summaryChars": 1066,
+            "schemaChars": 2799,
+            "propertiesCount": 48
+          },
+          {
+            "name": "memory_search",
+            "summaryChars": 385,
+            "schemaChars": 260,
+            "propertiesCount": 4
+          },
+          {
+            "name": "memory_get",
+            "summaryChars": 239,
+            "schemaChars": 249,
+            "propertiesCount": 4
+          }
+        ]
+      }
+    },
+    "finalPromptText": "[1] user\nNecesito que me ayudes a planificar la siguiente semana. Estas son mis\nrestricciones y compromisos:\n\nCOMPROMISOS FIJOS:\n- Lunes: standup Avature 10:30h (1h)\n- Martes: reunión con inversor 16:00h (2h)\n- Miércoles: dentista 11:00h (1.5h)\n- Viernes: entrega informe mensual VenPraLab (deadline 18:00h)\n\nTAREAS PENDIENTES (urgentes):\n- Preparar one-pager VenPraLab para la reunión del martes (estimado: 4h)\n- Revisar y corregir prototipo de la app de Avature (estimado: 6h, pedido para el miércoles por la tarde)\n- Preparar al inversor: investigar su background + ensayo del pitch (estimado: 3h)\n- Escribir informe mensual VenPraLab (estimado: 5h)\n\nRESTRICCIONES PERSONALES:\n- No trabajar más de 9h/día\n- Necesito tener el lunes por la tarde libre (compromiso personal inamovible)\n- El viernes antes de las 10:00h no puedo concentrarme (tengo el desayuno familiar semanal)",
+    "replayInvalid": true,
+    "livenessState": "abandoned"
+  }
+}

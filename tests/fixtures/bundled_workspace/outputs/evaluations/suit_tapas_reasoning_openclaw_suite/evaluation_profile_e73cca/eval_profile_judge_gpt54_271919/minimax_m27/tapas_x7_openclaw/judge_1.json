@@ -1,0 +1,171 @@
+{
+  "aggregation_method": "median",
+  "configured_repetitions": 1,
+  "dimensions": {
+    "autonomy": 0.0,
+    "closeness": 0.0,
+    "efficiency": 0.0,
+    "process": 0.0,
+    "spark": 0.0,
+    "task": 0.0
+  },
+  "evidence": {
+    "autonomy": [
+      "No agent reasoning or self-directed plan is present because execution stopped at startup/authentication.",
+      "The trace shows model fallback decisions, but no successful continuation."
+    ],
+    "closeness": [
+      "No substantive response to the Spanish planning request was generated.",
+      "No evidence of addressing the user's constraints or commitments."
+    ],
+    "efficiency": [
+      "The run consumed time but produced only error diagnostics, not a usable answer.",
+      "Failure occurred before any task-solving output."
+    ],
+    "process": [
+      "The agent invocation returned non-zero exit code 1.",
+      "Logs show: 'No API key found for provider \"openrouter\"' and a failover error."
+    ],
+    "spark": [
+      "No creative or distinctive solution content was generated.",
+      "No style or insight can be evaluated from an execution failure."
+    ],
+    "task": [
+      "No final response was produced; the execution ended with an auth failure.",
+      "Deterministic check only confirms a final response would be required, not that one existed."
+    ]
+  },
+  "excluded_repetition_indices": [],
+  "failed_iterations": 0,
+  "iteration_results": [
+    {
+      "dimensions": {
+        "autonomy": 0.0,
+        "closeness": 0.0,
+        "efficiency": 0.0,
+        "process": 0.0,
+        "spark": 0.0,
+        "task": 0.0
+      },
+      "evidence": {
+        "autonomy": [
+          "No agent reasoning or self-directed plan is present because execution stopped at startup/authentication.",
+          "The trace shows model fallback decisions, but no successful continuation."
+        ],
+        "closeness": [
+          "No substantive response to the Spanish planning request was generated.",
+          "No evidence of addressing the user's constraints or commitments."
+        ],
+        "efficiency": [
+          "The run consumed time but produced only error diagnostics, not a usable answer.",
+          "Failure occurred before any task-solving output."
+        ],
+        "process": [
+          "The agent invocation returned non-zero exit code 1.",
+          "Logs show: 'No API key found for provider \"openrouter\"' and a failover error."
+        ],
+        "spark": [
+          "No creative or distinctive solution content was generated.",
+          "No style or insight can be evaluated from an execution failure."
+        ],
+        "task": [
+          "No final response was produced; the execution ended with an auth failure.",
+          "Deterministic check only confirms a final response would be required, not that one existed."
+        ]
+      },
+      "judge_model": "openai/gpt-5.4-mini",
+      "judge_name": "gpt54_single",
+      "raw_result_ref": "gpt54_single:repetition:0:attempt:0",
+      "repetition_index": 0,
+      "status": "success",
+      "summary": "The run failed before producing any answer due to an OpenRouter authentication error, so no planning quality can be assessed from output.",
+      "warnings": []
+    }
+  ],
+  "judge_model": "openai/gpt-5.4-mini",
+  "judge_name": "gpt54_single",
+  "raw_results": [
+    {
+      "attempt_index": 0,
+      "error_code": null,
+      "error_message": null,
+      "finish_reason": "stop",
+      "judge_model": "openai/gpt-5.4-mini",
+      "judge_name": "gpt54_single",
+      "native_finish_reason": "completed",
+      "parsed_response": {
+        "dimensions": {
+          "autonomy": 0,
+          "closeness": 0,
+          "efficiency": 0,
+          "process": 0,
+          "spark": 0,
+          "task": 0
+        },
+        "evidence": {
+          "autonomy": [
+            "No agent reasoning or self-directed plan is present because execution stopped at startup/authentication.",
+            "The trace shows model fallback decisions, but no successful continuation."
+          ],
+          "closeness": [
+            "No substantive response to the Spanish planning request was generated.",
+            "No evidence of addressing the user's constraints or commitments."
+          ],
+          "efficiency": [
+            "The run consumed time but produced only error diagnostics, not a usable answer.",
+            "Failure occurred before any task-solving output."
+          ],
+          "process": [
+            "The agent invocation returned non-zero exit code 1.",
+            "Logs show: 'No API key found for provider \"openrouter\"' and a failover error."
+          ],
+          "spark": [
+            "No creative or distinctive solution content was generated.",
+            "No style or insight can be evaluated from an execution failure."
+          ],
+          "task": [
+            "No final response was produced; the execution ended with an auth failure.",
+            "Deterministic check only confirms a final response would be required, not that one existed."
+          ]
+        },
+        "summary": "The run failed before producing any answer due to an OpenRouter authentication error, so no planning quality can be assessed from output."
+      },
+      "provider_model_id": "openai/gpt-5.4-mini-20260317",
+      "provider_name": null,
+      "raw_result_ref": "gpt54_single:repetition:0:attempt:0",
+      "repetition_index": 0,
+      "request_id": null,
+      "request_messages": [
+        {
+          "content": "You are a strict evaluation judge. Return only valid JSON with the exact top-level keys `dimensions`, `summary`, and `evidence`. `dimensions` must contain the six dimension scores `task`, `process`, `autonomy`, `closeness`, `efficiency`, and `spark`. `summary` must be a single concise string. `evidence` must contain those same six keys with arrays of strings. Do not wrap the JSON in markdown. Identity fields that would reveal which subject model produced the run are omitted from the run artifact; do not infer or discuss that identity-evaluate only the trace and outputs shown.",
+          "role": "system"
+        },
+        {
+          "content": "{\n  \"case_context\": {\n    \"case_id\": \"tapas_x7_openclaw\",\n    \"deterministic_checks\": [\n      {\n        \"check_id\": \"tapas-x7-final-response\",\n        \"declarative\": {\n          \"kind\": \"final_response_present\"\n        },\n        \"description\": null,\n        \"dimensions\": [\n          \"task\"\n        ],\n        \"python_hook\": null\n      }\n    ],\n    \"expectations\": {\n      \"hard_expectations\": [\n        {\n          \"metadata\": {},\n          \"text\": \"Identifies explicitly that the 6h Proyecto Atlas prototype review cannot fit Wednesday afternoon alongside the dentist morning slot and other constraints (the core scheduling conflict).\\n\",\n          \"weight\": 1.0\n        },\n        {\n          \"metadata\": {},\n          \"text\": \"Proposes a realistic weekly plan that respects fixed commitments and personal constraints (max 9h/day, Monday afternoon free, Friday morning low focus).\",\n          \"weight\": 1.0\n        },\n        {\n          \"metadata\": {},\n          \"text\": \"Proposes how to communicate the trade-off or delay to Proyecto Atlas (or stakeholders), instead of pretending the impossible schedule works.\",\n          \"weight\": 1.0\n        }\n      ],\n      \"soft_expectations\": [\n        {\n          \"metadata\": {},\n          \"text\": \"Delivers a concise structured plan (table or short sections), not an overly long wall of text.\",\n          \"weight\": 1.0\n        },\n        {\n          \"metadata\": {},\n          \"text\": \"Prioritizes protecting the external meeting and the Proyecto Brisa monthly report deadline where relevant.\",\n          \"weight\": 1.0\n        }\n      ]\n    },\n    \"input\": {\n      \"attachments\": [],\n      \"context\": {},\n      \"messages\": [\n        {\n          \"content\": \"Necesito que me ayudes a planificar la siguiente semana. Estas son mis\\nrestricciones y compromisos:\\n\\nCOMPROMISOS FIJOS:\\n- Lunes: standup Proyecto Atlas 10:30h (1h)\\n- Martes: reuni\\u00f3n con partner externo 16:00h (2h)\\n- Mi\\u00e9rcoles: dentista 11:00h (1.5h)\\n- Viernes: entrega informe mensual Proyecto Brisa (deadline 18:00h)\\n\\nTAREAS PENDIENTES (urgentes):\\n- Preparar one-pager Proyecto Brisa para la reuni\\u00f3n del martes (estimado: 4h)\\n- Revisar y corregir prototipo de la app de Proyecto Atlas (estimado: 6h, pedido para el mi\\u00e9rcoles por la tarde)\\n- Preparar la reuni\\u00f3n externa: investigar el background del interlocutor + ensayo (estimado: 3h)\\n- Escribir informe mensual Proyecto Brisa (estimado: 5h)\\n\\nRESTRICCIONES PERSONALES:\\n- No trabajar m\\u00e1s de 9h/d\\u00eda\\n- Necesito tener el lunes por la tarde libre (compromiso personal inamovible)\\n- El viernes antes de las 10:00h no puedo concentrarme (tengo el desayuno familiar semanal)\\n\",\n          \"name\": null,\n          \"role\": \"user\",\n          \"source\": null\n        }\n      ]\n    },\n    \"metadata\": {\n      \"reference_task_id\": \"X7_multiconstraint_planning\",\n      \"source\": \"model-benchmark/references/tasks/reasoning/X7_multiconstraint_planning.md\"\n    },\n    \"runner\": {\n      \"type\": \"openclaw\"\n    },\n    \"schema_version\": 1,\n    \"source_path\": \"/home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/configs/cases/tapas_x7_openclaw/test.yaml\",\n    \"tags\": [\n      \"extreme\",\n      \"openclaw\",\n      \"reasoning\",\n      \"tapas\",\n      \"x7\"\n    ],\n    \"title\": \"Tapas OpenClaw \\u2014 X7 multi-constraint planning (reference task)\"\n  },\n  \"deterministic_summary\": {\n    \"error_checks\": 0,\n    \"failed_checks\": 0,\n    \"passed_checks\": 1,\n    \"total_checks\": 1\n  },\n  \"dimensions\": [\n    \"task\",\n    \"process\",\n    \"autonomy\",\n    \"closeness\",\n    \"efficiency\",\n    \"spark\"\n  ],\n  \"judge_model\": \"openai/gpt-5.4-mini\",\n  \"judge_name\": \"gpt54_single\",\n  \"run_artifact\": {\n    \"error\": {\n      \"code\": \"openclaw_execution_failed\",\n      \"error_type\": \"OpenClawExecutionError\",\n      \"message\": \"OpenClaw agent execution returned a non-zero exit code.\",\n      \"metadata\": {\n        \"returncode\": 1,\n        \"stderr\": \"[diagnostic] lane task error: lane=main durationMs=3383 error=\\\"Error: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\\"\\n[diagnostic] lane task error: lane=session:agent:tapas:main durationMs=3391 error=\\\"Error: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\\"\\n[model-fallback/decision] model fallback decision: decision=candidate_failed requested=openrouter/minimax/minimax-m2.7 candidate=openrouter/minimax/minimax-m2.7 reason=auth next=none detail=No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\nFailoverError: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\n\"\n      },\n      \"provider_code\": null,\n      \"retryable\": false\n    },\n    \"identity\": {\n      \"case_id\": \"tapas_x7_openclaw\",\n      \"run_id\": \"run_2025c0e00b224ff59781ca4c2c0af2e4\",\n      \"run_profile_id\": \"openclaw_tapas\",\n      \"runner_type\": \"openclaw\",\n      \"schema_version\": 1,\n      \"suite_id\": \"tapas_reasoning_openclaw_suite\"\n    },\n    \"output_artifacts\": [],\n    \"provider\": {\n      \"finish_reason\": null,\n      \"gateway\": \"openclaw\",\n      \"metadata\": {\n        \"returncode\": 1\n      },\n      \"native_finish_reason\": null,\n      \"provider_name\": null,\n      \"request_id\": null,\n      \"response_id\": null\n    },\n    \"request\": {\n      \"execution_parameters\": {\n        \"max_tokens\": null,\n        \"max_turns\": null,\n        \"retries\": null,\n        \"seed\": null,\n        \"temperature\": null,\n        \"timeout_seconds\": 300.0,\n        \"tool_choice\": null,\n        \"top_p\": null\n      },\n      \"gateway\": \"openclaw\",\n      \"metadata\": {\n        \"attachments\": [],\n        \"case_metadata\": {\n          \"reference_task_id\": \"X7_multiconstraint_planning\",\n          \"source\": \"model-benchmark/references/tasks/reasoning/X7_multiconstraint_planning.md\"\n        },\n        \"input_context\": {},\n        \"openclaw\": {\n          \"agent_id\": \"tapas\",\n          \"container_image\": \"ghcr.io/openclaw/openclaw:2026.4.15\",\n          \"docker_cli\": \"docker\",\n          \"execution\": \"docker\"\n        },\n        \"requested_runner_config\": {\n          \"type\": \"openclaw\"\n        }\n      }\n    },\n    \"runner_metadata\": {\n      \"openclaw_judge_context\": {\n        \"agent_id\": \"tapas\",\n        \"container_image\": \"ghcr.io/openclaw/openclaw:2026.4.15\",\n        \"generated_openclaw_config_excerpt\": \"{\\n  \\\"agents\\\": {\\n    \\\"defaults\\\": {\\n      \\\"bootstrapMaxChars\\\": 9007199254740991,\\n      \\\"bootstrapTotalMaxChars\\\": 9007199254740991,\\n      \\\"model\\\": {\\n        \\\"primary\\\": \\\"openrouter/minimax/minimax-m2.7\\\"\\n      },\\n      \\\"models\\\": {\\n        \\\"openrouter/minimax/minimax-m2.7\\\": {\\n          \\\"alias\\\": \\\"benchmark-primary\\\",\\n          \\\"params\\\": {\\n            \\\"max_tokens\\\": 16384\\n          }\\n        }\\n      },\\n      \\\"sandbox\\\": {\\n        \\\"mode\\\": \\\"off\\\"\\n      },\\n      \\\"workspace\\\": \\\"/work/workspace\\\"\\n    },\\n    \\\"list\\\": [\\n      {\\n        \\\"id\\\": \\\"tapas\\\",\\n        \\\"model\\\": \\\"openrouter/minimax/minimax-m2.7\\\",\\n        \\\"systemPromptOverride\\\": \\\"Eres Tapas. Sigue AGENTS.md, SOUL.md e IDENTITY.md del workspace; usa memory/ con criterio y mant\\\\u00e9n un tono claro y respetuoso.\\\\n\\\"\\n      }\\n    ]\\n  },\\n  \\\"models\\\": {\\n    \\\"mode\\\": \\\"merge\\\",\\n    \\\"providers\\\": {\\n      \\\"openrouter\\\": {\\n        \\\"api\\\": \\\"openai-completions\\\",\\n        \\\"apiKey\\\": \\\"OPENROUTER_API_KEY\\\",\\n        \\\"baseUrl\\\": \\\"https://openrouter.ai/api/v1\\\",\\n        \\\"models\\\": [\\n          {\\n            \\\"contextWindow\\\": 200000,\\n            \\\"cost\\\": {\\n              \\\"cacheRead\\\": 0,\\n              \\\"cacheWrite\\\": 0,\\n              \\\"input\\\": 0,\\n              \\\"output\\\": 0\\n            },\\n            \\\"id\\\": \\\"minimax/minimax-m2.7\\\",\\n            \\\"input\\\": [\\n              \\\"text\\\",\\n              \\\"image\\\"\\n            ],\\n            \\\"maxTokens\\\": 16384,\\n            \\\"name\\\": \\\"minimax/minimax-m2.7\\\",\\n            \\\"reasoning\\\": true\\n          }\\n        ]\\n      }\\n    }\\n  }\\n}\\n\",\n        \"openclaw_logs_excerpt\": \"## validate\\nreturncode: 0\\ntimed_out: False\\n\\n[stdout]\\n{\\\"valid\\\":true,\\\"path\\\":\\\"/work/openclaw.json\\\"}\\n\\n\\n[stderr]\\n\\n## run_agent\\nreturncode: 1\\ntimed_out: False\\n\\n[stdout]\\n\\n\\n[stderr]\\n[diagnostic] lane task error: lane=main durationMs=3383 error=\\\"Error: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\\"\\n[diagnostic] lane task error: lane=session:agent:tapas:main durationMs=3391 error=\\\"Error: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\\"\\n[model-fallback/decision] model fallback decision: decision=candidate_failed requested=openrouter/minimax/minimax-m2.7 candidate=openrouter/minimax/minimax-m2.7 reason=auth next=none detail=No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\nFailoverError: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\n\\n\",\n        \"raw_session_trace_excerpt\": \"[diagnostic] lane task error: lane=main durationMs=3383 error=\\\"Error: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\\"\\n[diagnostic] lane task error: lane=session:agent:tapas:main durationMs=3391 error=\\\"Error: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\\"\\n[model-fallback/decision] model fallback decision: decision=candidate_failed requested=openrouter/minimax/minimax-m2.7 candidate=openrouter/minimax/minimax-m2.7 reason=auth next=none detail=No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\nFailoverError: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\n\",\n        \"workspace_diff_excerpt\": \"--- template/.openclaw/workspace-state.json\\n+++ workspace/.openclaw/workspace-state.json\\n@@ -0,0 +1,4 @@\\n+{\\n+  \\\"version\\\": 1,\\n+  \\\"setupCompletedAt\\\": \\\"2026-04-21T08:41:40.036Z\\\"\\n+}\\n--- template/HEARTBEAT.md\\n+++ workspace/HEARTBEAT.md\\n@@ -0,0 +1,7 @@\\n+# HEARTBEAT.md Template\\n+\\n+```markdown\\n+# Keep this file empty (or with only comments) to skip heartbeat API calls.\\n+\\n+# Add tasks below when you want the agent to check something periodically.\\n+```\\n--- template/IDENTITY.md\\n+++ workspace/IDENTITY.md\\n@@ -0,0 +1,4 @@\\n+# IDENTITY\\n+\\n+Benchmark-generated placeholder for OpenClaw workspace materialization.\\n+This file was missing from the reusable agent workspace template.\\n--- template/TOOLS.md\\n+++ workspace/TOOLS.md\\n@@ -0,0 +1,4 @@\\n+# TOOLS\\n+\\n+Benchmark-generated placeholder for OpenClaw workspace materialization.\\n+This file was missing from the reusable agent workspace template.\\n--- template/USER.md\\n+++ workspace/USER.md\\n@@ -0,0 +1,4 @@\\n+# USER\\n+\\n+Benchmark-generated placeholder for OpenClaw workspace materialization.\\n+This file was missing from the reusable agent workspace template.\\n\"\n      }\n    },\n    \"status\": \"failed\",\n    \"timing\": {\n      \"completed_at\": \"2026-04-21T08:41:54.115531Z\",\n      \"duration_seconds\": 21.9665,\n      \"queued_at\": \"2026-04-21T08:41:32.149014Z\",\n      \"started_at\": \"2026-04-21T08:41:32.149016Z\"\n    },\n    \"trace\": [\n      {\n        \"detail\": \"Docker-only execution using the run profile image.\",\n        \"event_type\": \"runner\",\n        \"metadata\": {\n          \"docker_cli\": \"docker\",\n          \"pinned_image\": \"ghcr.io/openclaw/openclaw:2026.4.15\"\n        },\n        \"name\": \"openclaw_executor_selected\",\n        \"sequence\": 0,\n        \"timestamp\": null\n      },\n      {\n        \"detail\": \"Materialized OpenClaw workspace template.\",\n        \"event_type\": \"runner\",\n        \"metadata\": {\n          \"placeholder_files\": [\n            \"IDENTITY.md\",\n            \"TOOLS.md\",\n            \"USER.md\"\n          ],\n          \"workspace_dir\": \"/tmp/pae-openclaw-6j6ewwa6/workspace\"\n        },\n        \"name\": \"workspace_materialized\",\n        \"sequence\": 1,\n        \"timestamp\": null\n      },\n      {\n        \"content\": \"Necesito que me ayudes a planificar la siguiente semana. Estas son mis\\nrestricciones y compromisos:\\n\\nCOMPROMISOS FIJOS:\\n- Lunes: standup Proyecto Atlas 10:30h (1h)\\n- Martes: reuni\\u00f3n con partner externo 16:00h (2h)\\n- Mi\\u00e9rcoles: dentista 11:00h (1.5h)\\n- Viernes: entrega informe mensual Proyecto Brisa (deadline 18:00h)\\n\\nTAREAS PENDIENTES (urgentes):\\n- Preparar one-pager Proyecto Brisa para la reuni\\u00f3n del martes (estimado: 4h)\\n- Revisar y corregir prototipo de la app de Proyecto Atlas (estimado: 6h, pedido para el mi\\u00e9rcoles por la tarde)\\n- Preparar la reuni\\u00f3n externa: investigar el background del interlocutor + ensayo (estimado: 3h)\\n- Escribir informe mensual Proyecto Brisa (estimado: 5h)\\n\\nRESTRICCIONES PERSONALES:\\n- No trabajar m\\u00e1s de 9h/d\\u00eda\\n- Necesito tener el lunes por la tarde libre (compromiso personal inamovible)\\n- El viernes antes de las 10:00h no puedo concentrarme (tengo el desayuno familiar semanal)\\n\",\n        \"event_type\": \"message\",\n        \"name\": null,\n        \"role\": \"user\",\n        \"sequence\": 2,\n        \"timestamp\": null\n      },\n      {\n        \"detail\": \"Host env forwarded into OpenClaw container (filtered: OpenRouter, providers, proxy/TLS).\",\n        \"event_type\": \"runner\",\n        \"metadata\": {\n          \"env_file\": \".pae-openclaw.docker.env\",\n          \"forwarded_var_count\": 3,\n          \"mode\": \"filtered\",\n          \"openrouter_api_key_set\": false\n        },\n        \"name\": \"openclaw_container_env\",\n        \"sequence\": 3,\n        \"timestamp\": null\n      },\n      {\n        \"detail\": \"Validated generated OpenClaw config.\",\n        \"event_type\": \"runner\",\n        \"metadata\": {\n          \"returncode\": 0\n        },\n        \"name\": \"config_validated\",\n        \"sequence\": 4,\n        \"timestamp\": null\n      },\n      {\n        \"detail\": \"Running OpenClaw local agent turn.\",\n        \"event_type\": \"runner\",\n        \"metadata\": {\n          \"agent_directory_id\": \"tapas\",\n          \"agent_id\": \"tapas\"\n        },\n        \"name\": \"agent_invoked\",\n        \"sequence\": 5,\n        \"timestamp\": null\n      },\n      {\n        \"content\": \"[diagnostic] lane task error: lane=main durationMs=3383 error=\\\"Error: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\\"\\n[diagnostic] lane task error: lane=session:agent:tapas:main durationMs=3391 error=\\\"Error: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\\"\\n[model-fallback/decision] model fallback decision: decision=candidate_failed requested=openrouter/minimax/minimax-m2.7 candidate=openrouter/minimax/minimax-m2.7 reason=auth next=none detail=No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\\nFailoverError: No API key found for provider \\\"openrouter\\\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\",\n        \"event_type\": \"final_output\",\n        \"sequence\": 6,\n        \"timestamp\": null\n      }\n    ],\n    \"usage\": {\n      \"cost_usd\": null,\n      \"normalized\": {\n        \"cache_write_tokens\": null,\n        \"cached_input_tokens\": null,\n        \"input_tokens\": null,\n        \"output_tokens\": null,\n        \"reasoning_tokens\": null,\n        \"total_tokens\": null\n      },\n      \"raw_provider_usage\": null\n    }\n  }\n}",
+          "role": "user"
+        }
+      ],
+      "response_content": "{\"dimensions\":{\"task\":0,\"process\":0,\"autonomy\":0,\"closeness\":0,\"efficiency\":0,\"spark\":0},\"summary\":\"The run failed before producing any answer due to an OpenRouter authentication error, so no planning quality can be assessed from output.\",\"evidence\":{\"task\":[\"No final response was produced; the execution ended with an auth failure.\",\"Deterministic check only confirms a final response would be required, not that one existed.\"],\"process\":[\"The agent invocation returned non-zero exit code 1.\",\"Logs show: 'No API key found for provider \\\"openrouter\\\"' and a failover error.\"],\"autonomy\":[\"No agent reasoning or self-directed plan is present because execution stopped at startup/authentication.\",\"The trace shows model fallback decisions, but no successful continuation.\"],\"closeness\":[\"No substantive response to the Spanish planning request was generated.\",\"No evidence of addressing the user's constraints or commitments.\"],\"efficiency\":[\"The run consumed time but produced only error diagnostics, not a usable answer.\",\"Failure occurred before any task-solving output.\"],\"spark\":[\"No creative or distinctive solution content was generated.\",\"No style or insight can be evaluated from an execution failure.\"]}}",
+      "response_id": "gen-1776761298-JTD7h8fvnwIkbVV8ExqR",
+      "schema_version": 1,
+      "status": "success",
+      "usage": {
+        "cache_write_tokens": 0,
+        "cached_input_tokens": 0,
+        "cost": 0.004898,
+        "input_tokens": 5049,
+        "output_tokens": 247,
+        "reasoning_tokens": 0,
+        "total_tokens": 5296
+      },
+      "warnings": []
+    }
+  ],
+  "schema_version": 1,
+  "successful_iterations": 1,
+  "summary": "[repetition 0] The run failed before producing any answer due to an OpenRouter authentication error, so no planning quality can be assessed from output.",
+  "used_repetition_indices": [
+    0
+  ],
+  "warnings": []
+}

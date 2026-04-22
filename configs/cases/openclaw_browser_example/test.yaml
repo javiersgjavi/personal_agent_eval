@@ -7,14 +7,13 @@ input:
   messages:
     - role: user
       content: |
-        Usa el navegador o búsqueda web para encontrar una página oficial de Python sobre la
-        versión estable actual.
-        Crea un `report.md` en el workspace con:
-        - un título `# Browser Example`
-        - la URL oficial consultada
-        - una frase corta justificando por qué esa fuente es fiable
+        Use the browser or web search to find an official Python page about the current stable version.
+        Create a `report.md` in the workspace with:
+        - a title `# Browser Example`
+        - the official URL you consulted
+        - a short sentence justifying why that source is reliable
 
-        Luego responde en 2-3 líneas resumiendo lo encontrado.
+        Then reply in 2–3 lines summarizing what you found.
   context:
     openclaw:
       expected_artifact: report.md

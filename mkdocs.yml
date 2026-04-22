@@ -1,5 +1,5 @@
 site_name: personal_agent_eval
-site_description: Evaluation framework for LLM and agent-style systems
+site_description: Open evaluation framework for LLM and agent-based systems
 # site_url is injected by CI via MKDOCS_SITE_URL env var.
 # Override locally with: MKDOCS_SITE_URL=http://localhost:8000 uv run mkdocs serve
 site_url: !ENV [MKDOCS_SITE_URL, 'http://localhost:8000']
@@ -51,14 +51,22 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started: getting_started.md
-  - Concepts:
+  - Concepts: concepts.md
+  - How It Works:
       - Config Model: config_model.md
       - Configuration Reference: configuration.md
-      - Run Artifacts: run_artifacts.md
+      - CLI Reference: cli.md
+      - Fingerprints & Reuse: fingerprints.md
+  - Evaluation:
+      - Deterministic Checks: deterministic_checks.md
       - Judge Results: judge_results.md
       - Hybrid Evaluation: hybrid_evaluation.md
+  - Outputs:
+      - Run Artifacts: run_artifacts.md
       - Reporting: reporting.md
   - Examples:
-      - Minimal llm_probe: examples/minimal_llm_probe.md
+      - Runnable Examples: examples/runnable_examples.md
+      - llm_probe Walkthrough: examples/minimal_llm_probe.md
+      - OpenClaw Walkthrough: examples/minimal_openclaw.md
 
 docs_dir: docs

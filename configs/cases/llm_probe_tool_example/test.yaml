@@ -7,11 +7,11 @@ input:
   messages:
     - role: user
       content: |
-        Usa herramientas reales y sigue exactamente estos pasos:
-        1. Ejecuta `printf 'llm-probe-tool-example\n'` con `exec_shell`.
-        2. Escribe `/tmp/pae_llm_probe_tool_example.txt` con ese contenido usando `write_file`.
-        3. Lee el archivo usando `read_file`.
-        4. Responde en 2-4 líneas confirmando lo que has hecho y el contenido final.
+        Use real tools and follow these steps exactly:
+        1. Run `printf 'llm-probe-tool-example\n'` with `exec_shell`.
+        2. Write `/tmp/pae_llm_probe_tool_example.txt` with that content using `write_file`.
+        3. Read the file using `read_file`.
+        4. Reply in 2–4 lines confirming what you did and the final file content.
   context:
     llm_probe:
       tools:

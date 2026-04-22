@@ -1,327 +1,180 @@
 # Getting Started
 
-This page shows the minimal mental model for running V1 of `personal_agent_eval`.
+This guide walks you from a fresh checkout to a running benchmark in about five minutes.
 
-## Core Files
+---
 
-V1 uses four YAML file types:
+## Prerequisites
 
-1. `configs/cases/<case_id>/test.yaml`
-2. `configs/suites/<suite_id>.yaml`
-3. `configs/run_profiles/<profile_id>.yaml`
-4. `configs/evaluation_profiles/<profile_id>.yaml`
+- **Python 3.12+** with [uv](https://docs.astral.sh/uv/) installed
+- An **OpenRouter API key** (used for both the subject model and the judge)
+- **Docker** — only required for `openclaw` runs; not needed for `llm_probe`
 
-They answer four different questions:
+---
 
-- `test.yaml`: what is the case
-- `suite.yaml`: which cases and models should be grouped together
-- `run_profile.yaml`: how should execution run
-- `evaluation_profile.yaml`: how should results be judged and aggregated
-
-## Minimal Workflow
-
-The intended V1 flow is:
-
-1. define one or more cases
-2. define a suite that selects those cases
-3. define a run profile for execution behavior
-4. define an evaluation profile for judges and hybrid aggregation
-5. execute the workflow through `pae`
-
-V1 now exposes these orchestration commands:
-
-- `pae run`
-- `pae eval`
-- `pae run-eval`
-- `pae report`
-
-**OpenClaw:** cases with `runner.type: openclaw` use the same commands. Choose a run profile
-that defines `openclaw` (`agent_id`, `image`, `timeout_seconds`, optional `docker_cli`) and keep the
-reusable agent under `configs/agents/<agent_id>/` (`agent.yaml` plus `workspace/`). The workflow
-resolves the agent into run fingerprints, runs the OpenClaw harness **only via Docker** using that
-pinned image (`openclaw` CLI inside the container), and persists artifacts for reuse like
-`llm_probe` runs. The generated `openclaw.json` uses **OpenRouter-style** model refs
-(`openrouter/…` and `agents.defaults.model.primary`); set `OPENROUTER_API_KEY` (and any other
-required provider env) on the host before running.
-
-For **upstream OpenClaw** (install, gateway, channels, day-to-day config), see the official
-documentation: [docs.openclaw.ai](https://docs.openclaw.ai). This framework generates a **per-run**
-`openclaw.json` under a temporary directory; that is separate from a developer’s optional global
-config at `~/.openclaw/openclaw.json`. A minimal runnable layout lives under `configs/`; see
-[Minimal OpenClaw example](examples/minimal_openclaw.md).
-
-When working inside this repository, prefer running the CLI via `uv`:
+## Install
 
 ```bash
-uv run pae --help
+# clone the repo
+git clone <repo-url>
+cd benchmark-openclaw-llm
+
+# install all dependencies (including dev tools)
+uv sync --group dev
 ```
 
-If you installed `personal_agent_eval` into an active virtualenv (or globally), you can also run:
+---
+
+## Set your API key
+
+The CLI loads `.env` from the repository root automatically:
 
 ```bash
-pae --help
+# .env
+OPENROUTER_API_KEY=sk-or-v1-...
 ```
 
-The CLI accepts either explicit YAML paths or config ids for:
-
-- `--suite`
-- `--run-profile`
-- `--evaluation-profile`
-
-When an id is provided, the CLI resolves it automatically under the conventional workspace
-directories:
-
-- `configs/suites/<suite_id>.yaml`
-- `configs/run_profiles/<run_profile_id>.yaml`
-- `configs/evaluation_profiles/<evaluation_profile_id>.yaml`
-
-Minimal examples:
+Or export it directly:
 
 ```bash
-uv run pae run \
-  --suite configs/suites/example_suite.yaml \
-  --run-profile configs/run_profiles/default.yaml
-
-uv run pae eval \
-  --suite configs/suites/example_suite.yaml \
-  --run-profile configs/run_profiles/default.yaml \
-  --evaluation-profile configs/evaluation_profiles/default.yaml
-
-uv run pae run-eval \
-  --suite configs/suites/example_suite.yaml \
-  --run-profile configs/run_profiles/default.yaml \
-  --evaluation-profile configs/evaluation_profiles/default.yaml
-
-uv run pae report \
-  --suite configs/suites/example_suite.yaml \
-  --run-profile configs/run_profiles/default.yaml \
-  --evaluation-profile configs/evaluation_profiles/default.yaml
+export OPENROUTER_API_KEY=sk-or-v1-...
 ```
 
-Equivalent id-based commands:
+---
 
-```bash
-uv run pae run \
-  --suite example_suite \
-  --run-profile default
+## Run the llm_probe example
 
-uv run pae eval \
-  --suite example_suite \
-  --run-profile default \
-  --evaluation-profile default
-
-uv run pae run-eval \
-  --suite example_suite \
-  --run-profile default \
-  --evaluation-profile default
-
-uv run pae report \
-  --suite example_suite \
-  --run-profile default \
-  --evaluation-profile default
-```
-
-The CLI now renders human-readable reporting by default and can also emit structured JSON
-with `--output json`.
-
-## Runnable Example Campaigns
-
-This repository ships two small campaigns that work as documentation and as real commands:
-
-- `llm_probe_examples`
-- `openclaw_examples`
-
-They both use:
-
-- run model: `minimax/minimax-m2.7`
-- judge model: `openai/gpt-5.4-mini`
-
-Commands:
+The repository ships a ready-to-run `llm_probe` campaign:
 
 ```bash
 uv run pae run-eval \
   --suite llm_probe_examples \
   --run-profile llm_probe_examples \
   --evaluation-profile judge_gpt54_mini
+```
 
+This single command:
+
+1. **Runs** two test cases against `minimax/minimax-m2.7` via OpenRouter
+2. **Evaluates** each result with a GPT-5.4-mini judge
+3. **Reports** scores, latency, and cost to the terminal
+4. **Writes** a score-vs-cost chart PNG to `outputs/charts/`
+
+The terminal output looks like:
+
+```
+Suite:             llm_probe_examples
+Run profile:       llm_probe_examples
+Evaluation:        judge_gpt54_mini
+Run cost:          $0.0003
+Evaluation cost:   $0.0018
+Total cost:        $0.0021
+
+MODEL          CASE                          RUN   EVAL  SCORE  LATENCY_S  TOTAL_COST
+─────────────  ────────────────────────────  ────  ────  ─────  ─────────  ──────────
+minimax_m27    llm_probe_tool_example        exec  exec   8.50      12.3    $0.001
+minimax_m27    llm_probe_browser_example     exec  exec   7.00       9.1    $0.001
+```
+
+---
+
+## Understand the output files
+
+After the run, four kinds of files appear under `outputs/`:
+
+```text
+outputs/
+├── charts/
+│   └── judge_gpt54/
+│       └── score_cost.png              ← score vs cost bubble chart
+├── runs/
+│   └── suit_llm_probe_examples/
+│       └── run_profile_<fp6>/
+│           └── minimax_m27/
+│               └── llm_probe_tool_example/
+│                   ├── run_1.json                   ← raw run trace + token usage
+│                   └── run_1.fingerprint_input.json ← what was hashed
+└── evaluations/
+    └── suit_llm_probe_examples/
+        └── evaluation_profile_<fp6>/
+            └── eval_profile_judge_gpt54_<fp6>/
+                └── minimax_m27/
+                    └── llm_probe_tool_example/
+                        ├── evaluation_result_summary_1.md  ← start here
+                        ├── judge_1.prompt.debug.md         ← exact prompt shown to the judge
+                        └── raw_outputs/
+                            ├── final_result_1.json         ← hybrid score breakdown
+                            ├── judge_1.json                ← raw judge response
+                            └── judge_1.prompt.user.json    ← structured judge payload
+```
+
+**Start reading from `evaluation_result_summary_1.md`** — it is a human-readable Markdown file with the score, the judge's evidence, and the dimension breakdown.
+
+To see exactly what the judge saw, open `judge_1.prompt.debug.md`.
+
+---
+
+## Run the OpenClaw example
+
+OpenClaw evaluates a full autonomous agent. It requires Docker and a container image pull:
+
+```bash
 uv run pae run-eval \
   --suite openclaw_examples \
   --run-profile openclaw_examples \
   --evaluation-profile judge_gpt54_mini
 ```
 
-See [Runnable examples](examples/runnable_examples.md) for the exact case files and the generated
-output layout.
+The framework:
 
-Example:
+1. Materializes an ephemeral workspace from `configs/agents/support_agent/`
+2. Generates a per-run `openclaw.json` config file in that workspace
+3. Invokes `docker run ghcr.io/openclaw/openclaw:2026.4.15 openclaw ...`
+4. Captures the workspace diff, logs, and key outputs as evidence
+5. Evaluates them through the same deterministic + judge pipeline
+
+→ See [Minimal OpenClaw example](examples/minimal_openclaw.md) for the full layout.
+
+---
+
+## What happens on the second run?
+
+Run the same command again:
 
 ```bash
 uv run pae run-eval \
-  --suite configs/suites/example_suite.yaml \
-  --run-profile configs/run_profiles/default.yaml \
-  --evaluation-profile configs/evaluation_profiles/default.yaml \
-  --output json
+  --suite llm_probe_examples \
+  --run-profile llm_probe_examples \
+  --evaluation-profile judge_gpt54_mini
 ```
 
-For **`eval`**, **`run-eval`**, and **`report`**, the CLI also **writes a score-vs-cost chart PNG**
-by default under `outputs/charts/<evaluation_profile_id>/score_cost.png` (requires the optional
-`[charts]` extra). Use **`--no-chart`** to skip it, or **`--chart /path/to/file.png`** for a custom
-destination. Chart status lines go to **stderr** so JSON on stdout stays parseable.
+The `RUN` and `EVAL` columns now show `reuse` instead of `exec`. No tokens were spent. The framework compared the stored fingerprints with the current config and found exact matches.
 
-The reporting layer is a pure consumer of structured workflow results and can render:
+This is the fingerprint reuse system. → [Read how fingerprints work](fingerprints.md)
 
-- per-model per-case tables (including run vs evaluation cost split and run latency)
-- per-model summaries (including average latency and cost split)
-- JSON report payloads (including workflow-level cost totals)
-- basic ASCII charts
-- optional matplotlib bubble chart (score vs cost, bubble size ~ latency)
+---
 
-See [Reporting](reporting.md) for column names and structured fields.
+## Core mental model
 
-Execution artifacts are stored under suite-scoped campaign directories. For example, runs now
-land under paths like:
+Four YAML files define a complete benchmark campaign:
 
-```text
-outputs/runs/suit_<suite_id>/run_profile_<run_profile_fingerprint_short6>/<model_id>/<case_id>/run_1.json
-```
+| File | Answers |
+|---|---|
+| `configs/cases/<id>/test.yaml` | What to test |
+| `configs/suites/<id>.yaml` | Which cases and which models |
+| `configs/run_profiles/<id>.yaml` | How to execute (temperature, retries, repetitions…) |
+| `configs/evaluation_profiles/<id>.yaml` | How to judge and aggregate scores |
 
-If `execution_policy.run_repetitions` is greater than `1`, the workflow stores `run_1.json`,
-`run_2.json`, and so on in that same case directory and then aggregates those repetitions back
-into one case-level workflow result in the CLI/reporting layer.
+You can mix and match: the same case can appear in multiple suites, the same suite can be evaluated with different judge profiles, and the same run profile can be reused across suites.
 
-## Minimal Repository Shape
+→ [Config model](config_model.md) — visual diagram of how they fit together
 
-```text
-configs/
-  cases/
-    example_case/
-      test.yaml
-  suites/
-    example_suite.yaml
-  run_profiles/
-    default.yaml
-  evaluation_profiles/
-    default.yaml
-```
+---
 
-## Minimal Output Mental Model
+## Next steps
 
-One run produces a canonical run artifact:
-
-```json
-{
-  "run_id": "run_001",
-  "case_id": "example_case",
-  "runner_type": "llm_probe",
-  "status": "success"
-}
-```
-
-Deterministic evaluation produces structured check results:
-
-```json
-{
-  "case_id": "example_case",
-  "run_id": "run_001",
-  "summary": {
-    "passed_checks": 2,
-    "failed_checks": 0
-  }
-}
-```
-
-Judge orchestration produces per-iteration and aggregated judge outputs:
-
-```json
-{
-  "judge_name": "primary_judge",
-  "configured_repetitions": 3,
-  "successful_iterations": 3,
-  "aggregation_method": "median"
-}
-```
-
-Hybrid aggregation produces the final evaluation result:
-
-```json
-{
-  "case_id": "example_case",
-  "run_id": "run_001",
-  "deterministic_dimensions": {
-    "task": 10.0,
-    "process": 10.0
-  },
-  "judge_dimensions": {
-    "task": 8.0,
-    "process": 7.0,
-    "autonomy": 7.5,
-    "closeness": 6.5,
-    "efficiency": 6.0,
-    "spark": 6.0
-  },
-  "judge_overall": {
-    "score": 7.13,
-    "evidence": ["Meets hard constraints", "Clear and actionable plan"]
-  },
-  "final_dimensions": {
-    "task": 8.0,
-    "process": 7.0,
-    "autonomy": 7.5,
-    "closeness": 6.5,
-    "efficiency": 6.0,
-    "spark": 6.0
-  },
-  "final_score": 7.13
-}
-```
-
-CLI orchestration already produces per-`model_id` and per-`case_id` workflow results, and the
-CLI can present them either as terminal reporting or as structured JSON.
-
-## Important V1 Rules
-
-- `llm_probe` is the implemented runtime target
-- automated tests should stay mocked wherever possible
-- OpenRouter may be used for tiny, deliberate smoke tests only
-- judge output and deterministic output stay separate from the final hybrid result
-- the judge is the default prevailing source unless aggregation config says otherwise
-
-## Optional Real OpenRouter Smoke Test
-
-The repository includes one real OpenRouter smoke test for the full `run-eval` path. It
-covers:
-
-- real `llm_probe` execution against OpenRouter
-- real judge execution against OpenRouter
-- final hybrid aggregation and persisted artifacts
-
-It is gated so normal local runs and CI do not spend tokens by accident.
-
-Required environment variables:
-
-- `OPENROUTER_API_KEY`: real OpenRouter API key
-- `PERSONAL_AGENT_EVAL_RUN_OPENROUTER_E2E=1`: explicit opt-in switch
-
-Optional environment variable:
-
-- `PERSONAL_AGENT_EVAL_OPENROUTER_E2E_RUN_MODEL`: override the run model
-- `PERSONAL_AGENT_EVAL_OPENROUTER_E2E_JUDGE_MODEL`: override the judge model
-
-If those optional overrides are omitted, both default to `openai/gpt-4o-mini`.
-
-Example:
-
-```bash
-PERSONAL_AGENT_EVAL_RUN_OPENROUTER_E2E=1 \
-OPENROUTER_API_KEY=... \
-uv run pytest tests/test_openrouter_e2e.py -m openrouter_e2e
-```
-
-## Next Reading
-
-- [Config Model](config_model.md) — how the four YAML types relate and where artifacts land
-- [Configuration](configuration.md)
-- [Judge results](judge_results.md)
-- [Hybrid evaluation](hybrid_evaluation.md)
-- [Reporting](reporting.md)
-- [Minimal llm_probe example](examples/minimal_llm_probe.md)
+- [Concepts](concepts.md) — scoring dimensions, how hybrid aggregation works
+- [Configuration reference](configuration.md) — complete YAML field reference
+- [CLI reference](cli.md) — all `pae` commands and flags
+- [Fingerprints & reuse](fingerprints.md) — how to force a re-run, what changes a fingerprint
+- [Runnable examples](examples/runnable_examples.md) — walk through the shipped configs

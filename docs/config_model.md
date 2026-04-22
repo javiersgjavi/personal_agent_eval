@@ -1,8 +1,6 @@
 # Config Model
 
-`personal_agent_eval` is driven by four YAML configuration types plus a reusable
-OpenClaw agent directory. Each one answers a different question, and together they
-define a complete benchmark **campaign**.
+`personal_agent_eval` is driven by five YAML configuration surfaces. Each one answers a different question, and together they define a complete benchmark **campaign**.
 
 | Config type | File path | Answers |
 |---|---|---|
@@ -10,30 +8,29 @@ define a complete benchmark **campaign**.
 | Suite | `configs/suites/<suite_id>.yaml` | _Which_ cases and models |
 | Run profile | `configs/run_profiles/<profile_id>.yaml` | _How_ to execute |
 | Evaluation profile | `configs/evaluation_profiles/<profile_id>.yaml` | _How_ to judge |
-| OpenClaw agent | `configs/agents/<agent_id>/agent.yaml` + `workspace/` | _Which reusable OpenClaw workspace_ |
+| OpenClaw agent | `configs/agents/<agent_id>/agent.yaml` + `workspace/` | _Which_ reusable agent workspace |
 
 ---
 
-## Relationships
+## How the four core configs relate
 
 ```mermaid
 flowchart TD
-    T["<b>test.yaml</b><br/>runner · input · expectations · checks"]
+    T["<b>test.yaml</b><br/>runner · input · expectations · checks · rubric"]
     S["<b>suite.yaml</b><br/>cases × models"]
     R["<b>run_profile.yaml</b><br/>temperature · max_tokens · repetitions"]
     E["<b>evaluation_profile.yaml</b><br/>judge · aggregation · dimensions"]
     W["<b>pae run-eval</b><br/>--suite · --run-profile · --evaluation-profile"]
     A["<b>RunArtifact</b><br/>per model × case × run_N"]
-    F["<b>FinalResult</b><br/>deterministic + judge score"]
+    F["<b>FinalEvaluationResult</b><br/>deterministic + judge score"]
     P["<b>Report</b><br/>pae report"]
 
     T -->|"selected by id / tag"| S
     S -->|"--suite"| W
     R -->|"--run-profile"| W
     E -->|"--evaluation-profile"| W
-    W -->|"llm_probe runner"| A
-    A --> F
-    W -->|"judge + aggregation"| F
+    W -->|"llm_probe or openclaw runner"| A
+    A -->|"deterministic + judge"| F
     F --> P
 
     classDef cfg   fill:#E8EAF6,stroke:#5C6BC0,color:#1A237E
@@ -47,164 +44,256 @@ flowchart TD
 
 ---
 
+## OpenClaw execution flow
+
+When a case uses `runner.type: openclaw`, two extra config surfaces come into play: the agent definition and the `openclaw:` block in the run profile.
+
+```mermaid
+flowchart TD
+    TC["<b>test.yaml</b><br/>runner.type: openclaw<br/>input · expectations · checks"]
+    RP["<b>run_profile.yaml</b><br/>openclaw.agent_id<br/>openclaw.image · timeout"]
+    AC["<b>configs/agents/&lt;agent_id&gt;/</b><br/>agent.yaml<br/>workspace/ template"]
+    FP["<b>Fingerprint check</b><br/>SHA-256 of all inputs<br/>+ agent + workspace"]
+    WS["<b>Ephemeral workspace</b><br/>temp dir · workspace copied<br/>openclaw.json generated"]
+    DC["<b>docker run &lt;image&gt;</b><br/>openclaw CLI inside container<br/>OPENROUTER_API_KEY forwarded"]
+    RA["<b>RunArtifact</b><br/>runner_metadata.openclaw<br/>workspace diff · logs · key outputs"]
+    DE["<b>Deterministic checks</b><br/>openclaw_workspace_file_present<br/>file_contains · etc."]
+    JU["<b>Judge</b><br/>compact subject view<br/>task + response + evidence"]
+    FE["<b>FinalEvaluationResult</b><br/>hybrid score 0–10"]
+
+    TC --> FP
+    RP --> FP
+    AC --> FP
+    FP -->|"cache miss → execute"| WS
+    WS -->|"docker run"| DC
+    DC -->|"captures"| RA
+    RA --> DE
+    RA --> JU
+    DE --> FE
+    JU --> FE
+
+    classDef cfg   fill:#E8EAF6,stroke:#5C6BC0,color:#1A237E
+    classDef orch  fill:#DCE3FF,stroke:#5C6BC0,color:#1A237E
+    classDef art   fill:#E8F5E9,stroke:#43A047,color:#1B5E20
+    classDef exec  fill:#FFF8E1,stroke:#F9A825,color:#5D4037
+
+    class TC,RP,AC cfg
+    class FP,WS,DC exec
+    class RA,DE,JU,FE art
+```
+
+---
+
+## llm_probe execution flow
+
+For `runner.type: llm_probe`, the runner calls OpenRouter directly and manages a tool-use loop until the model produces a final response or reaches `max_turns`.
+
+```mermaid
+flowchart TD
+    TC["<b>test.yaml</b><br/>runner.type: llm_probe<br/>input.messages<br/>input.context.llm_probe.tools"]
+    RP["<b>run_profile.yaml</b><br/>temperature · max_tokens<br/>max_turns · retries"]
+    OR["<b>OpenRouter API</b><br/>model call with tool definitions"]
+    TL["<b>Tool execution loop</b><br/>exec_shell · read_file · write_file<br/>web_search · …"]
+    RA["<b>RunArtifact</b><br/>message trace · tool calls<br/>token usage · final output"]
+    DE["<b>Deterministic checks</b><br/>final_response_present<br/>file_contains · tool_call_count · etc."]
+    JU["<b>Judge</b><br/>compact subject view<br/>task + response + tool activity"]
+    FE["<b>FinalEvaluationResult</b><br/>hybrid score 0–10"]
+
+    TC --> OR
+    RP --> OR
+    OR -->|"tool_call → tool_result loop"| TL
+    TL --> OR
+    OR -->|"finish"| RA
+    RA --> DE
+    RA --> JU
+    DE --> FE
+    JU --> FE
+
+    classDef cfg   fill:#E8EAF6,stroke:#5C6BC0,color:#1A237E
+    classDef exec  fill:#FFF8E1,stroke:#F9A825,color:#5D4037
+    classDef art   fill:#E8F5E9,stroke:#43A047,color:#1B5E20
+
+    class TC,RP cfg
+    class OR,TL exec
+    class RA,DE,JU,FE art
+```
+
+---
+
 ## What each config controls
 
 ### `test.yaml` — the atomic test case
 
-Defines one scenario in full isolation. The same case can be included in
-multiple suites and run against multiple models without modification.
+Defines one scenario in full isolation. The same case can be included in multiple suites and run against multiple models without modification.
 
 ```yaml
 schema_version: 1
-case_id: h1_tool_chain
-title: "H1 – Tool chain basic"
+case_id: llm_probe_tool_example
+title: "llm_probe tool example"
 runner:
-  type: llm_probe
+  type: llm_probe                 # or: openclaw
 input:
   messages:
     - role: user
-      content: "Perform the task…"
+      content: |
+        Use real tools to create a file...
+  context:
+    llm_probe:
+      tools:
+        - exec_shell
+        - write_file
+        - read_file
 expectations:
   hard_expectations:
-    - text: "The response must include a confirmation"
+    - text: Uses tools to obtain the content instead of inventing it.
   soft_expectations:
-    - text: "The response is concise"
-      weight: 0.5
+    - text: Response is brief and clearly confirms the final file content.
+rubric:
+  version: 1
+  scale:
+    min: 0
+    max: 10
+    anchors:
+      "10": All required steps completed; artifacts present; confirmation clear.
+      "0": No attempt or irrelevant output.
+  criteria:
+    - name: Tool-grounded correctness
+      what_good_looks_like: Uses required tools and reports observed results.
+      what_bad_looks_like: Invents results or skips required steps.
 deterministic_checks:
   - check_id: final-response-present
-    dimensions:
-      - process
+    dimensions: [task]
     declarative:
       kind: final_response_present
+  - check_id: file-written
+    dimensions: [process]
+    declarative:
+      kind: file_contains
+      path: /tmp/expected_output.txt
+      text: expected-marker
+tags:
+  - example
+  - llm_probe
 ```
-
-Key fields: `runner`, `input.messages`, `input.attachments`,
-`expectations.hard_expectations` / `expectations.soft_expectations`, `deterministic_checks`, `tags`.
-
-For OpenClaw, the case schema stays the same. Use `runner.type: openclaw`, keep the task in
-`input.messages`, and place any runner-specific hints under `input.context.openclaw`.
 
 ---
 
 ### `suite.yaml` — the campaign scope
 
-Lists which cases and which models form the benchmark. A suite is **stable**:
-adding new cases or repetitions expands the existing campaign directory
-instead of creating a new one, as long as the `run_profile` is unchanged.
+Lists which cases and which models form the benchmark.
 
 ```yaml
 schema_version: 1
-suite_id: legacy_h1_h4_x7_h8
-title: "Legacy evaluation suite"
-cases:
-  - h1_tool_chain
-  - h4_email_constraints
-  - x7_multiconstraint_planning
-  - h8_complex_task
+suite_id: llm_probe_examples
+title: "llm_probe runnable examples"
 models:
-  - model_id: minimax/minimax-01
-  - model_id: openai/gpt-4o-mini
+  - model_id: minimax_m27
+    requested_model: minimax/minimax-m2.7
+    label: minimax/minimax-m2.7
+case_selection:
+  include_case_ids:
+    - llm_probe_tool_example
+    - llm_probe_browser_example
 ```
 
-Key fields: `suite_id`, `cases`, `models`.
+You can select cases by tag instead of (or in addition to) explicit IDs:
+
+```yaml
+case_selection:
+  include_tags: [example]
+  exclude_tags: [slow]
+```
 
 ---
 
 ### `run_profile.yaml` — execution policy
 
-Controls every aspect of how the runner calls the model. A semantic SHA-256
-fingerprint of the effective execution identity is used to scope campaign
-directories. Changing a field that affects reuse semantics produces a new
-fingerprint and a new directory.
+Controls how the runner calls the model. A fingerprint of the effective execution settings scopes campaign directories.
 
 ```yaml
 schema_version: 1
-run_profile_id: openrouter_minimax_smoke
+run_profile_id: llm_probe_examples
 runner_defaults:
-  max_tokens: 4096
-  temperature: 0.2
+  temperature: 0
+  timeout_seconds: 90
+  max_tokens: 768
+  max_turns: 6
+  retries: 0
 execution_policy:
-  run_repetitions: 2        # stores run_1.json, run_2.json …
-  timeout_seconds: 120
-  max_retries: 2
+  max_concurrency: 1
+  run_repetitions: 1
+  fail_fast: true
+  stop_on_runner_error: true
 ```
 
-Key fields: `runner_defaults`, `model_overrides`, `execution_policy.run_repetitions`.
-
-For OpenClaw, `run_profile.yaml` also owns the dedicated runtime block:
+For OpenClaw, add the `openclaw:` block:
 
 ```yaml
+schema_version: 1
+run_profile_id: openclaw_examples
 openclaw:
   agent_id: support_agent
   image: ghcr.io/openclaw/openclaw:2026.4.15
   timeout_seconds: 300
+execution_policy:
+  max_concurrency: 1
+  run_repetitions: 1
+  fail_fast: true
 ```
-
-That block selects the reusable agent directory and runtime image instead of relying on
-free-form runner defaults.
-
----
-
-### `configs/agents/<agent_id>/agent.yaml` — reusable OpenClaw agent
-
-This is the fifth config surface introduced for OpenClaw. It is directory-based rather than
-single-file based:
-
-```text
-configs/agents/support_agent/
-  agent.yaml
-  workspace/
-    AGENTS.md
-    SOUL.md
-```
-
-`agent.yaml` stores benchmark-owned OpenClaw fragments (`identity`, `agents_defaults`,
-`agent`, `model_defaults`) and `workspace/` stores the reusable workspace template that will
-be copied into each ephemeral run.
 
 ---
 
 ### `evaluation_profile.yaml` — judge policy
 
-Defines one or more LLM judges, their prompts, the number of judge
-repetitions, and how scores are aggregated into a final verdict.
+Defines one or more LLM judges and how their scores are aggregated.
 
 ```yaml
 schema_version: 1
 evaluation_profile_id: judge_gpt54
-judge_system_prompt_path: prompts/judge_system_default.md
 judges:
-  - name: primary_judge
-    model_id: openai/gpt-5.4
-    repetitions: 3
-    aggregation: median
-dimensions:
-  task:
-    policy: weighted
-    judge_weight: 0.6
-    deterministic_weight: 0.4
-  autonomy:
-    policy: judge_only
+  - judge_id: gpt54_judge
+    type: llm_probe
+    model: openai/gpt-5.4-mini
+judge_runs:
+  - judge_run_id: gpt54_single
+    judge_id: gpt54_judge
+    repetitions: 1
+aggregation:
+  method: median
+final_aggregation:
+  default_policy: judge_only
+  dimensions:
+    process:
+      policy: weighted
+      judge_weight: 0.9
+      deterministic_weight: 0.1
+security_policy:
+  allow_local_python_hooks: false
+  redact_secrets: true
 ```
 
-Key fields: `judges`, `dimensions`, `security_policy`, `anchors`.
+!!! note "final_score"
+    `final_score` is the judge's holistic `overall.score` (0–10). The per-dimension scores are for diagnosis. They do not determine the top-level score in V1.
 
-!!! note "Overall score"
-    In V1, the top-level `final_score` comes directly from the judge's overall assessment
-    (`judge_overall.score`). Per-dimension policies remain useful for observability, but do not
-    determine `final_score`.
+---
+
+### `configs/agents/<agent_id>/` — reusable OpenClaw agent
+
+```text
+configs/agents/support_agent/
+  agent.yaml        ← agent identity, model defaults, sandbox settings
+  workspace/
+    AGENTS.md       ← workspace template (copied to every run)
+    SOUL.md
+```
 
 ---
 
 ## Campaign storage layout
 
-Artifacts are stored under a deterministic path derived from the suite and
-profile fingerprints. This allows incremental execution — only new
-model/case/repetition combinations are computed.
-
 ```text
 outputs/
-├── charts/                              ← optional; CLI score/cost PNG (eval / run-eval / report)
+├── charts/
 │   └── {evaluation_profile_id}/
 │       └── score_cost.png
 ├── runs/
@@ -212,51 +301,21 @@ outputs/
 │       └── run_profile_{fp6}/
 │           └── {model_id}/
 │               └── {case_id}/
-│                   ├── manifest.json
 │                   ├── run_1.json
-│                   ├── run_1.artifacts/   ← copied refs (e.g. OpenClaw evidence)
 │                   ├── run_1.fingerprint_input.json
-│                   └── run_2.json        ← when run_repetitions > 1
+│                   └── run_2.json          ← when run_repetitions > 1
 └── evaluations/
     └── suit_{suite_id}/
         └── evaluation_profile_{fp6}/
             └── eval_profile_{eval_id}_{fp6}/
                 └── {model_id}/
                     └── {case_id}/
-                        └── final_result_N.json
+                        ├── evaluation_result_summary_1.md
+                        ├── judge_1.prompt.debug.md
+                        └── raw_outputs/
+                            ├── final_result_1.json
+                            ├── judge_1.json
+                            └── judge_1.prompt.user.json
 ```
 
-The chart is written by default when the optional `charts` dependency is installed; use
-`--no-chart` to skip. See [Reporting](reporting.md).
-
-!!! note "Fingerprints"
-    `fp6` is the first 6 characters of the SHA-256 fingerprint of the
-    profile's content. Modifying any execution or evaluation parameter
-    produces a different fingerprint, creating a separate campaign directory
-    and preserving the previous results.
-
-!!! tip "Expanding a campaign"
-    Adding a new case to a suite or increasing `run_repetitions` does **not**
-    change the run profile fingerprint. The workflow detects which
-    model/case/repetition combinations are missing and only runs those.
-
----
-
-## CLI commands
-
-```bash
-# execute runs only
-pae run --suite <id> --run-profile <id>
-
-# evaluate existing runs
-pae eval --suite <id> --run-profile <id> --evaluation-profile <id>
-
-# run and evaluate in one shot
-pae run-eval --suite <id> --run-profile <id> --evaluation-profile <id>
-
-# render report from stored artifacts
-pae report --suite <id> --run-profile <id> --evaluation-profile <id>
-```
-
-All flags accept either the plain config ID (auto-resolved from the
-conventional directory) or an explicit YAML path.
+`fp6` is the first 6 characters of the SHA-256 fingerprint. → [Fingerprints & reuse](fingerprints.md)

@@ -1,0 +1,31 @@
+{
+  "fingerprint": "d04861a7b3c5b299ab276f83ed9d7dc4efb656ad291b26eb042297b061769815",
+  "fingerprint_version": 1,
+  "hash_algorithm": "sha256",
+  "kind": "run",
+  "payload": {
+    "attachments": [],
+    "case_metadata": {},
+    "input_context": {
+      "openclaw": {
+        "expected_artifact": "report.md"
+      }
+    },
+    "input_messages": [
+      {
+        "content": "Produce report.md in the workspace.",
+        "metadata": {},
+        "name": null,
+        "role": "user"
+      }
+    ],
+    "requested_model": "openai/gpt-4o-mini",
+    "runner_config": {
+      "agent_fingerprint": "e7cbec3fe8606fd1c00f02cf5db8ab945e0fd2ecca3900c97586f00d170547b3",
+      "docker_cli": "docker",
+      "image": "ghcr.io/openclaw/openclaw:2026.4.15",
+      "openclaw_primary_model_ref": "openrouter/openai/gpt-4o-mini"
+    },
+    "runner_type": "openclaw"
+  }
+}

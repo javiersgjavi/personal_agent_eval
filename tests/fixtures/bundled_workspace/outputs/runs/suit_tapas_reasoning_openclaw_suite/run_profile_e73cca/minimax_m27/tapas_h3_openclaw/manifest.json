@@ -1,0 +1,16 @@
+{
+  "case_id": "tapas_h3_openclaw",
+  "iterations": [
+    {
+      "repetition_index": 0,
+      "run_fingerprint": "2771955b5831171fe0b1a2500b7a57af535915f6ef8c0dce0ce837fbb96e930e"
+    }
+  ],
+  "model_id": "minimax_m27",
+  "openclaw_agent_id": "tapas",
+  "run_profile_fingerprint": "e73cca94223b1c74598828fa1c6481a8f8419bca3a56aad935694ab3a5631354",
+  "run_profile_id": "openclaw_tapas",
+  "runner_type": "openclaw",
+  "schema_version": 1,
+  "suite_id": "tapas_reasoning_openclaw_suite"
+}

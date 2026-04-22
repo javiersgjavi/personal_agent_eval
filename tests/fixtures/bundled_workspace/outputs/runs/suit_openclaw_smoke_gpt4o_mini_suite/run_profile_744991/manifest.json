@@ -1,0 +1,8 @@
+{
+  "run_profile_fingerprint": "744991bb37b6c0efa9b24aeaf6db0acf660a5be2ae73c61456c39b6a20350d56",
+  "run_profile_id": "openclaw_smoke",
+  "run_repetitions": 1,
+  "runner_type": "openclaw",
+  "schema_version": 1,
+  "suite_id": "openclaw_smoke_gpt4o_mini_suite"
+}

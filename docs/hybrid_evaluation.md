@@ -1,164 +1,162 @@
 # Hybrid Evaluation
 
-Hybrid evaluation combines:
+Hybrid evaluation combines the **deterministic layer** (stable, pass/fail, free) with the **judge layer** (LLM-based, nuanced, 0–10) into a single `FinalEvaluationResult`.
 
-- deterministic evaluation outputs
-- aggregated judge outputs
+The combination is configurable per dimension: you can let the judge drive everything, rely only on deterministic checks, or blend both with explicit weights.
 
-It produces a final evaluation artifact without re-running the model or the judge.
+---
 
-## Why A Separate Layer Exists
-
-The framework keeps deterministic scoring and judge scoring separate because they answer
-different questions:
-
-- deterministic checks are stable and auditable
-- judge outputs capture semantic quality that is hard to express as assertions
-
-The final hybrid layer makes the policy explicit instead of hiding it.
-
-## Final Result Shape
-
-V1 note: the final score is now taken directly from the judge's **overall** assessment
-(`overall.score`). Per-dimension values are preserved for observability and debugging.
+## The final evaluation result
 
 ```json
 {
-  "case_id": "example_case",
+  "schema_version": 1,
+  "case_id": "llm_probe_tool_example",
   "run_id": "run_001",
   "deterministic_dimensions": {
-    "task": 0.0,
-    "process": 10.0,
-    "autonomy": null,
-    "closeness": null,
-    "efficiency": null,
-    "spark": null
+    "task": 10.0,
+    "process": 10.0
   },
   "judge_dimensions": {
-    "task": 8.0,
-    "process": 6.0,
-    "autonomy": 7.5,
-    "closeness": 6.5,
-    "efficiency": 5.0,
+    "task": 8.5,
+    "process": 9.0,
+    "autonomy": 8.0,
+    "closeness": 8.5,
+    "efficiency": 7.5,
     "spark": 6.0
   },
   "judge_overall": {
-    "score": 6.8,
-    "evidence": ["Violates Monday PM constraint", "Identifies Atlas conflict clearly"]
+    "score": 8.5,
+    "evidence": [
+      "Used all required tools correctly",
+      "File content matches the expected marker",
+      "Confirmation was brief and accurate"
+    ]
   },
   "final_dimensions": {
-    "task": 8.0,
-    "process": 6.0,
-    "autonomy": 7.5,
-    "closeness": 6.5,
-    "efficiency": 5.0,
+    "task": 8.5,
+    "process": 9.0,
+    "autonomy": 8.0,
+    "closeness": 8.5,
+    "efficiency": 7.5,
     "spark": 6.0
   },
-  "final_score": 6.8,
-  "security": {
-    "verdict": "not_evaluated",
-    "warnings": []
+  "dimension_resolutions": {
+    "task": {
+      "policy": "judge_only",
+      "source_used": "judge",
+      "judge_score": 8.5,
+      "deterministic_score": 10.0,
+      "final_score": 8.5
+    },
+    "process": {
+      "policy": "weighted",
+      "source_used": "weighted",
+      "judge_score": 9.0,
+      "deterministic_score": 10.0,
+      "final_score": 9.1
+    }
   },
-  "warnings": []
+  "final_score": 8.5,
+  "summary": {
+    "deterministic_passed_checks": 2,
+    "deterministic_failed_checks": 0,
+    "deterministic_error_checks": 0,
+    "judge_successful_iterations": 1,
+    "judge_failed_iterations": 0
+  }
 }
 ```
 
-## Per-Dimension Policy
+---
 
-V1 preserves per-dimension resolution metadata and deterministic scoring inputs, but the
-**final score is not computed via a weighted blend of dimensions**.
+## final_score
 
-The per-dimension policies below are kept for compatibility and future use:
+`final_score` is **the judge's overall score** (`judge_overall.score`). It is the judge's holistic verdict after reviewing all evidence. It is not derived from the per-dimension scores.
 
-- `judge_only`
-- `deterministic_only`
-- `weighted`
+The per-dimension `final_dimensions` scores exist for diagnostics: to understand where a model is strong or weak. They do not determine the top-level score in V1.
 
-The default is `judge_only`.
+---
 
-That means the judge remains the prevailing source unless a dimension explicitly overrides the
-policy.
+## Dimension policies
 
-## Example Aggregation Config
-
-Note: this config affects the per-dimension `final_dimensions` and `dimension_resolutions`, but
-does not change how `final_score` is computed in V1 (it comes from `judge_overall.score`).
+Each dimension can be configured independently in the evaluation profile:
 
 ```yaml
 final_aggregation:
-  default_policy: judge_only
+  default_policy: judge_only      # applied to all dimensions not listed below
   dimensions:
-    task:
-      policy: weighted
-      judge_weight: 0.7
-      deterministic_weight: 0.3
     process:
       policy: weighted
-      judge_weight: 0.6
-      deterministic_weight: 0.4
-  final_score_weights:
-    task: 0.3
-    process: 0.15
-    autonomy: 0.2
-    closeness: 0.1
-    efficiency: 0.15
-    spark: 0.1
+      judge_weight: 0.9
+      deterministic_weight: 0.1
 ```
 
-## Fallback Rule
+### `judge_only` (default)
 
-If deterministic scoring is missing for a dimension, hybrid aggregation falls back to the
-judge and records a warning.
+The final dimension score is the judge's score for that dimension. The deterministic result is recorded for reference but does not affect the score.
 
-Example:
+### `deterministic_only`
 
-```json
-{
-  "dimension": "task",
-  "policy": "weighted",
-  "judge_score": 7.0,
-  "deterministic_score": null,
-  "final_score": 7.0,
-  "warning": "Deterministic score missing for 'task'; judge score used as fallback."
-}
+The final dimension score is derived from the deterministic checks mapped to that dimension. The judge score is ignored.
+
+Deterministic checks produce a 0 or 10 per check. If multiple checks are mapped to the same dimension, the score is the proportion of passed checks, scaled to 0–10.
+
+### `weighted`
+
+```
+final = (judge_score × judge_weight) + (deterministic_score × deterministic_weight)
 ```
 
-## Resolution Metadata
+Weights do not need to sum to 1.0; they are normalised internally. Useful when you want deterministic evidence to nudge the judge without overriding it.
 
-The final result also stores per-dimension resolution metadata so users can inspect what
-happened during aggregation.
+---
 
-Example:
+## Hard expectation failure
 
-```json
-{
-  "task": {
-    "policy": "weighted",
-    "source_used": "weighted",
-    "judge_score": 8.0,
-    "deterministic_score": 0.0,
-    "final_score": 5.6
-  }
-}
-```
+If a deterministic check that maps to `task` fails, the aggregator treats it as a signal that the task was not completed. Depending on the dimension policy, this can:
 
-## Security Block
+- reduce the `process` or `task` dimension score if `weighted` or `deterministic_only` is configured
+- appear as a warning in the final result for `judge_only` dimensions
 
-The final artifact keeps a separate security block:
+Hard expectations in `test.yaml` (`expectations.hard_expectations`) are presented to the judge as part of the evaluation target and influence the judge's own assessment, but they do not mechanically cap scores on their own.
 
-```json
-{
-  "security": {
-    "verdict": "passed",
-    "warnings": []
-  }
-}
-```
+---
 
-This is kept visible instead of being hidden inside the numerical score.
+## Aggregating repetitions
 
-## Related Reading
+When `run_repetitions > 1`, the workflow runs each case multiple times and stores a separate `RunArtifact` and `FinalEvaluationResult` per repetition. The CLI and report aggregate them:
 
-- [Configuration](configuration.md)
-- [Judge results](judge_results.md)
-- [Run artifacts](run_artifacts.md)
+- `final_score` → mean of available scores across repetitions
+- per-dimension scores → mean per dimension
+- token usage and cost → sum across repetitions
+- latency → mean across repetitions
+
+This gives a more reliable estimate of model behaviour at the cost of additional token spend.
+
+---
+
+## Inspecting the resolution
+
+The `dimension_resolutions` field in the final result records, for every dimension:
+
+- which policy was applied
+- what source was used (`judge`, `deterministic`, `weighted`, or `missing`)
+- the raw judge and deterministic scores before combination
+- the final score after combination
+
+This makes the aggregation fully auditable — you can always see exactly how each dimension score was derived.
+
+---
+
+## Cost-quality tradeoff
+
+Every `FinalEvaluationResult` is associated with a `UsageSummary` that records:
+
+- `run_cost_usd` — cost of the subject run (model tokens)
+- `evaluation_cost_usd` — cost of the judge calls
+- `total_cost_usd` — sum of both
+
+Use `pae report --output json` to get the structured breakdown, or look at the `TOTAL_COST` column in the terminal output. The optional score/cost PNG chart plots this relationship visually for all models in the campaign.
+
+→ [Reporting](reporting.md)

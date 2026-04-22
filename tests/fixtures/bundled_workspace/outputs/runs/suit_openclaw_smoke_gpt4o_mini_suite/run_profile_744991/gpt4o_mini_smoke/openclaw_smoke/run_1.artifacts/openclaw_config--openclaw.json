@@ -1,0 +1,28 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "fallbacks": [
+          "openrouter/openai/gpt-4o-mini"
+        ],
+        "primary": "openrouter/openai/gpt-4o-mini"
+      },
+      "models": {
+        "openrouter/openai/gpt-4o-mini": {
+          "alias": "benchmark-primary"
+        }
+      },
+      "sandbox": {
+        "mode": "off"
+      },
+      "workspace": "/work/workspace"
+    },
+    "list": [
+      {
+        "id": "support-agent",
+        "model": "openrouter/openai/gpt-4o-mini",
+        "systemPromptOverride": "You are a benchmark example agent."
+      }
+    ]
+  }
+}

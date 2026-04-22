@@ -7,13 +7,13 @@ input:
   messages:
     - role: user
       content: |
-        Usa herramientas reales para crear un archivo `report.md` en el workspace.
-        El archivo debe contener:
-        - un título `# Tool Example`
-        - una línea con la fecha actual obtenida por comando
-        - una línea literal `openclaw-tool-example`
+        Use real tools to create a file `report.md` in the workspace.
+        The file must contain:
+        - a title `# Tool Example`
+        - a line with the current date obtained via a command
+        - a literal line `openclaw-tool-example`
 
-        Al final, confirma brevemente que has creado el archivo.
+        At the end, briefly confirm that you created the file.
   context:
     openclaw:
       expected_artifact: report.md

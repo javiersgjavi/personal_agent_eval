@@ -1,0 +1,73 @@
+{
+  "fingerprint": "271919af2772f127bb2e4c06420924c7e8a2e965593c05f1eca337e284724678",
+  "fingerprint_version": 1,
+  "hash_algorithm": "sha256",
+  "kind": "evaluation",
+  "payload": {
+    "anchors": {
+      "enabled": false,
+      "references": []
+    },
+    "final_aggregation": {
+      "default_policy": "judge_only",
+      "dimensions": {
+        "autonomy": {
+          "policy": "judge_only"
+        },
+        "closeness": {
+          "policy": "judge_only"
+        },
+        "efficiency": {
+          "policy": "judge_only"
+        },
+        "process": {
+          "deterministic_weight": 0.1,
+          "judge_weight": 0.9,
+          "policy": "weighted"
+        },
+        "spark": {
+          "policy": "judge_only"
+        },
+        "task": {
+          "policy": "judge_only"
+        }
+      },
+      "final_score_weights": {
+        "autonomy": 0.2,
+        "closeness": 0.1,
+        "efficiency": 0.15,
+        "process": 0.15,
+        "spark": 0.1,
+        "task": 0.3
+      }
+    },
+    "judge_aggregation": {
+      "method": "median"
+    },
+    "judge_runs": [
+      {
+        "judge_id": "gpt54_judge",
+        "repetitions": 1,
+        "sample_size": null
+      }
+    ],
+    "judge_system_prompt": {
+      "sha256": "ec268f4ba14c84ef8e6b005af1ab463566298a461c55e2c90a3a253d04394828",
+      "source": "path:prompts/judge_system_default.md"
+    },
+    "judges": [
+      {
+        "judge_id": "gpt54_judge",
+        "settings": {
+          "model": "openai/gpt-5.4-mini"
+        },
+        "type": "llm_probe"
+      }
+    ],
+    "security_policy": {
+      "allow_local_python_hooks": false,
+      "network_access": "deny",
+      "redact_secrets": true
+    }
+  }
+}

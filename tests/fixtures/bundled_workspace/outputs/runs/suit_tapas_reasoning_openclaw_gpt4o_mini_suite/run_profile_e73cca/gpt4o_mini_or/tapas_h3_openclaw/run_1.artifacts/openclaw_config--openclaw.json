@@ -1,0 +1,33 @@
+{
+  "agents": {
+    "defaults": {
+      "bootstrapMaxChars": 9007199254740991,
+      "bootstrapTotalMaxChars": 9007199254740991,
+      "model": {
+        "fallbacks": [
+          "openrouter/openai/gpt-4o-mini"
+        ],
+        "primary": "openrouter/openai/gpt-4o-mini"
+      },
+      "models": {
+        "openrouter/openai/gpt-4o-mini": {
+          "alias": "benchmark-primary",
+          "params": {
+            "max_tokens": 16384
+          }
+        }
+      },
+      "sandbox": {
+        "mode": "off"
+      },
+      "workspace": "/work/workspace"
+    },
+    "list": [
+      {
+        "id": "tapas",
+        "model": "openrouter/openai/gpt-4o-mini",
+        "systemPromptOverride": "Eres Tapas. Sigue AGENTS.md, SOUL.md e IDENTITY.md del workspace; usa memory/ con criterio y mant\u00e9n un tono claro y respetuoso.\n"
+      }
+    ]
+  }
+}

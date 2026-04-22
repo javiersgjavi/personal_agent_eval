@@ -1,216 +1,174 @@
 # Judge Results
 
-Judge orchestration consumes an existing `RunArtifact` and produces a separate evaluation
-surface. It does not mutate the run artifact.
+The judge is an LLM that reads a compact, structured view of the run and produces a scored assessment across six dimensions. It runs after the deterministic layer and before hybrid aggregation.
 
-When building the judge prompt, the framework no longer embeds a near-raw copy of the
-`RunArtifact`. Instead it builds a normalized **subject view** with three sections:
+---
 
-- `evaluation_target`
-- `subject_response`
-- `execution_evidence`
+## What the judge sees
 
-This strips structured subject-model identity and noisy runner metadata, while preserving the
-observable evidence the judge actually needs: task messages, final output, visible assistant
-messages, tool calls/results, deterministic-check summaries, material failures, and relevant
-artifacts. For OpenClaw runs, runner-specific evidence is summarized into the same normalized
-shape instead of exposing raw `file://` references or large opaque blobs.
+The judge receives two messages: a **system prompt** (the evaluation contract) and a **user prompt** (the structured subject view).
 
-The judge still receives two messages:
+The subject view is a compact JSON document with three sections:
 
-1. a `system` prompt with the scoring contract
-2. a `user` prompt rendered as human-readable text from the structured subject view
+### 1. Evaluation target
+What the subject was asked to do:
+- task messages from the test case
+- hard and soft expectations
+- declared scoring dimensions
 
-The structured subject view is persisted separately for reproducibility, but the provider-facing
-`user` message is the rendered text form.
+### 2. Subject response
+What the subject produced:
+- final output (if present)
+- assistant messages
+- tool activity summary (tool names used, call count)
 
-## Judge scoring semantics (dimensions + scale)
+### 3. Execution evidence
+Signals relevant for process scoring:
+- deterministic check summary (passed / failed / error counts)
+- filtered trace events (tool calls and results)
+- key generated artifacts (for OpenClaw runs, excerpts of workspace files)
+- material failures that blocked task completion
 
-Judge outputs use a 0–10 scoring scale per dimension. Scores are meant to be comparable across
-cases and runs; use the anchors below to calibrate.
+The judge does **not** see infrastructure details: run IDs, container image names, filesystem paths, provider metadata, raw Docker logs, or config generation steps. The prompt is designed to surface only what matters for evaluation.
 
-### 0–10 score scale
+---
 
-- **10**: Fully satisfies the task intent and all hard constraints; no meaningful issues.
-- **8–9**: Clear success with only minor issues (small omissions, minor style/clarity problems).
-- **6–7**: Partial success; notable issues, missing pieces, or ambiguity, but some useful progress.
-- **3–5**: Mostly unsuccessful; major gaps or multiple expectation failures.
-- **1–2**: Near-total failure; little relevant progress.
-- **0**: No attempt, empty output, or completely irrelevant output.
+## What the judge is asked to produce
 
-### Objective vs subjective signals
-
-- **Deterministic checks are objective**: when the prompt includes a deterministic summary/check
-  list, treat failed checks as strong evidence that relevant expectations were not met.
-- **Hard vs soft expectations**:
-  - **Hard** expectations are required. Failing any hard expectation should strongly cap the
-    relevant dimension scores (typically \( \le 4 \) for the impacted dimensions).
-  - **Soft** expectations are preferences. Missing them should reduce scores modestly.
-- **Do not guess missing facts**: if the artifact does not show evidence, record uncertainty and
-  avoid inventing completion.
-
-### Dimension definitions
-
-The six dimensions below are the canonical judge dimensions for V1:
-
-- **task**: Quality and correctness of the final result relative to the requested task outcome.
-  This is primarily about *what* was delivered.
-- **process**: Compliance with required procedure and artifacts (e.g., required file outputs,
-  required tool usage, required steps) and whether execution evidence supports completion.
-  This is primarily about *how* the outcome was produced.
-- **autonomy**: Ability to make progress without needing external intervention or unnecessary
-  back-and-forth. Penalize stalls, avoidable clarification loops, or dependence on manual steps.
-- **closeness**: Faithfulness to the request and evidence. Penalize hallucinations and claims not
-  supported by the trace/artifacts, as well as going off-task.
-- **efficiency**: Economy of steps and tool calls, and appropriately concise output. Penalize
-  wasted actions, redundant tool use, or overly verbose irrelevant text.
-- **spark**: Small helpful extras that improve usefulness or clarity *without* violating task
-  constraints (e.g., a crisp justification, a robust cross-check, or a small UX touch). Do not
-  reward fluff.
-
-## Default system prompt
-
-The judge **system** message (instructions to return JSON with `summary`, `dimensions`, and an
-`overall` score, where each assessment carries `evidence` and `score`) is resolved in this order:
-
-1. **`judge_system_prompt`** in the evaluation profile YAML (multiline string; lines joined with spaces), or
-2. **`judge_system_prompt_path`** in the same YAML (path to a UTF-8 `.txt` file, relative to that YAML), or
-3. Otherwise, if the profile is loaded from disk, the shared default file
-   **`prompts/judge_system_default.md` relative to that YAML**.
-
-Recommended project layout:
-
-- `configs/evaluation_profiles/<profile_id>.yaml`
-- `configs/evaluation_profiles/prompts/judge_system_default.md`
-
-In this repository, profiles also set `judge_system_prompt_path: prompts/judge_system_default.md`
-explicitly so the source is visible to the user inside the YAML itself. The evaluation fingerprint
-includes a hash of the resolved prompt text, so changing the prompt or the referenced file changes
-the evaluation campaign identity.
-
-The top-level evaluation `manifest.json` also stores the exact resolved `judge_system_prompt`
-string that was sent to the judge, plus its source descriptor, so each evaluation campaign keeps a
-human-readable record of the prompt that was actually used.
-
-## Two Layers
-
-V1 keeps two judge result layers:
-
-1. raw judge attempt results
-2. normalized logical iteration results
-
-This distinction matters because one logical repetition may require retries.
-
-## Logical Repetitions And Retries
-
-If a judge is configured for three repetitions, the system preserves those three logical
-iterations even if one of them retries internally.
-
-Example:
+The judge returns a structured JSON response with:
 
 ```json
 {
-  "configured_repetitions": 3,
-  "iterations": [
-    {"repetition_index": 0, "status": "success"},
-    {"repetition_index": 1, "status": "success"},
-    {"repetition_index": 2, "status": "failed"}
-  ]
-}
-```
-
-If repetition `2` retried three times before failing, the raw layer still keeps each attempt,
-while the normalized layer still shows one logical iteration with status `failed`.
-
-## Normalized Iteration Shape
-
-```json
-{
-  "judge_name": "primary_judge",
-  "judge_model": "minimax/minimax-m2.7",
-  "repetition_index": 0,
-  "status": "success",
-  "summary": "The answer completed the task cleanly.",
   "dimensions": {
-    "task": {
-      "evidence": ["Created the expected output."],
-      "score": 8.0
-    },
-    "process": {
-      "evidence": ["The trace completed without interruption."],
-      "score": 7.0
-    },
-    "autonomy": {
-      "evidence": [],
-      "score": 7.5
-    },
-    "closeness": {
-      "evidence": [],
-      "score": 6.5
-    },
-    "efficiency": {
-      "evidence": [],
-      "score": 6.0
-    },
-    "spark": {
-      "evidence": [],
-      "score": 6.0
-    }
+    "task":       { "evidence": ["..."], "score": 8.5 },
+    "process":    { "evidence": ["..."], "score": 7.0 },
+    "autonomy":   { "evidence": ["..."], "score": 7.5 },
+    "closeness":  { "evidence": ["..."], "score": 8.0 },
+    "efficiency": { "evidence": ["..."], "score": 6.5 },
+    "spark":      { "evidence": ["..."], "score": 5.0 }
   },
-  "warnings": [],
-  "raw_result_ref": "raw_001"
+  "overall": {
+    "evidence": ["Used all required tools", "File content matches the marker"],
+    "score": 7.8
+  }
 }
 ```
 
-## Iteration Statuses
+Each dimension score is on a 0–10 scale. The `evidence` items are concise factual observations that support the score — not vague qualitative statements.
 
-V1 normalized judge iterations use:
+---
 
-- `success`
-- `failed`
-- `invalid_output`
-- `provider_error`
-- `timed_out`
+## The six dimensions
 
-If the output is structurally valid but evidence is incomplete, the iteration remains
-`success` and records warnings.
+| Dimension | What the judge is measuring |
+|---|---|
+| `task` | Did the output fulfill the stated goal? Correct content, correct files, correct format. |
+| `process` | Did the agent follow a sound approach? Right tools, respected constraints, no hallucinated steps. |
+| `autonomy` | Did the agent operate independently? Sound decisions without over-asking or needing hand-holding. |
+| `closeness` | Did the output match what a thoughtful human response would look like? Tone, framing, completeness. |
+| `efficiency` | Did the agent achieve the goal without waste? No unnecessary tool calls, no verbose noise. |
+| `spark` | Did the response show something noteworthy? Useful insight, elegant shortcut, thoughtful initiative. |
 
-## Aggregated Judge Result
+The overall score (`overall.score`) is the judge's holistic verdict after reviewing all evidence. It is not a weighted average of the six dimensions — it is an independent holistic assessment.
 
-Successful logical iterations are aggregated into one judge result.
+---
 
-V1 uses `median` as the default aggregation method across successful iterations.
+## Judge repetitions
 
-Example:
+The evaluation profile can run the judge multiple times and aggregate across iterations:
 
-```json
-{
-  "judge_name": "primary_judge",
-  "judge_model": "minimax/minimax-m2.7",
-  "aggregation_method": "median",
-  "configured_repetitions": 3,
-  "successful_iterations": 2,
-  "failed_iterations": 1,
-  "used_repetition_indices": [0, 1],
-  "excluded_repetition_indices": [2],
-  "dimensions": {
-    "task": 7.5,
-    "process": 7.0,
-    "autonomy": 7.5,
-    "closeness": 6.0,
-    "efficiency": 6.5,
-    "spark": 6.0
-  },
-  "warnings": [
-    "Excluded non-successful repetitions from aggregation: 2."
-  ]
-}
+```yaml
+judge_runs:
+  - judge_run_id: gpt54_single
+    judge_id: gpt54_judge
+    repetitions: 3              # call the judge 3 times
+aggregation:
+  method: median                # take the median across successful iterations
 ```
 
-This aggregated judge result is still not the final evaluation result. Hybrid aggregation is a
-separate layer.
+Failed or excluded iterations are visible in the raw output but do not contribute to the aggregated score. The aggregated result records:
 
-## Related Reading
+- `configured_repetitions` — how many were requested
+- `successful_iterations` — how many produced valid output
+- `aggregation_method` — `median` or `mean`
+- the median/mean score per dimension and overall
 
-- [Run artifacts](run_artifacts.md)
-- [Hybrid evaluation](hybrid_evaluation.md)
+---
+
+## Output files
+
+After evaluation, three files are written per `(model, case, repetition)`:
+
+| File | Contents |
+|---|---|
+| `evaluation_result_summary_1.md` | Human-readable Markdown summary: score, dimensions, evidence |
+| `judge_1.prompt.debug.md` | The exact prompt shown to the judge (system + user, rendered as readable text) |
+| `raw_outputs/judge_1.json` | Raw aggregated judge result (structured JSON) |
+| `raw_outputs/judge_1.prompt.user.json` | Structured subject view payload sent as the user message |
+| `raw_outputs/final_result_1.json` | Final hybrid evaluation result (after aggregation) |
+
+**Start with `evaluation_result_summary_1.md`** to understand the verdict. Open `judge_1.prompt.debug.md` to audit what the judge saw. Use `raw_outputs/final_result_1.json` for downstream processing.
+
+---
+
+## Reading `evaluation_result_summary_1.md`
+
+Example (abbreviated):
+
+```markdown
+# Evaluation Result
+
+**Case:** llm_probe_tool_example
+**Model:** minimax/minimax-m2.7
+**Final score:** 8.50 / 10
+
+## Overall assessment
+- Used exec_shell, write_file, and read_file correctly
+- File content matches the required marker
+- Confirmation was brief and accurate
+
+## Dimension scores
+
+| Dimension   | Score | Policy        |
+|-------------|-------|---------------|
+| task        | 8.5   | judge_only    |
+| process     | 9.0   | weighted      |
+| autonomy    | 8.0   | judge_only    |
+| closeness   | 8.5   | judge_only    |
+| efficiency  | 7.5   | judge_only    |
+| spark       | 6.0   | judge_only    |
+
+## Deterministic checks
+
+| Check                        | Result |
+|------------------------------|--------|
+| final-response-present       | PASS   |
+| llm-probe-tool-example-file  | PASS   |
+```
+
+---
+
+## Warnings
+
+If a judge iteration fails (provider error, invalid output, timeout), the result records a warning and that iteration is excluded from aggregation. Warnings surface in the CLI table as a count in the `WARNINGS` column.
+
+Example warning: `Judge iteration 2 failed and was excluded.`
+
+If all iterations fail, the evaluation result still exists but has `evaluation_status: failed` in the workflow result.
+
+---
+
+## Configuring the judge
+
+Judges are defined in the evaluation profile:
+
+```yaml
+judges:
+  - judge_id: my_judge
+    type: llm_probe          # uses the llm_probe runner path for judge calls
+    model: openai/gpt-5.4-mini
+```
+
+The `judge_system_prompt_path` field points to a Markdown file that contains the scoring contract. The framework includes a default system prompt that encodes the six dimensions and the expected JSON output schema. You can override it per evaluation profile.
+
+→ [Hybrid evaluation](hybrid_evaluation.md) — how judge scores combine with deterministic results

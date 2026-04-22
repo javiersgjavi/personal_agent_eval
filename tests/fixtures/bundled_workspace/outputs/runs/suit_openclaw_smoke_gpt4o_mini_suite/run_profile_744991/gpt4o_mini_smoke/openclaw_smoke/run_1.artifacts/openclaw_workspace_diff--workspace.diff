@@ -1,0 +1,38 @@
+--- template/.openclaw/workspace-state.json
++++ workspace/.openclaw/workspace-state.json
+@@ -0,0 +1,4 @@
++{
++  "version": 1,
++  "setupCompletedAt": "2026-04-20T17:56:23.457Z"
++}
+--- template/HEARTBEAT.md
++++ workspace/HEARTBEAT.md
+@@ -0,0 +1,7 @@
++# HEARTBEAT.md Template
++
++```markdown
++# Keep this file empty (or with only comments) to skip heartbeat API calls.
++
++# Add tasks below when you want the agent to check something periodically.
++```
+--- template/IDENTITY.md
++++ workspace/IDENTITY.md
+@@ -0,0 +1,4 @@
++# IDENTITY
++
++Benchmark-generated placeholder for OpenClaw workspace materialization.
++This file was missing from the reusable agent workspace template.
+--- template/TOOLS.md
++++ workspace/TOOLS.md
+@@ -0,0 +1,4 @@
++# TOOLS
++
++Benchmark-generated placeholder for OpenClaw workspace materialization.
++This file was missing from the reusable agent workspace template.
+--- template/USER.md
++++ workspace/USER.md
+@@ -0,0 +1,4 @@
++# USER
++
++Benchmark-generated placeholder for OpenClaw workspace materialization.
++This file was missing from the reusable agent workspace template.

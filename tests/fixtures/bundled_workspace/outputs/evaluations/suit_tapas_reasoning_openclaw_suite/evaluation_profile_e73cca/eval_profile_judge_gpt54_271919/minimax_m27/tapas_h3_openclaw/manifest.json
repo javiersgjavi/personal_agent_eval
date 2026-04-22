@@ -1,0 +1,17 @@
+{
+  "case_id": "tapas_h3_openclaw",
+  "evaluation_fingerprint": "271919af2772f127bb2e4c06420924c7e8a2e965593c05f1eca337e284724678",
+  "evaluation_profile_id": "judge_gpt54",
+  "iterations": [
+    {
+      "evaluation_fingerprint": "271919af2772f127bb2e4c06420924c7e8a2e965593c05f1eca337e284724678",
+      "repetition_index": 0,
+      "run_fingerprint": "2771955b5831171fe0b1a2500b7a57af535915f6ef8c0dce0ce837fbb96e930e"
+    }
+  ],
+  "model_id": "minimax_m27",
+  "run_profile_fingerprint": "e73cca94223b1c74598828fa1c6481a8f8419bca3a56aad935694ab3a5631354",
+  "run_profile_id": "openclaw_tapas",
+  "schema_version": 1,
+  "suite_id": "tapas_reasoning_openclaw_suite"
+}

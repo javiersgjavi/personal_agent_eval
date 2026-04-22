@@ -1,184 +1,203 @@
 # Run Artifacts
 
-`personal_agent_eval` defines a canonical JSON-serializable run artifact schema in V1 for
-recording the result of one runner execution.
+A `RunArtifact` is the canonical JSON record of one runner execution. It is the single source of truth for everything that happened: the input, the trace, the output, the usage, and any errors.
 
-The V1 schema is provider-aware and runner-agnostic:
+Everything downstream — deterministic checks, the judge, hybrid aggregation — reads from this artifact. Nothing mutates it.
 
-- It records canonical identity fields for the run, including `schema_version`, `run_id`,
-  `case_id`, `suite_id`, `run_profile_id`, and `runner_type`.
-- It separates requested execution metadata from provider-returned metadata.
-- It stores normalized usage metrics plus raw provider usage when available.
-- It represents the execution trace as an ordered event sequence.
-- It stores output artifact references and metadata, not embedded file blobs.
-- It includes an explicit structured error object for any non-success terminal status.
-- It reserves `runner_metadata` for runner-specific extension fields without changing the
-  canonical top-level structure.
+---
 
-### OpenClaw evidence (`runner_metadata.openclaw`)
+## Top-level structure
 
-OpenClaw runs attach a typed block at `runner_metadata.openclaw` (constant
-`OPENCLAW_RUNNER_METADATA_KEY` in code). It validates as `OpenClawRunEvidence` and keeps
-large assets as `OutputArtifactRef` entries (URIs to files outside `run_N.json`), for
-example:
+```json
+{
+  "schema_version": 1,
+  "identity": {
+    "run_id": "run_001",
+    "case_id": "llm_probe_tool_example",
+    "suite_id": "llm_probe_examples",
+    "run_profile_id": "llm_probe_examples",
+    "runner_type": "llm_probe",
+    "run_fingerprint": "a3f8c2..."
+  },
+  "status": "success",
+  "request": {
+    "requested_model": "minimax/minimax-m2.7",
+    "gateway": "openrouter",
+    "execution_parameters": { "temperature": 0, "max_tokens": 768 }
+  },
+  "provider": {
+    "provider_name": "Minimax",
+    "provider_model_id": "minimax-m2.7",
+    "finish_reason": "stop"
+  },
+  "timing": {
+    "started_at": "2026-04-22T10:00:00Z",
+    "completed_at": "2026-04-22T10:00:12Z",
+    "duration_seconds": 12.3
+  },
+  "usage": {
+    "input_tokens": 580,
+    "output_tokens": 120,
+    "total_tokens": 700,
+    "cost_usd": 0.00018
+  },
+  "trace": [...],
+  "output_artifacts": [],
+  "runner_metadata": {}
+}
+```
 
-- generated OpenClaw config (`openclaw_generated_config`)
-- raw session trace (`openclaw_raw_session_trace`)
-- captured logs (`openclaw_logs`)
-- workspace snapshot archive (`openclaw_workspace_snapshot`)
-- workspace diff (`openclaw_workspace_diff`)
-- optional key outputs (`openclaw_key_output`), as a list
+---
 
-Concrete `artifact_type` strings are defined on `OpenClawEvidenceArtifactTypes`. Use
-`parse_openclaw_run_evidence(run_artifact.runner_metadata)` (or
-`with_openclaw_run_evidence(...)`) so downstream code does not scrape ad hoc dict keys.
+## Terminal statuses
 
-If the `openclaw` key is present, it must be a valid `OpenClawRunEvidence` payload or
-`RunArtifact` validation fails.
+| Status | Meaning |
+|---|---|
+| `success` | The run completed and produced a final response |
+| `failed` | The runner encountered an error after the model responded |
+| `timed_out` | The run exceeded `timeout_seconds` |
+| `invalid` | The provider returned an invalid or unparseable response |
+| `provider_error` | The provider returned an error (HTTP 4xx/5xx, quota exceeded, etc.) |
 
-V1 terminal statuses are:
+---
 
-- `success`
-- `failed`
-- `timed_out`
-- `invalid`
-- `provider_error`
+## The trace
 
-For OpenRouter-backed runs, the schema can record:
+The `trace` field is an ordered list of events that records exactly what happened during the run. Event types:
 
-- requested model and requested gateway in the request metadata
-- gateway, provider name, provider model id, request id, response id, finish reason, and
-  native finish reason in provider metadata
-- normalized token usage, normalized cost, and raw provider usage payloads
-- initial message traces, assistant responses, tool call traces, retry lifecycle events, and
-  final output events
-- explicit terminal errors for provider failures, timeouts, invalid provider output, and
-  runner execution failures
+| Kind | Description |
+|---|---|
+| `message` | A message sent to or received from the model (role + content) |
+| `tool_call` | A tool call requested by the model (name + arguments) |
+| `tool_result` | The result returned after executing the tool |
+| `final_output` | The model's final response (the last assistant message before stopping) |
+| `runner_trace` | Internal runner lifecycle events (retries, errors, etc.) |
 
-The schema package only defines the artifact surface. It does not implement runner
-execution, judge logic, fingerprinting, or artifact storage.
+Example trace (abbreviated):
 
-When the provider is OpenRouter, the stored usage payload may include:
+```json
+[
+  {"kind": "message",      "role": "user",      "content": "Use real tools to..."},
+  {"kind": "tool_call",    "tool_name": "exec_shell", "arguments": {"command": "printf 'marker\\n'"}},
+  {"kind": "tool_result",  "tool_name": "exec_shell", "content": "marker\n", "status": "success"},
+  {"kind": "tool_call",    "tool_name": "write_file", "arguments": {"path": "/tmp/out.txt", "content": "marker\n"}},
+  {"kind": "tool_result",  "tool_name": "write_file", "content": "written", "status": "success"},
+  {"kind": "final_output", "content": "Created /tmp/out.txt with the required content."}
+]
+```
 
-- `input_tokens`
-- `output_tokens`
-- `total_tokens`
-- `reasoning_tokens`
-- `cached_input_tokens`
-- `cache_write_tokens`
-- `cost_usd`
+---
 
-The raw provider payload is still preserved as-is under `raw_provider_usage`, so OpenRouter
-fields such as `cost_details` remain inspectable even if the normalized schema only promotes a
-subset for reporting.
+## Usage fields
 
-Deterministic evaluation in V1 consumes these canonical `RunArtifact` objects directly. The
-deterministic evaluator records per-check pass/fail outcomes plus structured metadata and
-outputs without depending on any judge orchestration.
+| Field | Description |
+|---|---|
+| `input_tokens` | Tokens in the prompt |
+| `output_tokens` | Tokens in the completion |
+| `total_tokens` | Sum of input + output |
+| `reasoning_tokens` | Tokens used for chain-of-thought (if available) |
+| `cached_input_tokens` | Cache-hit tokens (if available) |
+| `cache_write_tokens` | Tokens written to cache (if available) |
+| `cost_usd` | Estimated USD cost (from OpenRouter pricing) |
 
-Judge orchestration also consumes `RunArtifact` objects directly, but it produces a separate
-judge result surface rather than mutating the run artifact schema. V1 judge orchestration
-keeps two layers:
+The raw provider usage payload is preserved separately under `raw_provider_usage` so OpenRouter-specific fields remain inspectable.
 
-- raw judge attempt results, which preserve each provider call and any provider-facing
-  failures
-- normalized judge iteration results, which map one logical repetition onto a stable status
-  and structured fields for `summary`, `dimensions` (with per-dimension `evidence` and
-  `score`), `warnings`, and `raw_result_ref`
+---
 
-Aggregated judge results operate across repetitions for one judge. The default aggregation
-method is the median across successful iterations only. Failed or excluded iterations remain
-visible in the aggregated result and do not contribute scores.
+## OpenClaw evidence (`runner_metadata.openclaw`)
 
-Hybrid aggregation in V1 produces a separate final evaluation artifact rather than mutating
-the run artifact or the judge result. That final result keeps:
+For OpenClaw runs, the `runner_metadata` field contains an `openclaw` block with all the evidence captured from the container execution:
 
-- `deterministic_dimensions`
-- `judge_dimensions`
-- `final_dimensions`
-- `final_score`
-- `security`
-- `warnings`
+```json
+{
+  "runner_metadata": {
+    "openclaw": {
+      "agent_id": "support_agent",
+      "container_image": "ghcr.io/openclaw/openclaw:2026.4.15",
+      "openclaw_generated_config": {
+        "artifact_type": "openclaw_generated_config",
+        "uri": "file://run_1.artifacts/openclaw.json"
+      },
+      "openclaw_workspace_snapshot": {
+        "artifact_type": "openclaw_workspace_snapshot",
+        "uri": "file://run_1.artifacts/workspace.tar.gz"
+      },
+      "openclaw_workspace_diff": {
+        "artifact_type": "openclaw_workspace_diff",
+        "uri": "file://run_1.artifacts/workspace.diff"
+      },
+      "openclaw_key_output": [
+        {
+          "artifact_type": "openclaw_key_output",
+          "uri": "file://run_1.artifacts/report.md",
+          "name": "report.md"
+        }
+      ],
+      "openclaw_logs": {
+        "artifact_type": "openclaw_logs",
+        "uri": "file://run_1.artifacts/openclaw.log"
+      }
+    }
+  }
+}
+```
 
-This makes it possible to inspect what deterministic evaluation produced, what the judge
-produced, and what the final configured hybrid policy actually used.
+| Evidence field | What it contains |
+|---|---|
+| `openclaw_generated_config` | The `openclaw.json` generated for this run |
+| `openclaw_raw_session_trace` | The full JSON session trace from OpenClaw |
+| `openclaw_logs` | Captured stdout/stderr logs from the container |
+| `openclaw_workspace_snapshot` | Archive of the workspace at the end of the run |
+| `openclaw_workspace_diff` | Diff between the template workspace and the final workspace |
+| `openclaw_key_output` | Key output files identified by the runner (list) |
 
-## Storage Layout
+Artifact URIs use `file://` references to files stored in the `run_1.artifacts/` directory next to the artifact JSON.
 
-V1 stores runs and evaluations in separate deterministic filesystem spaces. Storage does not
-redefine fingerprint semantics; it consumes precomputed fingerprints and persists both a
-small manifest and the normalized fingerprint input payload used to derive that fingerprint.
+---
 
-Run spaces are organized as suite-scoped campaigns keyed by the semantic run-profile
-fingerprint:
+## Storage layout
 
 ```text
-outputs/runs/suit_<suite_id>/run_profile_<run_profile_fingerprint_short6>/
-  manifest.json
-  <model_id>/
-    <case_id>/
-      manifest.json
-      run_1.json
-      run_1.artifacts/
-      run_1.fingerprint_input.json
-      run_2.json
+outputs/runs/suit_{suite_id}/run_profile_{fp6}/
+  manifest.json                          ← suite-level manifest
+  {model_id}/
+    {case_id}/
+      manifest.json                      ← case-level manifest (maps repetitions → fingerprints)
+      run_1.json                         ← RunArtifact for repetition 1
+      run_1.artifacts/                   ← external files referenced by run_1.json
+      run_1.fingerprint_input.json       ← normalized payload used to derive the fingerprint
+      run_2.json                         ← RunArtifact for repetition 2 (if run_repetitions > 1)
       run_2.artifacts/
       run_2.fingerprint_input.json
-      ...
 ```
 
-Within one `<model_id>/<case_id>/` directory:
+The case-level `manifest.json` maps repetition indices to their full run fingerprints. It also records `runner_type` and, for OpenClaw runs, `openclaw_agent_id`, so stored campaigns are inspectable without opening each `run_N.json`.
 
-- `run_N.json` is the raw `RunArtifact` for repetition `N`
-- `run_N.artifacts/` stores copied external files referenced by `run_N.json` (for example OpenClaw
-  generated config, raw trace, logs, snapshots, diffs, and key outputs)
-- `run_N.fingerprint_input.json` stores the full normalized input payload used to derive that
-  repetition's `run_fingerprint`
-- `manifest.json` maps repetition indices back to their full `run_fingerprint` values. The case-level
-  run manifest may also record `runner_type` and, for OpenClaw runs, `openclaw_agent_id`, so stored
-  campaigns remain inspectable without opening each `run_N.json`.
+---
 
-Evaluation spaces are organized similarly, but scoped by both the run-profile fingerprint and the
-evaluation fingerprint:
+## Evaluation output layout
+
+Evaluation results live under a separate tree, scoped by both the run-profile fingerprint and the evaluation fingerprint:
 
 ```text
-outputs/evaluations/suit_<suite_id>/evaluation_profile_<run_profile_fingerprint_short6>/eval_profile_<evaluation_profile_id>_<evaluation_fingerprint_short6>/
-    manifest.json
-    fingerprint_input.json
-    <model_id>/
-      <case_id>/
-        manifest.json
-        evaluation_result_summary_1.md
-      judge_1.prompt.debug.md
-      raw_outputs/
-        judge_1.json
-        judge_1.prompt.user.json
-        final_result_1.json
-      ...
+outputs/evaluations/suit_{suite_id}/
+  evaluation_profile_{run_fp6}/
+    eval_profile_{eval_id}_{eval_fp6}/
+      manifest.json                      ← campaign-level manifest
+      fingerprint_input.json             ← evaluation fingerprint input
+      {model_id}/
+        {case_id}/
+          manifest.json
+          evaluation_result_summary_1.md ← human-readable summary (start here)
+          judge_1.prompt.debug.md        ← exact prompt shown to the judge
+          raw_outputs/
+            judge_1.json                 ← aggregated judge result
+            judge_1.prompt.user.json     ← structured subject-view payload
+            final_result_1.json          ← FinalEvaluationResult (hybrid score)
 ```
 
-Within one evaluation `<model_id>/<case_id>/` directory:
+**Recommended reading order:**
 
-- `evaluation_result_summary_N.md` is the human-readable evaluation summary for repetition `N`
-- `judge_N.prompt.debug.md` is the human-readable judge prompt debug view containing both the
-  system prompt and the rendered user prompt
-- `raw_outputs/judge_N.json` is the aggregated judge result for repetition `N`
-- `raw_outputs/judge_N.prompt.user.json` is the structured subject-view payload used to render
-  the judge user prompt
-- `raw_outputs/final_result_N.json` is the final hybrid evaluation result for repetition `N`
-- `manifest.json` maps repetition indices back to the full `run_fingerprint` and
-  `evaluation_fingerprint`
-
-The repository's public example campaigns use this exact layout. See
-[Runnable examples](examples/runnable_examples.md) for concrete commands and the intended reading
-order for these files.
-
-When `execution_policy.run_repetitions` is greater than `1`, each repetition gets a distinct
-`run_fingerprint` because the repetition index is included in the normalized execution settings
-used for hashing. The workflow then aggregates repetitions back into one case-level workflow
-result by taking the mean of available `final_score` values and per-dimension means of available
-final dimensions.
-
-This keeps execution artifacts and evaluation artifacts clearly separated, gives humans stable and
-explicit path labels for both campaign layers, and still preserves enough normalized fingerprint
-input to reproduce exact semantic identities later.
+1. `evaluation_result_summary_1.md` — the verdict
+2. `judge_1.prompt.debug.md` — what the judge saw
+3. `raw_outputs/final_result_1.json` — technical details and dimension resolution

@@ -1,0 +1,221 @@
+{
+  "error": {
+    "code": "openclaw_execution_failed",
+    "error_type": "OpenClawExecutionError",
+    "message": "OpenClaw agent execution returned a non-zero exit code.",
+    "metadata": {
+      "returncode": 1,
+      "stderr": "[diagnostic] lane task error: lane=main durationMs=3409 error=\"Error: No API key found for provider \"openrouter\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\"\n[diagnostic] lane task error: lane=session:agent:tapas:main durationMs=3433 error=\"Error: No API key found for provider \"openrouter\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\"\n[model-fallback/decision] model fallback decision: decision=candidate_failed requested=openrouter/minimax/minimax-m2.7 candidate=openrouter/minimax/minimax-m2.7 reason=auth next=none detail=No API key found for provider \"openrouter\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\nFailoverError: No API key found for provider \"openrouter\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\n"
+    },
+    "provider_code": null,
+    "retryable": false
+  },
+  "identity": {
+    "case_id": "tapas_h3_openclaw",
+    "run_id": "run_321734f7f0b14737b28ec3169addc943",
+    "run_profile_id": "openclaw_tapas",
+    "runner_type": "openclaw",
+    "schema_version": 1,
+    "suite_id": "tapas_reasoning_openclaw_suite"
+  },
+  "output_artifacts": [],
+  "provider": {
+    "finish_reason": null,
+    "gateway": "openclaw",
+    "metadata": {
+      "returncode": 1
+    },
+    "native_finish_reason": null,
+    "provider_model_id": null,
+    "provider_name": null,
+    "request_id": null,
+    "response_id": null
+  },
+  "request": {
+    "execution_parameters": {
+      "max_tokens": null,
+      "max_turns": null,
+      "retries": null,
+      "seed": null,
+      "temperature": null,
+      "timeout_seconds": 300.0,
+      "tool_choice": null,
+      "top_p": null
+    },
+    "gateway": "openclaw",
+    "metadata": {
+      "attachments": [],
+      "case_metadata": {
+        "reference_task_id": "H3_finance_reasoning",
+        "source": "model-benchmark/references/tasks/reasoning/H3_finance_reasoning.md"
+      },
+      "input_context": {},
+      "model_selection": {
+        "label": "minimax/minimax-m2.7",
+        "model_id": "minimax_m27",
+        "requested_model": "minimax/minimax-m2.7"
+      },
+      "openclaw": {
+        "agent_id": "tapas",
+        "container_image": "ghcr.io/openclaw/openclaw:2026.4.15",
+        "docker_cli": "docker",
+        "execution": "docker"
+      },
+      "requested_runner_config": {
+        "type": "openclaw"
+      }
+    },
+    "requested_model": "minimax/minimax-m2.7"
+  },
+  "runner_metadata": {
+    "openclaw": {
+      "agent_id": "tapas",
+      "container_image": "ghcr.io/openclaw/openclaw:2026.4.15",
+      "generated_openclaw_config": {
+        "artifact_id": "openclaw_config",
+        "artifact_type": "openclaw_generated_config",
+        "byte_size": 1470,
+        "media_type": "application/json",
+        "metadata": {},
+        "sha256": "4ea2f4dbc7e77b060fa90324ed13ac5d287969d1885632bb0b0a11ea55bf7516",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_suite/run_profile_e73cca/minimax_m27/tapas_h3_openclaw/run_1.artifacts/openclaw_config--openclaw.json"
+      },
+      "key_output_artifacts": [],
+      "metadata": {},
+      "openclaw_logs": {
+        "artifact_id": "openclaw_logs",
+        "artifact_type": "openclaw_logs",
+        "byte_size": 1574,
+        "media_type": "text/plain",
+        "metadata": {},
+        "sha256": "bbce924ad185e924852c8f9668cdd7b2f8c92ee04e0add96b2f3532b3a7026a9",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_suite/run_profile_e73cca/minimax_m27/tapas_h3_openclaw/run_1.artifacts/openclaw_logs--openclaw.log"
+      },
+      "raw_session_trace": {
+        "artifact_id": "openclaw_raw_trace",
+        "artifact_type": "openclaw_raw_session_trace",
+        "byte_size": 1399,
+        "media_type": "application/json",
+        "metadata": {},
+        "sha256": "cd259924e7fda4046ba06c782c9aca873ac6299f92f1c417e16839183c43129f",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_suite/run_profile_e73cca/minimax_m27/tapas_h3_openclaw/run_1.artifacts/openclaw_raw_trace--raw_session_trace.json"
+      },
+      "schema_version": 1,
+      "workspace_diff": {
+        "artifact_id": "openclaw_workspace_diff",
+        "artifact_type": "openclaw_workspace_diff",
+        "byte_size": 1089,
+        "media_type": "text/x-diff",
+        "metadata": {},
+        "sha256": "edb4779035ca855dbeca9eb4b141a6c92c13d10d616a88fbc18a98f1ebbe6e10",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_suite/run_profile_e73cca/minimax_m27/tapas_h3_openclaw/run_1.artifacts/openclaw_workspace_diff--workspace.diff"
+      },
+      "workspace_snapshot": {
+        "artifact_id": "openclaw_workspace_snapshot",
+        "artifact_type": "openclaw_workspace_snapshot",
+        "byte_size": 853,
+        "media_type": "application/gzip",
+        "metadata": {},
+        "sha256": "04e708505d12a2863d7c037babae0e610a413ed8c243bd0480e169c957a04938",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_suite/run_profile_e73cca/minimax_m27/tapas_h3_openclaw/run_1.artifacts/openclaw_workspace_snapshot--workspace_snapshot.tar.gz"
+      }
+    }
+  },
+  "status": "failed",
+  "timing": {
+    "completed_at": "2026-04-21T08:41:32.135592Z",
+    "duration_seconds": 22.6814,
+    "queued_at": "2026-04-21T08:41:09.454147Z",
+    "started_at": "2026-04-21T08:41:09.454150Z"
+  },
+  "trace": [
+    {
+      "detail": "Docker-only execution using the run profile image.",
+      "event_type": "runner",
+      "metadata": {
+        "docker_cli": "docker",
+        "pinned_image": "ghcr.io/openclaw/openclaw:2026.4.15"
+      },
+      "name": "openclaw_executor_selected",
+      "sequence": 0,
+      "timestamp": null
+    },
+    {
+      "detail": "Materialized OpenClaw workspace template.",
+      "event_type": "runner",
+      "metadata": {
+        "placeholder_files": [
+          "IDENTITY.md",
+          "TOOLS.md",
+          "USER.md"
+        ],
+        "workspace_dir": "/tmp/pae-openclaw-n1l6qosk/workspace"
+      },
+      "name": "workspace_materialized",
+      "sequence": 1,
+      "timestamp": null
+    },
+    {
+      "content": "Tengo 80.000\u20ac ahorrados. Mi situaci\u00f3n:\n- 60.000\u20ac reservados para posible hipoteca en 1-2 a\u00f1os\n- 10.000\u20ac fondo de emergencia (no tocar)\n- 10.000\u20ac disponibles para invertir ahora mismo\n\nTengo 26 a\u00f1os, trabajo estable, perfil moderado.\n\nCon los 10.000\u20ac disponibles:\n1. \u00bfQu\u00e9 asset allocation me recomendar\u00edas?\n2. \u00bfQu\u00e9 instrumentos concretos (ETFs, fondos)?\n3. \u00bfTiene sentido invertir a largo plazo si en 1-2 a\u00f1os puedo necesitar el dinero de la hipoteca?\n\nS\u00e9 espec\u00edfico y razona cada punto.\n",
+      "event_type": "message",
+      "metadata": {},
+      "name": null,
+      "role": "user",
+      "sequence": 2,
+      "timestamp": null
+    },
+    {
+      "detail": "Host env forwarded into OpenClaw container (filtered: OpenRouter, providers, proxy/TLS).",
+      "event_type": "runner",
+      "metadata": {
+        "env_file": ".pae-openclaw.docker.env",
+        "forwarded_var_count": 3,
+        "mode": "filtered",
+        "openrouter_api_key_set": false
+      },
+      "name": "openclaw_container_env",
+      "sequence": 3,
+      "timestamp": null
+    },
+    {
+      "detail": "Validated generated OpenClaw config.",
+      "event_type": "runner",
+      "metadata": {
+        "returncode": 0
+      },
+      "name": "config_validated",
+      "sequence": 4,
+      "timestamp": null
+    },
+    {
+      "detail": "Running OpenClaw local agent turn.",
+      "event_type": "runner",
+      "metadata": {
+        "agent_directory_id": "tapas",
+        "agent_id": "tapas"
+      },
+      "name": "agent_invoked",
+      "sequence": 5,
+      "timestamp": null
+    },
+    {
+      "content": "[diagnostic] lane task error: lane=main durationMs=3409 error=\"Error: No API key found for provider \"openrouter\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\"\n[diagnostic] lane task error: lane=session:agent:tapas:main durationMs=3433 error=\"Error: No API key found for provider \"openrouter\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\"\n[model-fallback/decision] model fallback decision: decision=candidate_failed requested=openrouter/minimax/minimax-m2.7 candidate=openrouter/minimax/minimax-m2.7 reason=auth next=none detail=No API key found for provider \"openrouter\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.\nFailoverError: No API key found for provider \"openrouter\". Auth store: /work/state/agents/tapas/agent/auth-profiles.json (agentDir: /work/state/agents/tapas/agent). Configure auth for this agent (openclaw agents add <id>) or copy auth-profiles.json from the main agentDir.",
+      "event_type": "final_output",
+      "metadata": {},
+      "sequence": 6,
+      "timestamp": null
+    }
+  ],
+  "usage": {
+    "cost_usd": null,
+    "normalized": {
+      "cache_write_tokens": null,
+      "cached_input_tokens": null,
+      "input_tokens": null,
+      "output_tokens": null,
+      "reasoning_tokens": null,
+      "total_tokens": null
+    },
+    "raw_provider_usage": null
+  }
+}

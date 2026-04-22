@@ -1,0 +1,88 @@
+{
+  "case_id": "tapas_h3_openclaw",
+  "deterministic_dimensions": {
+    "autonomy": null,
+    "closeness": null,
+    "efficiency": null,
+    "process": null,
+    "spark": null,
+    "task": 10.0
+  },
+  "dimension_resolutions": {
+    "autonomy": {
+      "deterministic_score": null,
+      "final_score": 1.0,
+      "judge_score": 1.0,
+      "policy": "judge_only",
+      "source_used": "judge"
+    },
+    "closeness": {
+      "deterministic_score": null,
+      "final_score": 1.0,
+      "judge_score": 1.0,
+      "policy": "judge_only",
+      "source_used": "judge"
+    },
+    "efficiency": {
+      "deterministic_score": null,
+      "final_score": 2.0,
+      "judge_score": 2.0,
+      "policy": "judge_only",
+      "source_used": "judge"
+    },
+    "process": {
+      "deterministic_score": null,
+      "final_score": 1.0,
+      "judge_score": 1.0,
+      "policy": "weighted",
+      "source_used": "judge"
+    },
+    "spark": {
+      "deterministic_score": null,
+      "final_score": 1.0,
+      "judge_score": 1.0,
+      "policy": "judge_only",
+      "source_used": "judge"
+    },
+    "task": {
+      "deterministic_score": 10.0,
+      "final_score": 1.0,
+      "judge_score": 1.0,
+      "policy": "judge_only",
+      "source_used": "judge"
+    }
+  },
+  "final_dimensions": {
+    "autonomy": 1.0,
+    "closeness": 1.0,
+    "efficiency": 2.0,
+    "process": 1.0,
+    "spark": 1.0,
+    "task": 1.0
+  },
+  "final_score": 1.15,
+  "judge_dimensions": {
+    "autonomy": 1.0,
+    "closeness": 1.0,
+    "efficiency": 2.0,
+    "process": 1.0,
+    "spark": 1.0,
+    "task": 1.0
+  },
+  "run_id": "run_321734f7f0b14737b28ec3169addc943",
+  "schema_version": 1,
+  "security": {
+    "verdict": "not_evaluated",
+    "warnings": []
+  },
+  "summary": {
+    "deterministic_error_checks": 0,
+    "deterministic_failed_checks": 0,
+    "deterministic_passed_checks": 1,
+    "judge_failed_iterations": 0,
+    "judge_successful_iterations": 1
+  },
+  "warnings": [
+    "Deterministic score missing for 'process'; judge score used as fallback."
+  ]
+}

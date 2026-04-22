@@ -1,0 +1,16 @@
+{
+  "case_id": "tapas_x7_openclaw",
+  "iterations": [
+    {
+      "repetition_index": 0,
+      "run_fingerprint": "4c9d4da567a9564f3ee1cb5dd234f3470c8309b9a163df779adbb998fbab5072"
+    }
+  ],
+  "model_id": "gpt4o_mini_or",
+  "openclaw_agent_id": "tapas",
+  "run_profile_fingerprint": "e73cca94223b1c74598828fa1c6481a8f8419bca3a56aad935694ab3a5631354",
+  "run_profile_id": "openclaw_tapas",
+  "runner_type": "openclaw",
+  "schema_version": 1,
+  "suite_id": "tapas_reasoning_openclaw_gpt4o_mini_suite"
+}

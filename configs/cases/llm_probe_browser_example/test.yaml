@@ -7,12 +7,11 @@ input:
   messages:
     - role: user
       content: |
-        Usa `web_search` para encontrar la página oficial de documentación de Python que hable
-        de la versión estable actual.
-        Después dame una respuesta corta con:
-        - el título o página encontrada
-        - la URL oficial consultada
-        - una frase explicando por qué esa fuente es fiable
+        Use `web_search` to find the official Python documentation page about the current stable version.
+        Then give me a short answer with:
+        - the title or page you found
+        - the official URL you consulted
+        - one sentence explaining why that source is reliable
   context:
     llm_probe:
       tools:

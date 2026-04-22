@@ -1,0 +1,203 @@
+{
+  "error": null,
+  "identity": {
+    "case_id": "tapas_x7_openclaw",
+    "run_id": "run_e03fa03f18294910a0c09b38b9108de6",
+    "run_profile_id": "openclaw_tapas",
+    "runner_type": "openclaw",
+    "schema_version": 1,
+    "suite_id": "tapas_reasoning_openclaw_gpt4o_mini_suite"
+  },
+  "output_artifacts": [],
+  "provider": {
+    "finish_reason": null,
+    "gateway": "openclaw",
+    "metadata": {
+      "returncode": 0
+    },
+    "native_finish_reason": null,
+    "provider_model_id": null,
+    "provider_name": null,
+    "request_id": null,
+    "response_id": null
+  },
+  "request": {
+    "execution_parameters": {
+      "max_tokens": null,
+      "max_turns": null,
+      "retries": null,
+      "seed": null,
+      "temperature": null,
+      "timeout_seconds": 300.0,
+      "tool_choice": null,
+      "top_p": null
+    },
+    "gateway": "openclaw",
+    "metadata": {
+      "attachments": [],
+      "case_metadata": {
+        "reference_task_id": "X7_multiconstraint_planning",
+        "source": "model-benchmark/references/tasks/reasoning/X7_multiconstraint_planning.md"
+      },
+      "input_context": {},
+      "model_selection": {
+        "label": "openai/gpt-4o-mini",
+        "model_id": "gpt4o_mini_or",
+        "requested_model": "openai/gpt-4o-mini"
+      },
+      "openclaw": {
+        "agent_id": "tapas",
+        "container_image": "ghcr.io/openclaw/openclaw:2026.4.15",
+        "docker_cli": "docker",
+        "execution": "docker"
+      },
+      "requested_runner_config": {
+        "type": "openclaw"
+      }
+    },
+    "requested_model": "openai/gpt-4o-mini"
+  },
+  "runner_metadata": {
+    "openclaw": {
+      "agent_id": "tapas",
+      "container_image": "ghcr.io/openclaw/openclaw:2026.4.15",
+      "generated_openclaw_config": {
+        "artifact_id": "openclaw_config",
+        "artifact_type": "openclaw_generated_config",
+        "byte_size": 846,
+        "media_type": "application/json",
+        "metadata": {},
+        "sha256": "07a5fb5fdd2543fcb1809eb5e9fbbf3c863839a2be78c1968840dbf14d16e248",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_gpt4o_mini_suite/run_profile_e73cca/gpt4o_mini_or/tapas_x7_openclaw/run_1.artifacts/openclaw_config--openclaw.json"
+      },
+      "key_output_artifacts": [],
+      "metadata": {},
+      "openclaw_logs": {
+        "artifact_id": "openclaw_logs",
+        "artifact_type": "openclaw_logs",
+        "byte_size": 8834,
+        "media_type": "text/plain",
+        "metadata": {},
+        "sha256": "247741d0a1a7e82e595fc1c7f9070d649fdcb416c297b54f8b59e67bf803bd25",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_gpt4o_mini_suite/run_profile_e73cca/gpt4o_mini_or/tapas_x7_openclaw/run_1.artifacts/openclaw_logs--openclaw.log"
+      },
+      "raw_session_trace": {
+        "artifact_id": "openclaw_raw_trace",
+        "artifact_type": "openclaw_raw_session_trace",
+        "byte_size": 8659,
+        "media_type": "application/json",
+        "metadata": {},
+        "sha256": "ca8032c8699b3551574b7b05d13da533cbbd60942af27614c93ade017bb62bc3",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_gpt4o_mini_suite/run_profile_e73cca/gpt4o_mini_or/tapas_x7_openclaw/run_1.artifacts/openclaw_raw_trace--raw_session_trace.json"
+      },
+      "schema_version": 1,
+      "workspace_diff": {
+        "artifact_id": "openclaw_workspace_diff",
+        "artifact_type": "openclaw_workspace_diff",
+        "byte_size": 1089,
+        "media_type": "text/x-diff",
+        "metadata": {},
+        "sha256": "4cf48f65782e79c8b9bf620dc5343149748c21993c44714adb304e285c5fb65c",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_gpt4o_mini_suite/run_profile_e73cca/gpt4o_mini_or/tapas_x7_openclaw/run_1.artifacts/openclaw_workspace_diff--workspace.diff"
+      },
+      "workspace_snapshot": {
+        "artifact_id": "openclaw_workspace_snapshot",
+        "artifact_type": "openclaw_workspace_snapshot",
+        "byte_size": 879,
+        "media_type": "application/gzip",
+        "metadata": {},
+        "sha256": "46a89c5cd412dcea536c916c49291be33ec424a2657d76931c6cd0e4e2052c1c",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_gpt4o_mini_suite/run_profile_e73cca/gpt4o_mini_or/tapas_x7_openclaw/run_1.artifacts/openclaw_workspace_snapshot--workspace_snapshot.tar.gz"
+      }
+    }
+  },
+  "status": "success",
+  "timing": {
+    "completed_at": "2026-04-20T17:54:19.229860Z",
+    "duration_seconds": 31.755,
+    "queued_at": "2026-04-20T17:53:47.474881Z",
+    "started_at": "2026-04-20T17:53:47.474883Z"
+  },
+  "trace": [
+    {
+      "detail": "Docker-only execution using the run profile image.",
+      "event_type": "runner",
+      "metadata": {
+        "docker_cli": "docker",
+        "pinned_image": "ghcr.io/openclaw/openclaw:2026.4.15"
+      },
+      "name": "openclaw_executor_selected",
+      "sequence": 0,
+      "timestamp": null
+    },
+    {
+      "detail": "Materialized OpenClaw workspace template.",
+      "event_type": "runner",
+      "metadata": {
+        "placeholder_files": [
+          "IDENTITY.md",
+          "TOOLS.md",
+          "USER.md"
+        ],
+        "workspace_dir": "/tmp/pae-openclaw-i17azdul/workspace"
+      },
+      "name": "workspace_materialized",
+      "sequence": 1,
+      "timestamp": null
+    },
+    {
+      "content": "Necesito que me ayudes a planificar la siguiente semana. Estas son mis\nrestricciones y compromisos:\n\nCOMPROMISOS FIJOS:\n- Lunes: standup Avature 10:30h (1h)\n- Martes: reuni\u00f3n con inversor 16:00h (2h)\n- Mi\u00e9rcoles: dentista 11:00h (1.5h)\n- Viernes: entrega informe mensual VenPraLab (deadline 18:00h)\n\nTAREAS PENDIENTES (urgentes):\n- Preparar one-pager VenPraLab para la reuni\u00f3n del martes (estimado: 4h)\n- Revisar y corregir prototipo de la app de Avature (estimado: 6h, pedido para el mi\u00e9rcoles por la tarde)\n- Preparar al inversor: investigar su background + ensayo del pitch (estimado: 3h)\n- Escribir informe mensual VenPraLab (estimado: 5h)\n\nRESTRICCIONES PERSONALES:\n- No trabajar m\u00e1s de 9h/d\u00eda\n- Necesito tener el lunes por la tarde libre (compromiso personal inamovible)\n- El viernes antes de las 10:00h no puedo concentrarme (tengo el desayuno familiar semanal)\n",
+      "event_type": "message",
+      "metadata": {},
+      "name": null,
+      "role": "user",
+      "sequence": 2,
+      "timestamp": null
+    },
+    {
+      "detail": "Host env forwarded into OpenClaw container (filtered: OpenRouter, providers, proxy/TLS).",
+      "event_type": "runner",
+      "metadata": {
+        "env_file": ".pae-openclaw.docker.env",
+        "forwarded_var_count": 4,
+        "mode": "filtered",
+        "openrouter_api_key_set": true
+      },
+      "name": "openclaw_container_env",
+      "sequence": 3,
+      "timestamp": null
+    },
+    {
+      "detail": "Validated generated OpenClaw config.",
+      "event_type": "runner",
+      "metadata": {
+        "returncode": 0
+      },
+      "name": "config_validated",
+      "sequence": 4,
+      "timestamp": null
+    },
+    {
+      "detail": "Running OpenClaw local agent turn.",
+      "event_type": "runner",
+      "metadata": {
+        "agent_id": "tapas"
+      },
+      "name": "agent_invoked",
+      "sequence": 5,
+      "timestamp": null
+    }
+  ],
+  "usage": {
+    "cost_usd": null,
+    "normalized": {
+      "cache_write_tokens": null,
+      "cached_input_tokens": null,
+      "input_tokens": null,
+      "output_tokens": null,
+      "reasoning_tokens": null,
+      "total_tokens": null
+    },
+    "raw_provider_usage": null
+  }
+}

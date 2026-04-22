@@ -1,0 +1,203 @@
+{
+  "error": null,
+  "identity": {
+    "case_id": "tapas_h3_openclaw",
+    "run_id": "run_13f5ad8b778c43078df93128f2573e34",
+    "run_profile_id": "openclaw_tapas",
+    "runner_type": "openclaw",
+    "schema_version": 1,
+    "suite_id": "tapas_reasoning_openclaw_gpt4o_mini_suite"
+  },
+  "output_artifacts": [],
+  "provider": {
+    "finish_reason": null,
+    "gateway": "openclaw",
+    "metadata": {
+      "returncode": 0
+    },
+    "native_finish_reason": null,
+    "provider_model_id": null,
+    "provider_name": null,
+    "request_id": null,
+    "response_id": null
+  },
+  "request": {
+    "execution_parameters": {
+      "max_tokens": null,
+      "max_turns": null,
+      "retries": null,
+      "seed": null,
+      "temperature": null,
+      "timeout_seconds": 300.0,
+      "tool_choice": null,
+      "top_p": null
+    },
+    "gateway": "openclaw",
+    "metadata": {
+      "attachments": [],
+      "case_metadata": {
+        "reference_task_id": "H3_finance_reasoning",
+        "source": "model-benchmark/references/tasks/reasoning/H3_finance_reasoning.md"
+      },
+      "input_context": {},
+      "model_selection": {
+        "label": "openai/gpt-4o-mini",
+        "model_id": "gpt4o_mini_or",
+        "requested_model": "openai/gpt-4o-mini"
+      },
+      "openclaw": {
+        "agent_id": "tapas",
+        "container_image": "ghcr.io/openclaw/openclaw:2026.4.15",
+        "docker_cli": "docker",
+        "execution": "docker"
+      },
+      "requested_runner_config": {
+        "type": "openclaw"
+      }
+    },
+    "requested_model": "openai/gpt-4o-mini"
+  },
+  "runner_metadata": {
+    "openclaw": {
+      "agent_id": "tapas",
+      "container_image": "ghcr.io/openclaw/openclaw:2026.4.15",
+      "generated_openclaw_config": {
+        "artifact_id": "openclaw_config",
+        "artifact_type": "openclaw_generated_config",
+        "byte_size": 846,
+        "media_type": "application/json",
+        "metadata": {},
+        "sha256": "07a5fb5fdd2543fcb1809eb5e9fbbf3c863839a2be78c1968840dbf14d16e248",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_gpt4o_mini_suite/run_profile_e73cca/gpt4o_mini_or/tapas_h3_openclaw/run_1.artifacts/openclaw_config--openclaw.json"
+      },
+      "key_output_artifacts": [],
+      "metadata": {},
+      "openclaw_logs": {
+        "artifact_id": "openclaw_logs",
+        "artifact_type": "openclaw_logs",
+        "byte_size": 8462,
+        "media_type": "text/plain",
+        "metadata": {},
+        "sha256": "df4ad2e613137ff6fc47d9223296592568cd0a628e213a8cee935862a9697010",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_gpt4o_mini_suite/run_profile_e73cca/gpt4o_mini_or/tapas_h3_openclaw/run_1.artifacts/openclaw_logs--openclaw.log"
+      },
+      "raw_session_trace": {
+        "artifact_id": "openclaw_raw_trace",
+        "artifact_type": "openclaw_raw_session_trace",
+        "byte_size": 8287,
+        "media_type": "application/json",
+        "metadata": {},
+        "sha256": "5611962246815ed2b6ea9ab7aa14c17f188046208c18f372159775e1e30c99d1",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_gpt4o_mini_suite/run_profile_e73cca/gpt4o_mini_or/tapas_h3_openclaw/run_1.artifacts/openclaw_raw_trace--raw_session_trace.json"
+      },
+      "schema_version": 1,
+      "workspace_diff": {
+        "artifact_id": "openclaw_workspace_diff",
+        "artifact_type": "openclaw_workspace_diff",
+        "byte_size": 1089,
+        "media_type": "text/x-diff",
+        "metadata": {},
+        "sha256": "1020f70fad8a80cbf44906799e3995d749d212532777ddf8864f2c41f0bcfe16",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_gpt4o_mini_suite/run_profile_e73cca/gpt4o_mini_or/tapas_h3_openclaw/run_1.artifacts/openclaw_workspace_diff--workspace.diff"
+      },
+      "workspace_snapshot": {
+        "artifact_id": "openclaw_workspace_snapshot",
+        "artifact_type": "openclaw_workspace_snapshot",
+        "byte_size": 874,
+        "media_type": "application/gzip",
+        "metadata": {},
+        "sha256": "179edab30e27ada1ed8c51bf28e256d907656035ab069672a56e5a3538f77e8b",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/tests/fixtures/bundled_workspace/outputs/runs/suit_tapas_reasoning_openclaw_gpt4o_mini_suite/run_profile_e73cca/gpt4o_mini_or/tapas_h3_openclaw/run_1.artifacts/openclaw_workspace_snapshot--workspace_snapshot.tar.gz"
+      }
+    }
+  },
+  "status": "success",
+  "timing": {
+    "completed_at": "2026-04-20T17:53:47.465221Z",
+    "duration_seconds": 31.1401,
+    "queued_at": "2026-04-20T17:53:16.325090Z",
+    "started_at": "2026-04-20T17:53:16.325093Z"
+  },
+  "trace": [
+    {
+      "detail": "Docker-only execution using the run profile image.",
+      "event_type": "runner",
+      "metadata": {
+        "docker_cli": "docker",
+        "pinned_image": "ghcr.io/openclaw/openclaw:2026.4.15"
+      },
+      "name": "openclaw_executor_selected",
+      "sequence": 0,
+      "timestamp": null
+    },
+    {
+      "detail": "Materialized OpenClaw workspace template.",
+      "event_type": "runner",
+      "metadata": {
+        "placeholder_files": [
+          "IDENTITY.md",
+          "TOOLS.md",
+          "USER.md"
+        ],
+        "workspace_dir": "/tmp/pae-openclaw-1jgbs2gt/workspace"
+      },
+      "name": "workspace_materialized",
+      "sequence": 1,
+      "timestamp": null
+    },
+    {
+      "content": "Tengo 80.000\u20ac ahorrados. Mi situaci\u00f3n:\n- 60.000\u20ac reservados para posible hipoteca en 1-2 a\u00f1os\n- 10.000\u20ac fondo de emergencia (no tocar)\n- 10.000\u20ac disponibles para invertir ahora mismo\n\nTengo 26 a\u00f1os, trabajo estable, perfil moderado.\n\nCon los 10.000\u20ac disponibles:\n1. \u00bfQu\u00e9 asset allocation me recomendar\u00edas?\n2. \u00bfQu\u00e9 instrumentos concretos (ETFs, fondos)?\n3. \u00bfTiene sentido invertir a largo plazo si en 1-2 a\u00f1os puedo necesitar el dinero de la hipoteca?\n\nS\u00e9 espec\u00edfico y razona cada punto.\n",
+      "event_type": "message",
+      "metadata": {},
+      "name": null,
+      "role": "user",
+      "sequence": 2,
+      "timestamp": null
+    },
+    {
+      "detail": "Host env forwarded into OpenClaw container (filtered: OpenRouter, providers, proxy/TLS).",
+      "event_type": "runner",
+      "metadata": {
+        "env_file": ".pae-openclaw.docker.env",
+        "forwarded_var_count": 4,
+        "mode": "filtered",
+        "openrouter_api_key_set": true
+      },
+      "name": "openclaw_container_env",
+      "sequence": 3,
+      "timestamp": null
+    },
+    {
+      "detail": "Validated generated OpenClaw config.",
+      "event_type": "runner",
+      "metadata": {
+        "returncode": 0
+      },
+      "name": "config_validated",
+      "sequence": 4,
+      "timestamp": null
+    },
+    {
+      "detail": "Running OpenClaw local agent turn.",
+      "event_type": "runner",
+      "metadata": {
+        "agent_id": "tapas"
+      },
+      "name": "agent_invoked",
+      "sequence": 5,
+      "timestamp": null
+    }
+  ],
+  "usage": {
+    "cost_usd": null,
+    "normalized": {
+      "cache_write_tokens": null,
+      "cached_input_tokens": null,
+      "input_tokens": null,
+      "output_tokens": null,
+      "reasoning_tokens": null,
+      "total_tokens": null
+    },
+    "raw_provider_usage": null
+  }
+}

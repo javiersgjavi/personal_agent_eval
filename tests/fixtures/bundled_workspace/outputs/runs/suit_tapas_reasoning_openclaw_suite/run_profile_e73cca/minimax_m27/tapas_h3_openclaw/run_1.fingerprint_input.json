@@ -1,0 +1,30 @@
+{
+  "fingerprint": "2771955b5831171fe0b1a2500b7a57af535915f6ef8c0dce0ce837fbb96e930e",
+  "fingerprint_version": 1,
+  "hash_algorithm": "sha256",
+  "kind": "run",
+  "payload": {
+    "attachments": [],
+    "case_metadata": {
+      "reference_task_id": "H3_finance_reasoning",
+      "source": "model-benchmark/references/tasks/reasoning/H3_finance_reasoning.md"
+    },
+    "input_context": {},
+    "input_messages": [
+      {
+        "content": "Tengo 80.000\u20ac ahorrados. Mi situaci\u00f3n:\n- 60.000\u20ac reservados para posible hipoteca en 1-2 a\u00f1os\n- 10.000\u20ac fondo de emergencia (no tocar)\n- 10.000\u20ac disponibles para invertir ahora mismo\n\nTengo 26 a\u00f1os, trabajo estable, perfil moderado.\n\nCon los 10.000\u20ac disponibles:\n1. \u00bfQu\u00e9 asset allocation me recomendar\u00edas?\n2. \u00bfQu\u00e9 instrumentos concretos (ETFs, fondos)?\n3. \u00bfTiene sentido invertir a largo plazo si en 1-2 a\u00f1os puedo necesitar el dinero de la hipoteca?\n\nS\u00e9 espec\u00edfico y razona cada punto.\n",
+        "metadata": {},
+        "name": null,
+        "role": "user"
+      }
+    ],
+    "requested_model": "minimax/minimax-m2.7",
+    "runner_config": {
+      "agent_fingerprint": "dda73a0a9739c15a1e0d1b024b52b42041d277f09d713f08f2ac262a7d86b671",
+      "docker_cli": "docker",
+      "image": "ghcr.io/openclaw/openclaw:2026.4.15",
+      "openclaw_primary_model_ref": "openrouter/minimax/minimax-m2.7"
+    },
+    "runner_type": "openclaw"
+  }
+}

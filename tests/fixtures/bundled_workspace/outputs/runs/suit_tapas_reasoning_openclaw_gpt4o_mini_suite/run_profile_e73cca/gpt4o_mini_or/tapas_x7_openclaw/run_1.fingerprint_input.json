@@ -1,0 +1,30 @@
+{
+  "fingerprint": "4c9d4da567a9564f3ee1cb5dd234f3470c8309b9a163df779adbb998fbab5072",
+  "fingerprint_version": 1,
+  "hash_algorithm": "sha256",
+  "kind": "run",
+  "payload": {
+    "attachments": [],
+    "case_metadata": {
+      "reference_task_id": "X7_multiconstraint_planning",
+      "source": "model-benchmark/references/tasks/reasoning/X7_multiconstraint_planning.md"
+    },
+    "input_context": {},
+    "input_messages": [
+      {
+        "content": "Necesito que me ayudes a planificar la siguiente semana. Estas son mis\nrestricciones y compromisos:\n\nCOMPROMISOS FIJOS:\n- Lunes: standup Avature 10:30h (1h)\n- Martes: reuni\u00f3n con inversor 16:00h (2h)\n- Mi\u00e9rcoles: dentista 11:00h (1.5h)\n- Viernes: entrega informe mensual VenPraLab (deadline 18:00h)\n\nTAREAS PENDIENTES (urgentes):\n- Preparar one-pager VenPraLab para la reuni\u00f3n del martes (estimado: 4h)\n- Revisar y corregir prototipo de la app de Avature (estimado: 6h, pedido para el mi\u00e9rcoles por la tarde)\n- Preparar al inversor: investigar su background + ensayo del pitch (estimado: 3h)\n- Escribir informe mensual VenPraLab (estimado: 5h)\n\nRESTRICCIONES PERSONALES:\n- No trabajar m\u00e1s de 9h/d\u00eda\n- Necesito tener el lunes por la tarde libre (compromiso personal inamovible)\n- El viernes antes de las 10:00h no puedo concentrarme (tengo el desayuno familiar semanal)\n",
+        "metadata": {},
+        "name": null,
+        "role": "user"
+      }
+    ],
+    "requested_model": "openai/gpt-4o-mini",
+    "runner_config": {
+      "agent_fingerprint": "0071e2ab2437a18a65aebec3d065676d07c418ef4cebe679c57ca6c8e924efa0",
+      "docker_cli": "docker",
+      "image": "ghcr.io/openclaw/openclaw:2026.4.15",
+      "openclaw_primary_model_ref": "openrouter/openai/gpt-4o-mini"
+    },
+    "runner_type": "openclaw"
+  }
+}
