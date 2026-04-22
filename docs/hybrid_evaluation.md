@@ -58,7 +58,7 @@ The deterministic layer is informative. The judge reads that evidence and assign
 
 `final_score` is **the judge's overall score** (`judge_overall.score`). It is the judge's holistic verdict after reviewing all evidence. It is not derived from the per-dimension scores.
 
-The per-dimension `final_dimensions` scores exist for diagnostics: to understand where a model is strong or weak. They do not determine the top-level score in V1.
+The per-dimension `final_dimensions` scores exist for diagnostics: to understand where a model is strong or weak. They do not determine the top-level score.
 
 ---
 
