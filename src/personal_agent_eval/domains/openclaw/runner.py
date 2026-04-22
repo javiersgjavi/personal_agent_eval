@@ -697,7 +697,8 @@ def _build_openclaw_observable_summary(
     payload = _parse_openclaw_payload(run_payload_text)
     if payload is None:
         return None
-    meta = payload.get("meta") if isinstance(payload.get("meta"), Mapping) else {}
+    raw_meta = payload.get("meta")
+    meta: Mapping[str, Any] = raw_meta if isinstance(raw_meta, Mapping) else {}
     summary: dict[str, Any] = {}
 
     final_prompt_text = payload.get("finalPromptText") or meta.get("finalPromptText")

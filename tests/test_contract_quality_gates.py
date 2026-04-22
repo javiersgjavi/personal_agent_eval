@@ -7,6 +7,7 @@ from personal_agent_eval.aggregation.models import (
     DimensionScores,
     FinalEvaluationResult,
     HybridAggregationSummary,
+    OverallAssessment,
     SecurityBlock,
 )
 from personal_agent_eval.artifacts import (
@@ -517,7 +518,7 @@ def _build_final_result(
             efficiency=5.0,
             spark=6.0,
         ),
-        judge_overall={"score": final_score, "evidence": ["Overall evidence"]},
+        judge_overall=OverallAssessment(score=final_score, evidence=["Overall evidence"]),
         final_score=final_score,
         summary=HybridAggregationSummary(
             deterministic_passed_checks=1,

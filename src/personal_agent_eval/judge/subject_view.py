@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlparse
 
 import yaml
@@ -56,8 +56,9 @@ def render_judge_user_text(subject_view: dict[str, Any]) -> str:
     if isinstance(task_messages, list) and task_messages:
         lines.append("")
         lines.append("Task messages")
-        for index, message in enumerate(task_messages, start=1):
-            if not isinstance(message, dict):
+        for index, raw_message in enumerate(task_messages, start=1):
+            message = _as_string_key_dict(raw_message)
+            if message is None:
                 continue
             role = message.get("role") or "user"
             content = message.get("content")
@@ -169,7 +170,8 @@ def render_judge_user_text(subject_view: dict[str, Any]) -> str:
             if not process_trace:
                 lines.append("- none")
             else:
-                for index, event in enumerate(process_trace, start=1):
+                for index, raw_event in enumerate(process_trace, start=1):
+                    event = _as_string_key_dict(raw_event)
                     lines.extend(_render_trace_event(index, event))
             lines.append("")
 
@@ -614,9 +616,9 @@ def _build_synthetic_openclaw_process_trace(run_artifact: RunArtifact) -> list[d
     return events
 
 
-def _render_trace_event(index: int, event: dict[str, Any]) -> list[str]:
+def _render_trace_event(index: int, event: dict[str, Any] | None) -> list[str]:
     lines: list[str] = []
-    if not isinstance(event, dict):
+    if event is None:
         return [f"{index}. [unrecognized event]"]
     kind = event.get("kind", "unknown")
     lines.append(f"{index}. {kind}")
@@ -696,6 +698,14 @@ def _render_output_summary(summary: dict[str, Any]) -> str:
 
 def _indent_block(text: str, *, prefix: str) -> list[str]:
     return [f"{prefix}{line}" if line else prefix.rstrip() for line in text.splitlines()]
+
+
+def _as_string_key_dict(value: object) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    if not all(isinstance(key, str) for key in value):
+        return None
+    return cast(dict[str, Any], value)
 
 
 def _safe_pretty(value: Any) -> str:

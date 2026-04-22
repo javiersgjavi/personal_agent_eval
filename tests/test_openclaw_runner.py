@@ -7,6 +7,7 @@ import pytest
 
 from helpers.docker_subprocess_stub import patch_openclaw_docker_run
 from personal_agent_eval.artifacts import parse_openclaw_run_evidence
+from personal_agent_eval.artifacts.run_artifact import FinalOutputTraceEvent
 from personal_agent_eval.config import load_openclaw_agent, load_run_profile, load_test_config
 from personal_agent_eval.config.suite_config import ModelConfig
 from personal_agent_eval.config.test_config import TestConfig as CaseConfig
@@ -161,6 +162,7 @@ def test_run_openclaw_case_extracts_final_output_from_stderr(
     )
 
     assert artifact.trace[-1].event_type == "final_output"
+    assert isinstance(artifact.trace[-1], FinalOutputTraceEvent)
     assert artifact.trace[-1].content == "from-stderr"
 
 

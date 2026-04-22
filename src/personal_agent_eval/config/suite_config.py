@@ -22,6 +22,9 @@ class ModelConfig(ConfigModel):
 
     model_id: str = Field(pattern=ID_PATTERN)
     label: str | None = None
+    requested_model: str | None = None
+    provider: str | None = None
+    model_name: str | None = None
 
 
 class CaseSelection(ConfigModel):
