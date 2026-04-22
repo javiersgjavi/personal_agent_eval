@@ -130,9 +130,7 @@ def render_judge_user_text(subject_view: dict[str, Any]) -> str:
             tool_count = tool_summary.get("tool_call_count")
             tools_used = tool_summary.get("tools_used", [])
             rendered_tools = (
-                ", ".join(tools_used)
-                if isinstance(tools_used, list) and tools_used
-                else "none"
+                ", ".join(tools_used) if isinstance(tools_used, list) and tools_used else "none"
             )
             lines.append(
                 f"Tool activity: {tool_count if isinstance(tool_count, int) else 0} tool calls; "
@@ -429,12 +427,7 @@ def _render_rubric_table(rubric: dict[str, Any]) -> list[str]:
             lines.append("|---|---|---|")
             for name, good, bad in rendered_rows:
                 lines.append(
-                    "| "
-                    + " | ".join(
-                        _escape_table_cell(cell)
-                        for cell in (name, good, bad)
-                    )
-                    + " |"
+                    "| " + " | ".join(_escape_table_cell(cell) for cell in (name, good, bad)) + " |"
                 )
 
     if isinstance(scoring_instructions, str) and scoring_instructions.strip():
@@ -472,9 +465,7 @@ def _build_subject_response(run_artifact: RunArtifact) -> dict[str, Any]:
     ]
     final_output = _last_final_output(run_artifact)
     tool_calls = [
-        event.tool_name
-        for event in run_artifact.trace
-        if isinstance(event, ToolCallTraceEvent)
+        event.tool_name for event in run_artifact.trace if isinstance(event, ToolCallTraceEvent)
     ]
     openclaw_tool_summary = _extract_openclaw_tool_summary(run_artifact)
     tool_call_count = len(tool_calls)
@@ -798,10 +789,7 @@ def _normalize_value(value: Any, *, depth: int) -> Any:
     if isinstance(value, str):
         return _normalize_text(value)
     if isinstance(value, list | tuple):
-        items = [
-            _normalize_value(item, depth=depth + 1)
-            for item in list(value)[:_MAX_LIST_ITEMS]
-        ]
+        items = [_normalize_value(item, depth=depth + 1) for item in list(value)[:_MAX_LIST_ITEMS]]
         return {
             "content_type": "list",
             "item_count": len(value),
@@ -1007,10 +995,7 @@ def _extract_openclaw_embedded_payload(content: str) -> dict[str, Any] | None:
             "payloads" in payload
             or "finalAssistantVisibleText" in payload
             or "finalPromptText" in payload
-            or (
-                isinstance(payload.get("meta"), dict)
-                and "toolSummary" in payload["meta"]
-            )
+            or (isinstance(payload.get("meta"), dict) and "toolSummary" in payload["meta"])
         ):
             return payload
     return None

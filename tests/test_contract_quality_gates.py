@@ -244,9 +244,7 @@ def test_evaluation_fingerprint_reorder_vs_aggregation_change() -> None:
         }
     )
     changed = evaluation_profile.model_copy(
-        update={
-            "aggregation": evaluation_profile.aggregation.model_copy(update={"method": "mean"})
-        }
+        update={"aggregation": evaluation_profile.aggregation.model_copy(update={"method": "mean"})}
     )
 
     base_input = build_evaluation_fingerprint_input(evaluation_profile=evaluation_profile)

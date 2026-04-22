@@ -57,6 +57,7 @@ nav:
       - Configuration Reference: configuration.md
       - CLI Reference: cli.md
       - Fingerprints & Reuse: fingerprints.md
+      - OpenClaw Agents: openclaw_agents.md
   - Evaluation:
       - Deterministic Checks: deterministic_checks.md
       - Judge Results: judge_results.md

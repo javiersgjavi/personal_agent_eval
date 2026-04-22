@@ -45,8 +45,7 @@ def test_resolve_repo_evaluation_profile_uses_configs_default_file() -> None:
     assert "strict evaluation judge" in text
     assert "`dimensions`" in text
     assert (
-        resolve_judge_system_prompt_details(cfg)["source"]
-        == "path:prompts/judge_system_default.md"
+        resolve_judge_system_prompt_details(cfg)["source"] == "path:prompts/judge_system_default.md"
     )
 
 

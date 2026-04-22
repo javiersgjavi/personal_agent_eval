@@ -354,17 +354,24 @@ outputs/
 ├── charts/<eval_profile_id>/score_cost.png
 ├── runs/suit_<suite_id>/run_profile_<fp6>/
 │   └── <model_id>/<case_id>/
-│       ├── run_1.json                           ← raw trace, token usage, provider metadata
-│       └── run_1.fingerprint_input.json         ← exact payload that was hashed
+│       ├── run_1.json                              ← raw trace, token usage, provider metadata
+│       ├── run_1.fingerprint_input.json            ← exact payload that was hashed
+│       └── run_1.artifacts/                        ← openclaw only
+│           ├── openclaw_config--openclaw.json      ← generated container config
+│           ├── openclaw_workspace_diff--*.diff     ← what the agent changed
+│           ├── openclaw_key_output_1--<file>       ← extracted expected artifact
+│           ├── openclaw_logs--openclaw.log         ← command log
+│           ├── openclaw_raw_trace--*.json          ← container stdout/stderr
+│           └── openclaw_workspace_snapshot--*.tar.gz
 └── evaluations/suit_<suite_id>/
     └── evaluation_profile_<fp6>/eval_profile_<eval_id>_<fp6>/
         └── <model_id>/<case_id>/
-            ├── evaluation_result_summary_1.md   ← START HERE: verdict + evidence
-            ├── judge_1.prompt.debug.md          ← exact prompt the judge saw
+            ├── evaluation_result_summary_1.md      ← START HERE: verdict + evidence
+            ├── judge_1.prompt.debug.md             ← exact prompt the judge saw
             └── raw_outputs/
-                ├── final_result_1.json          ← judge score + deterministic summaries
-                ├── judge_1.json                 ← raw aggregated judge response
-                └── judge_1.prompt.user.json     ← structured subject view payload
+                ├── final_result_1.json             ← judge score + deterministic summaries
+                ├── judge_1.json                    ← raw aggregated judge response
+                └── judge_1.prompt.user.json        ← structured subject view payload
 ```
 
 **Reading order:**
@@ -372,6 +379,42 @@ outputs/
 2. `judge_1.prompt.debug.md` — what the judge actually saw (check here if a score seems wrong)
 3. `raw_outputs/final_result_1.json` — judge scores, deterministic summaries, and final reported dimensions
 4. `run_1.json` — full event trace (tool calls, messages, token usage) for runner-level debug
+5. For openclaw: `run_1.artifacts/openclaw_workspace_diff--*.diff` — the exact changes the agent made to the workspace
+
+---
+
+## Custom OpenClaw agents
+
+The shipped examples use `basic_agent`. To benchmark your own agent — with its own identity, instructions, and context files — create an entry under `configs/agents/<agent_id>/`:
+
+```
+configs/agents/my_agent/
+  agent.yaml          ← agent ID, openclaw config fragments
+  workspace/
+    AGENTS.md         ← workspace rules and session behaviour (required)
+    SOUL.md           ← agent personality and values
+    IDENTITY.md       ← name, role, avatar
+    USER.md           ← context about the person the agent works for
+    TOOLS.md          ← environment-specific tool notes
+    BOOTSTRAP.md      ← first-run setup instructions (deleted after first session)
+    HEARTBEAT.md      ← idle/heartbeat response instructions
+```
+
+The workspace is copied into an ephemeral directory before each run. The agent sees it as its home. Any file you add here shapes its behaviour; changing a file invalidates the fingerprint for that agent, so all stored runs for it are re-executed on the next campaign.
+
+**Do not set `agent.prompt` in `agent.yaml` unless you intend to test a modified configuration.** Omitting it is the correct default. OpenClaw has its own internal system prompt that is separate from the workspace files — those files are context the agent reads, not the system prompt itself. Setting `agent.prompt` replaces that internal prompt, which modifies the OpenClaw harness and means you are no longer benchmarking the same agent your users interact with.
+
+Then wire the agent into your run profile:
+
+```yaml
+# configs/run_profiles/my_run.yaml
+openclaw:
+  agent_id: my_agent
+  image: ghcr.io/openclaw/openclaw:2026.4.15
+  timeout_seconds: 300
+```
+
+See `skill/references/openclaw-agents.md` for workspace file roles, the full `agent.yaml` schema, and how to capture a workspace from a live OpenClaw instance.
 
 ---
 
@@ -430,4 +473,5 @@ outputs/                          ← generated at runtime; not committed
 
 - `skill/references/config-fields.md` — full field-by-field YAML reference for all config types
 - `skill/references/evaluation.md` — scoring dimensions in depth, what the judge sees, and how to read and debug evaluation artifacts
+- `skill/references/openclaw-agents.md` — creating and customising OpenClaw agents, workspace file roles, run artifacts
 - `uv run mkdocs serve` — browse the full documentation site locally

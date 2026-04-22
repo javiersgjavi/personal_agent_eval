@@ -98,9 +98,7 @@ def test_run_openclaw_case_invalid_config_still_records_evidence(
     assert artifact.output_artifacts == []
 
 
-def test_run_openclaw_case_uses_docker_cli(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_run_openclaw_case_uses_docker_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[list[str]] = []
 
     def fake_run(argv: list[str], **kwargs: object) -> SimpleNamespace:
@@ -173,9 +171,9 @@ def test_run_openclaw_case_persists_observable_summary_metadata(
         "[tools] browser failed: gateway closed\n"
         'Bind: loopback raw_params={"action":"open","url":"https://www.python.org/downloads/"}\n'
         "{"
-        "\"payloads\":[{\"text\":\"Consulta completada en python.org/downloads/\"}],"
-        "\"finalAssistantVisibleText\":\"Consulta completada en python.org/downloads/\","
-        "\"meta\":{\"toolSummary\":{\"calls\":2,\"tools\":[\"web_search\",\"write\"],\"failures\":0}}"
+        '"payloads":[{"text":"Consulta completada en python.org/downloads/"}],'
+        '"finalAssistantVisibleText":"Consulta completada en python.org/downloads/",'
+        '"meta":{"toolSummary":{"calls":2,"tools":["web_search","write"],"failures":0}}'
         "}"
     )
     patch_openclaw_docker_run(monkeypatch, run_stdout=payload)

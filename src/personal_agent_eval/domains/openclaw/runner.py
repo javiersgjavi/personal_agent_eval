@@ -62,6 +62,7 @@ def _openclaw_cli_agent_id(agent_config: OpenClawAgentConfig) -> str:
             return stripped
     return agent_config.agent_id
 
+
 # Sidecar env file for ``docker run --env-file`` (avoids ARG_MAX vs. many ``-e`` flags).
 _DOCKER_ENV_FILE_NAME = ".pae-openclaw.docker.env"
 
@@ -736,10 +737,7 @@ def _parse_openclaw_payload(raw_text: str) -> dict[str, Any] | None:
             "payloads" in payload
             or "finalAssistantVisibleText" in payload
             or "finalPromptText" in payload
-            or (
-                isinstance(payload.get("meta"), Mapping)
-                and "toolSummary" in payload["meta"]
-            )
+            or (isinstance(payload.get("meta"), Mapping) and "toolSummary" in payload["meta"])
         ):
             return payload
     return None

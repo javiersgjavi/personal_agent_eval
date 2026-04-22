@@ -31,9 +31,13 @@ def test_run_case_storage_relative_paths(tmp_path: Path) -> None:
         repetition_index=0,
     )
     root = tmp_path.resolve()
-    assert rel["run_artifact"] == storage.case_run_path(
-        "my_suite", "f" * 64, "vendor/model", "case_a", 0
-    ).resolve().relative_to(root).as_posix()
+    assert (
+        rel["run_artifact"]
+        == storage.case_run_path("my_suite", "f" * 64, "vendor/model", "case_a", 0)
+        .resolve()
+        .relative_to(root)
+        .as_posix()
+    )
     assert rel["run_artifacts_dir"].endswith("run_1.artifacts")
     assert rel["run_fingerprint_input"].endswith("run_1.fingerprint_input.json")
 
@@ -78,9 +82,9 @@ def test_build_openclaw_workflow_evidence_summary_maps_types(tmp_path: Path) -> 
     assert summary.agent_id == "support_agent"
     assert summary.container_image == "ghcr.io/x:y"
     assert OpenClawEvidenceArtifactTypes.GENERATED_OPENCLAW_CONFIG in summary.evidence_paths
-    assert summary.evidence_paths[
-        OpenClawEvidenceArtifactTypes.GENERATED_OPENCLAW_CONFIG
-    ].endswith("cfg.json")
+    assert summary.evidence_paths[OpenClawEvidenceArtifactTypes.GENERATED_OPENCLAW_CONFIG].endswith(
+        "cfg.json"
+    )
 
 
 def test_write_case_run_manifest_records_openclaw_fields(tmp_path: Path) -> None:

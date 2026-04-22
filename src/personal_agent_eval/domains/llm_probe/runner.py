@@ -645,9 +645,7 @@ def _resolve_tool_runtime(
                     tool_names.append(stripped)
 
     deduped_names = tuple(
-        name
-        for name in dict.fromkeys(tool_names)
-        if name in _DEFAULT_TOOL_DEFINITIONS
+        name for name in dict.fromkeys(tool_names) if name in _DEFAULT_TOOL_DEFINITIONS
     )
     request_metadata["resolved_tools"] = list(deduped_names)
     tool_choice = _coerce_tool_choice(llm_probe_context.get("tool_choice")) or (
@@ -764,8 +762,7 @@ def _run_provider_turns(
 
     return ProviderTurnResult(
         error=ValueError(
-            f"Tool-enabled conversation exceeded max_turns={max_turns} "
-            "without a final answer."
+            f"Tool-enabled conversation exceeded max_turns={max_turns} without a final answer."
         )
     )
 

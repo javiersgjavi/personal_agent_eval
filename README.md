@@ -11,6 +11,8 @@
 
 The key property: every run is identified by a SHA-256 fingerprint of its inputs. Re-running the same configuration reuses stored results instead of spending tokens again. Adding a new model or case to an existing campaign only runs what is missing — nothing already computed is touched.
 
+**Agent-friendly by design.** This repo ships a `SKILL.md` at its root. Any AI agent with skill support (such as Openclaw or Claude Code) loads it automatically and can set up test cases, run benchmarks, read results, and configure custom OpenClaw agents from a plain-language description — no step-by-step instructions needed.
+
 ---
 
 ## Quick start
@@ -78,6 +80,12 @@ uv run pae run-eval \
 ```
 
 Both runner modes share the same config schema, the same scoring pipeline, and the same output format.
+
+### Bringing your own agent
+
+The shipped examples use `basic_agent`, a default-style OpenClaw workspace. To benchmark your own agent, create a directory under `configs/agents/<agent_id>/` with an `agent.yaml` and a `workspace/` folder containing the files that define the agent's identity, memory contract, working context (`AGENTS.md`, `SOUL.md`, `USER.md`, etc.), and skills. Point your run profile at it with `openclaw.agent_id: my_agent` and run normally.
+
+The workspace is copied into an ephemeral container directory before each run — the agent sees it as home. Changing any workspace file invalidates the fingerprint and triggers a fresh run, so your evaluation always reflects the current agent definition. See [docs/examples/minimal_openclaw.md](docs/examples/minimal_openclaw.md) for a full example.
 
 ---
 
@@ -210,5 +218,12 @@ If you want to add a deterministic check, a new runner mode, or a runnable examp
 
 ```bash
 uv sync --group dev
+uv run pre-commit install
 uv run pytest
+```
+
+Before committing, the local hook will auto-format staged Python files with `ruff format`, apply safe lint fixes with `ruff check --fix`, and scan staged files for leaked secrets. To run the same checks manually across the repo:
+
+```bash
+uv run pre-commit run --all-files
 ```

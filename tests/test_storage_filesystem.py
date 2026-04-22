@@ -333,8 +333,9 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
             model_name,
             "example_case",
             0,
-        ).read_text(encoding="utf-8")
-        .startswith("{\n  \"evaluation_target\":")
+        )
+        .read_text(encoding="utf-8")
+        .startswith('{\n  "evaluation_target":')
     )
     assert (
         storage.case_judge_prompt_debug_path(
@@ -345,7 +346,8 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
             model_name,
             "example_case",
             0,
-        ).read_text(encoding="utf-8")
+        )
+        .read_text(encoding="utf-8")
         .startswith("SYSTEM PROMPT:\n")
     )
     summary_text = storage.case_evaluation_result_summary_path(

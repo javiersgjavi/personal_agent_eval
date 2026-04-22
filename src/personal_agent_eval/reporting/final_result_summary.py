@@ -222,9 +222,11 @@ def _markdown_table(headers: Iterable[str], rows: Iterable[Iterable[str]]) -> st
 
     def _format_row(row: Iterable[str]) -> str:
         cells = list(row)
-        return "| " + " | ".join(
-            cells[index].ljust(widths[index]) for index in range(len(cells))
-        ) + " |"
+        return (
+            "| "
+            + " | ".join(cells[index].ljust(widths[index]) for index in range(len(cells)))
+            + " |"
+        )
 
     divider = "| " + " | ".join("-" * width for width in widths) + " |"
     lines = [_format_row(header_row), divider]
@@ -242,8 +244,5 @@ def _format_score(value: float) -> str:
 
 def _format_dimension_snapshot(dimensions: object) -> str:
     names = ("task", "process", "autonomy", "closeness", "efficiency", "spark")
-    parts = [
-        f"{name}={_format_optional_score(getattr(dimensions, name))}"
-        for name in names
-    ]
+    parts = [f"{name}={_format_optional_score(getattr(dimensions, name))}" for name in names]
     return ", ".join(parts)

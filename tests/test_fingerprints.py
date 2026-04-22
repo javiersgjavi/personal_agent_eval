@@ -320,9 +320,7 @@ def test_evaluation_fingerprint_ignores_profile_id_but_changes_on_semantic_chang
         }
     )
     changed_profile = evaluation_profile.model_copy(
-        update={
-            "aggregation": evaluation_profile.aggregation.model_copy(update={"method": "mean"})
-        }
+        update={"aggregation": evaluation_profile.aggregation.model_copy(update={"method": "mean"})}
     )
 
     base_input = build_evaluation_fingerprint_input(evaluation_profile=evaluation_profile)

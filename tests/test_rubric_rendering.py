@@ -77,4 +77,3 @@ def _minimal_success_artifact():
             )
         ],
     )
-

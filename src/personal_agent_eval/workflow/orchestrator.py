@@ -516,10 +516,7 @@ class WorkflowOrchestrator:
                     [
                         *_run_warnings(run_artifact),
                         *judge_result.warnings,
-                        (
-                            "Unable to compute final evaluation result: "
-                            f"{type(exc).__name__}: {exc}"
-                        ),
+                        (f"Unable to compute final evaluation result: {type(exc).__name__}: {exc}"),
                     ]
                 )
                 self._storage.write_case_summary_text(
@@ -621,10 +618,7 @@ class WorkflowOrchestrator:
                     [
                         *_run_warnings(run_artifact),
                         *judge_result.warnings,
-                        (
-                            "Unable to compute final evaluation result: "
-                            f"{type(exc).__name__}: {exc}"
-                        ),
+                        (f"Unable to compute final evaluation result: {type(exc).__name__}: {exc}"),
                     ]
                 )
                 self._storage.write_case_summary_text(

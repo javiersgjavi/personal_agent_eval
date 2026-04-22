@@ -254,8 +254,9 @@ def test_build_judge_messages_filters_raw_run_artifact_fields() -> None:
     assert payload["execution_evidence"]["material_failures"] == []
 
 
-def test_build_judge_messages_summarizes_search_outputs_without_breaking_on_unknown_shapes(
-    ) -> None:
+def test_build_judge_messages_summarizes_search_outputs_without_breaking_on_unknown_shapes() -> (
+    None
+):
     artifact = _build_artifact().model_copy(
         update={
             "trace": [
@@ -317,51 +318,51 @@ def test_build_judge_messages_summarizes_search_outputs_without_breaking_on_unkn
 def test_build_judge_messages_normalizes_html_and_unknown_tool_outputs_resiliently() -> None:
     artifact = with_openclaw_run_evidence(
         _build_artifact().model_copy(
-        update={
-            "trace": [
-                MessageTraceEvent(
-                    sequence=0,
-                    event_type="message",
-                    role="assistant",
-                    content="using tools",
-                ),
-                ToolCallTraceEvent(
-                    sequence=1,
-                    event_type="tool_call",
-                    call_id="call_html",
-                    tool_name="fetch_page",
-                    raw_arguments={"url": "https://example.com"},
-                    parsed_arguments={"url": "https://example.com"},
-                ),
-                ToolResultTraceEvent(
-                    sequence=2,
-                    event_type="tool_result",
-                    call_id="call_html",
-                    status="success",
-                    output="<!doctype html><html><body>" + ("x" * 3000) + "</body></html>",
-                ),
-                ToolCallTraceEvent(
-                    sequence=3,
-                    event_type="tool_call",
-                    call_id="call_unknown",
-                    tool_name="weird_tool",
-                    raw_arguments={},
-                    parsed_arguments={},
-                ),
-                ToolResultTraceEvent(
-                    sequence=4,
-                    event_type="tool_result",
-                    call_id="call_unknown",
-                    status="success",
-                    output=object(),
-                ),
-                FinalOutputTraceEvent(
-                    sequence=5,
-                    event_type="final_output",
-                    content="done",
-                ),
-            ]
-        }
+            update={
+                "trace": [
+                    MessageTraceEvent(
+                        sequence=0,
+                        event_type="message",
+                        role="assistant",
+                        content="using tools",
+                    ),
+                    ToolCallTraceEvent(
+                        sequence=1,
+                        event_type="tool_call",
+                        call_id="call_html",
+                        tool_name="fetch_page",
+                        raw_arguments={"url": "https://example.com"},
+                        parsed_arguments={"url": "https://example.com"},
+                    ),
+                    ToolResultTraceEvent(
+                        sequence=2,
+                        event_type="tool_result",
+                        call_id="call_html",
+                        status="success",
+                        output="<!doctype html><html><body>" + ("x" * 3000) + "</body></html>",
+                    ),
+                    ToolCallTraceEvent(
+                        sequence=3,
+                        event_type="tool_call",
+                        call_id="call_unknown",
+                        tool_name="weird_tool",
+                        raw_arguments={},
+                        parsed_arguments={},
+                    ),
+                    ToolResultTraceEvent(
+                        sequence=4,
+                        event_type="tool_result",
+                        call_id="call_unknown",
+                        status="success",
+                        output=object(),
+                    ),
+                    FinalOutputTraceEvent(
+                        sequence=5,
+                        event_type="final_output",
+                        content="done",
+                    ),
+                ]
+            }
         ),
         OpenClawRunEvidence(
             agent_id="support_agent",
@@ -387,12 +388,12 @@ def test_build_judge_messages_normalizes_html_and_unknown_tool_outputs_resilient
 def test_build_judge_messages_extracts_visible_text_from_openclaw_embedded_json() -> None:
     embedded = (
         "[tools] browser failed: gateway closed\\n"
-        "Bind: loopback raw_params={\"action\":\"open\",\"url\":\"https://www.python.org/downloads/\"}\\n"
+        'Bind: loopback raw_params={"action":"open","url":"https://www.python.org/downloads/"}\\n'
         "{"
-        "\"payloads\":[{\"text\":\"Respuesta visible final https://www.python.org/downloads/\"}],"
-        "\"finalPromptText\":\"[1] user\\nEnunciado\","
-        "\"finalAssistantVisibleText\":\"Respuesta visible final https://www.python.org/downloads/\","
-        "\"meta\":{\"toolSummary\":{\"calls\":2,\"tools\":[\"exec\",\"write\"],\"failures\":0}}"
+        '"payloads":[{"text":"Respuesta visible final https://www.python.org/downloads/"}],'
+        '"finalPromptText":"[1] user\\nEnunciado",'
+        '"finalAssistantVisibleText":"Respuesta visible final https://www.python.org/downloads/",'
+        '"meta":{"toolSummary":{"calls":2,"tools":["exec","write"],"failures":0}}'
         "}"
     )
     artifact = with_openclaw_run_evidence(

@@ -47,36 +47,36 @@ def test_openrouter_judge_client_builds_raw_success_result() -> None:
                 assistant_message=OpenRouterAssistantMessage(
                     role="assistant",
                     content=json.dumps(
-                            {
-                                "summary": "Strong result.",
-                                "dimensions": {
-                                    "task": {
-                                        "evidence": ["Completed the task."],
-                                        "score": 4.0,
-                                    },
-                                    "process": {
-                                        "evidence": ["Used a clear sequence."],
-                                        "score": 3.0,
-                                    },
-                                    "autonomy": {
-                                        "evidence": ["Acted without extra prompting."],
-                                        "score": 4.0,
-                                    },
-                                    "closeness": {
-                                        "evidence": ["Matched the request."],
-                                        "score": 5.0,
-                                    },
-                                    "efficiency": {
-                                        "evidence": ["A little verbose."],
-                                        "score": 2.0,
-                                    },
-                                    "spark": {
-                                        "evidence": ["Included one useful detail."],
-                                        "score": 3.0,
-                                    },
+                        {
+                            "summary": "Strong result.",
+                            "dimensions": {
+                                "task": {
+                                    "evidence": ["Completed the task."],
+                                    "score": 4.0,
                                 },
-                            }
-                        ),
+                                "process": {
+                                    "evidence": ["Used a clear sequence."],
+                                    "score": 3.0,
+                                },
+                                "autonomy": {
+                                    "evidence": ["Acted without extra prompting."],
+                                    "score": 4.0,
+                                },
+                                "closeness": {
+                                    "evidence": ["Matched the request."],
+                                    "score": 5.0,
+                                },
+                                "efficiency": {
+                                    "evidence": ["A little verbose."],
+                                    "score": 2.0,
+                                },
+                                "spark": {
+                                    "evidence": ["Included one useful detail."],
+                                    "score": 3.0,
+                                },
+                            },
+                        }
+                    ),
                 ),
                 provider_name="openai",
                 provider_model_id="openai/gpt-5-mini-2026-04-01",

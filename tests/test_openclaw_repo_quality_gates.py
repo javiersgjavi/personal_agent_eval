@@ -68,11 +68,15 @@ def test_repo_basic_agent_workspace_matches_default_openclaw_bootstrap() -> None
         "TOOLS.md",
         "USER.md",
     }
-    assert (agent.workspace_dir / "BOOTSTRAP.md").read_text(encoding="utf-8").startswith(
-        "# BOOTSTRAP.md - Hello, World"
+    assert (
+        (agent.workspace_dir / "BOOTSTRAP.md")
+        .read_text(encoding="utf-8")
+        .startswith("# BOOTSTRAP.md - Hello, World")
     )
-    assert (agent.workspace_dir / "HEARTBEAT.md").read_text(encoding="utf-8").startswith(
-        "# HEARTBEAT.md Template"
+    assert (
+        (agent.workspace_dir / "HEARTBEAT.md")
+        .read_text(encoding="utf-8")
+        .startswith("# HEARTBEAT.md Template")
     )
 
 
