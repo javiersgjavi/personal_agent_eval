@@ -9,9 +9,9 @@
 
 `personal_agent_eval` (`pae`) is an open evaluation framework that benchmarks both raw LLMs and full autonomous agents. It runs your test cases against any model or agent, scores the results using a combination of deterministic checks and an LLM judge, and stores every artifact so you can inspect, reproduce, or extend the evaluation at any time.
 
-The key property: every run is identified by a SHA-256 fingerprint of its inputs. Re-running the same configuration reuses stored results instead of spending tokens again. Adding a new model or case to an existing campaign only runs what is missing — nothing already computed is touched.
+The key property: every run is identified by a SHA-256 fingerprint of its inputs. Re-running the same configuration reuses stored results instead of spending tokens again. Adding a new model or case to an existing campaign only runs what is missing, nothing already computed is touched.
 
-**Agent-friendly by design.** This repo ships a `SKILL.md` at its root. Any AI agent with skill support (such as Openclaw or Claude Code) loads it automatically and can set up test cases, run benchmarks, read results, and configure custom OpenClaw agents from a plain-language description — no step-by-step instructions needed.
+**Agent-friendly by design.** This repo ships a `SKILL.md` at its root. Any AI agent with skill support (such as Openclaw or Claude Code) loads it automatically and can set up test cases, run benchmarks, read results, and configure custom OpenClaw agents from a plain-language description, no step-by-step instructions needed.
 
 ---
 
