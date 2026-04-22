@@ -169,6 +169,10 @@ Within one evaluation `<model_id>/<case_id>/` directory:
 - `manifest.json` maps repetition indices back to the full `run_fingerprint` and
   `evaluation_fingerprint`
 
+The repository's public example campaigns use this exact layout. See
+[Runnable examples](examples/runnable_examples.md) for concrete commands and the intended reading
+order for these files.
+
 When `execution_policy.run_repetitions` is greater than `1`, each repetition gets a distinct
 `run_fingerprint` because the repetition index is included in the normalized execution settings
 used for hashing. The workflow then aggregates repetitions back into one case-level workflow

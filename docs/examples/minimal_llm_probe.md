@@ -1,140 +1,43 @@
 # Minimal llm_probe Example
 
-This example shows the smallest realistic V1 shape for one `llm_probe` case.
+This repository ships a runnable `llm_probe` example campaign under `configs/`.
 
-## Case
+## Layout
 
-`configs/cases/example_case/test.yaml`
+| Piece | Path |
+| --- | --- |
+| Tool case | `configs/cases/llm_probe_tool_example/test.yaml` |
+| Browser case | `configs/cases/llm_probe_browser_example/test.yaml` |
+| Suite | `configs/suites/llm_probe_examples.yaml` |
+| Run profile | `configs/run_profiles/llm_probe_examples.yaml` |
+| Evaluation profile | `configs/evaluation_profiles/judge_gpt54_mini.yaml` |
 
-```yaml
-schema_version: 1
-case_id: example_case
-title: Example case
-runner:
-  type: llm_probe
-input:
-  messages:
-    - role: user
-      content: Say hello in one sentence.
-  attachments:
-    - artifacts/context.txt
-expectations:
-  hard_expectations:
-    - text: The answer should contain a greeting.
-  soft_expectations:
-    - text: The answer should be concise.
-deterministic_checks:
-  - check_id: final-response-present
-    dimensions:
-      - process
-    declarative:
-      kind: final_response_present
-tags:
-  - smoke
-  - llm_probe
-metadata:
-  owner: qa
+The shipped example is intentionally fixed to:
+
+- run model: `minimax/minimax-m2.7`
+- judge model: `openai/gpt-5.4-mini`
+
+## Command
+
+```bash
+uv run pae run-eval \
+  --suite llm_probe_examples \
+  --run-profile llm_probe_examples \
+  --evaluation-profile judge_gpt54_mini
 ```
 
-## Suite
+## What this example demonstrates
 
-`configs/suites/example_suite.yaml`
-
-```yaml
-schema_version: 1
-suite_id: example_suite
-title: Example suite
-models:
-  - model_id: minimax_m27
-    requested_model: minimax/minimax-m2.7
-case_selection:
-  include_case_ids:
-    - example_case
-```
-
-## Run Profile
-
-`configs/run_profiles/default.yaml`
-
-```yaml
-schema_version: 1
-run_profile_id: default
-title: Default run profile
-runner_defaults:
-  temperature: 0
-  retries: 5
-execution_policy:
-  max_concurrency: 1
-  fail_fast: true
-```
-
-## Evaluation Profile
-
-`configs/evaluation_profiles/default.yaml`
-
-```yaml
-schema_version: 1
-evaluation_profile_id: default
-title: Default evaluation profile
-judges:
-  - judge_id: primary_judge
-    type: llm_probe
-    model: minimax/minimax-m2.7
-judge_runs:
-  - judge_run_id: primary_judge_default
-    judge_id: primary_judge
-    repetitions: 3
-aggregation:
-  method: median
-final_aggregation:
-  default_policy: judge_only
-  dimensions:
-    process:
-      policy: weighted
-      judge_weight: 0.6
-      deterministic_weight: 0.4
-  final_score_weights:
-    task: 0.3
-    process: 0.15
-    autonomy: 0.2
-    closeness: 0.1
-    efficiency: 0.15
-    spark: 0.1
-```
+- one case that requires local tool use (`exec_shell`, `write_file`, `read_file`)
+- one case that requires browser or web search (`web_search`)
+- a minimal evaluation path that writes both human-readable and raw outputs
 
 ## Output Mental Model
 
-After execution and evaluation, the library should be able to express something like:
+After execution, inspect:
 
-```json
-{
-  "run_artifact": {
-    "run_id": "run_001",
-    "case_id": "example_case",
-    "runner_type": "llm_probe",
-    "status": "success"
-  },
-  "deterministic_result": {
-    "summary": {
-      "passed_checks": 1,
-      "failed_checks": 0
-    }
-  },
-  "judge_result": {
-    "aggregation_method": "median",
-    "successful_iterations": 3,
-    "failed_iterations": 0
-  },
-  "final_result": {
-    "final_score": 7.1
-  }
-}
-```
+- `evaluation_result_summary_1.md` for the human summary
+- `judge_1.prompt.debug.md` for the exact prompt shown to the judge
+- `raw_outputs/` for the structured JSON payloads
 
-## Notes
-
-- V1 runtime work is centered on `llm_probe`
-- `input.attachments` are injected into the initial prompt for `llm_probe` runs as additional
-  `user` messages (they are not tool-driven reads).
-- final CLI orchestration is still a later V1 step
-- this example is meant to explain the shape of the library, not a fully frozen CLI command
+See [Runnable examples](runnable_examples.md) for the exact output tree.

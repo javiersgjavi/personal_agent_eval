@@ -81,6 +81,8 @@ pae --help
 - [Hybrid evaluation](docs/hybrid_evaluation.md)
 - [Reporting](docs/reporting.md)
 - [Minimal llm_probe example](docs/examples/minimal_llm_probe.md)
+- [Minimal OpenClaw example](docs/examples/minimal_openclaw.md)
+- [Runnable examples](docs/examples/runnable_examples.md)
 
 ## CLI Commands
 
@@ -125,7 +127,7 @@ uv run --group docs mkdocs serve
 
 - historical benchmark material remains under `archive/` for reference only
 - internal planning lives under `internal_docs/` and is not part of the public library docs
-- smoke validation status as of 2026-04-22:
-  - `evaluation_result_summary_1.md` now shows the aggregated judge `summary` and per-dimension `evidence` before the score table
-  - OpenClaw judge views now recover tool/browser usage from embedded OpenClaw final-output payloads when canonical tool trace events are absent
-  - fresh smoke evaluations for both `llm_probe` and `openclaw` completed cleanly under `outputs/evaluations/`
+- use the shipped example campaigns if you want a small runnable benchmark:
+  - `uv run pae run-eval --suite llm_probe_examples --run-profile llm_probe_examples --evaluation-profile judge_gpt54_mini`
+  - `uv run pae run-eval --suite openclaw_examples --run-profile openclaw_examples --evaluation-profile judge_gpt54_mini`
+- generated `outputs/` are local runtime artifacts and are not meant to be committed

@@ -1,0 +1,15 @@
+schema_version: 1
+suite_id: openclaw_examples
+title: OpenClaw runnable examples
+models:
+  - model_id: minimax_m27
+    requested_model: minimax/minimax-m2.7
+    label: minimax/minimax-m2.7
+case_selection:
+  include_case_ids:
+    - openclaw_tool_example
+    - openclaw_browser_example
+metadata:
+  owner: qa
+  agent: support_agent
+  run_profile: openclaw_examples

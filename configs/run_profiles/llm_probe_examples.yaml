@@ -1,0 +1,14 @@
+schema_version: 1
+run_profile_id: llm_probe_examples
+title: llm_probe runnable examples
+runner_defaults:
+  temperature: 0
+  timeout_seconds: 90
+  max_tokens: 768
+  max_turns: 6
+  retries: 0
+execution_policy:
+  max_concurrency: 1
+  run_repetitions: 1
+  fail_fast: true
+  stop_on_runner_error: true

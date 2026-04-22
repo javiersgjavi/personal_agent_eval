@@ -1,0 +1,11 @@
+schema_version: 1
+suite_id: llm_probe_examples
+title: llm_probe runnable examples
+models:
+  - model_id: minimax_m27
+    requested_model: minimax/minimax-m2.7
+    label: minimax/minimax-m2.7
+case_selection:
+  include_case_ids:
+    - llm_probe_tool_example
+    - llm_probe_browser_example

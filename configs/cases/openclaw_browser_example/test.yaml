@@ -1,0 +1,44 @@
+schema_version: 1
+case_id: openclaw_browser_example
+title: OpenClaw browser example
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: user
+      content: |
+        Usa el navegador o búsqueda web para encontrar una página oficial de Python sobre la
+        versión estable actual.
+        Crea un `report.md` en el workspace con:
+        - un título `# Browser Example`
+        - la URL oficial consultada
+        - una frase corta justificando por qué esa fuente es fiable
+
+        Luego responde en 2-3 líneas resumiendo lo encontrado.
+  context:
+    openclaw:
+      expected_artifact: report.md
+expectations:
+  hard_expectations:
+    - text: Produces report.md in the workspace.
+    - text: Includes an official Python URL in report.md.
+  soft_expectations:
+    - text: Final response summarizes the result briefly.
+deterministic_checks:
+  - check_id: openclaw-browser-example-final
+    dimensions:
+      - task
+    declarative:
+      kind: final_response_present
+  - check_id: openclaw-browser-example-report
+    dimensions:
+      - process
+    declarative:
+      kind: openclaw_workspace_file_present
+      relative_path: report.md
+      contains: python.org
+tags:
+  - example
+  - openclaw
+  - browser
+  - web

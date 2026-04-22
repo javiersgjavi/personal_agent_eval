@@ -1,0 +1,42 @@
+schema_version: 1
+case_id: openclaw_tool_example
+title: OpenClaw tool example
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: user
+      content: |
+        Usa herramientas reales para crear un archivo `report.md` en el workspace.
+        El archivo debe contener:
+        - un título `# Tool Example`
+        - una línea con la fecha actual obtenida por comando
+        - una línea literal `openclaw-tool-example`
+
+        Al final, confirma brevemente que has creado el archivo.
+  context:
+    openclaw:
+      expected_artifact: report.md
+expectations:
+  hard_expectations:
+    - text: Produces report.md in the workspace.
+    - text: Includes the literal marker openclaw-tool-example in report.md.
+  soft_expectations:
+    - text: Final response briefly confirms the artifact creation.
+deterministic_checks:
+  - check_id: openclaw-tool-example-final
+    dimensions:
+      - task
+    declarative:
+      kind: final_response_present
+  - check_id: openclaw-tool-example-report
+    dimensions:
+      - process
+    declarative:
+      kind: openclaw_workspace_file_present
+      relative_path: report.md
+      contains: openclaw-tool-example
+tags:
+  - example
+  - openclaw
+  - tool_use

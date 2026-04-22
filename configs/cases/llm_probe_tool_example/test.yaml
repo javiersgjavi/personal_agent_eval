@@ -1,0 +1,43 @@
+schema_version: 1
+case_id: llm_probe_tool_example
+title: llm_probe tool example
+runner:
+  type: llm_probe
+input:
+  messages:
+    - role: user
+      content: |
+        Usa herramientas reales y sigue exactamente estos pasos:
+        1. Ejecuta `printf 'llm-probe-tool-example\n'` con `exec_shell`.
+        2. Escribe `/tmp/pae_llm_probe_tool_example.txt` con ese contenido usando `write_file`.
+        3. Lee el archivo usando `read_file`.
+        4. Responde en 2-4 líneas confirmando lo que has hecho y el contenido final.
+  context:
+    llm_probe:
+      tools:
+        - exec_shell
+        - write_file
+        - read_file
+expectations:
+  hard_expectations:
+    - text: Uses tools to obtain the content instead of inventing it.
+    - text: Creates /tmp/pae_llm_probe_tool_example.txt and confirms the saved text.
+  soft_expectations:
+    - text: Response is brief and clearly confirms the final file content.
+deterministic_checks:
+  - check_id: llm-probe-tool-example-final
+    dimensions:
+      - task
+    declarative:
+      kind: final_response_present
+  - check_id: llm-probe-tool-example-file
+    dimensions:
+      - process
+    declarative:
+      kind: file_contains
+      path: /tmp/pae_llm_probe_tool_example.txt
+      text: llm-probe-tool-example
+tags:
+  - example
+  - llm_probe
+  - tool_use

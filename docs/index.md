@@ -43,3 +43,4 @@ The current implementation already includes:
 - [Reporting](reporting.md)
 - [Minimal llm_probe example](examples/minimal_llm_probe.md)
 - [Minimal OpenClaw example](examples/minimal_openclaw.md)
+- [Runnable examples](examples/runnable_examples.md)

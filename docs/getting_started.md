@@ -124,6 +124,35 @@ uv run pae report \
 The CLI now renders human-readable reporting by default and can also emit structured JSON
 with `--output json`.
 
+## Runnable Example Campaigns
+
+This repository ships two small campaigns that work as documentation and as real commands:
+
+- `llm_probe_examples`
+- `openclaw_examples`
+
+They both use:
+
+- run model: `minimax/minimax-m2.7`
+- judge model: `openai/gpt-5.4-mini`
+
+Commands:
+
+```bash
+uv run pae run-eval \
+  --suite llm_probe_examples \
+  --run-profile llm_probe_examples \
+  --evaluation-profile judge_gpt54_mini
+
+uv run pae run-eval \
+  --suite openclaw_examples \
+  --run-profile openclaw_examples \
+  --evaluation-profile judge_gpt54_mini
+```
+
+See [Runnable examples](examples/runnable_examples.md) for the exact case files and the generated
+output layout.
+
 Example:
 
 ```bash

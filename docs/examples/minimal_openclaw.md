@@ -17,13 +17,19 @@ Unit tests patch `subprocess.run` instead of running real containers.
 | Piece | Path |
 | --- | --- |
 | Reusable agent | `configs/agents/support_agent/` (`agent.yaml` + `workspace/`) |
-| Case | `configs/cases/openclaw_smoke/test.yaml` |
-| Suite | `configs/suites/openclaw_smoke_suite.yaml` |
-| Run profile | `configs/run_profiles/openclaw_smoke.yaml` (`openclaw:` block) |
+| Tool case | `configs/cases/openclaw_tool_example/test.yaml` |
+| Browser case | `configs/cases/openclaw_browser_example/test.yaml` |
+| Suite | `configs/suites/openclaw_examples.yaml` |
+| Run profile | `configs/run_profiles/openclaw_examples.yaml` (`openclaw:` block) |
 
 Use an evaluation profile you already have under `configs/evaluation_profiles/` when calling
 `pae eval` / `run-eval` / `report`. This repository includes `judge_gpt54_mini.yaml` (resolve it by
 filename id: `judge_gpt54_mini`).
+
+The shipped example is intentionally fixed to:
+
+- run model: `minimax/minimax-m2.7`
+- judge model: `openai/gpt-5.4-mini`
 
 ## Commands (from repository root)
 
@@ -31,16 +37,16 @@ Run only (requires Docker and the pinned OpenClaw image):
 
 ```bash
 uv run pae run \
-  --suite openclaw_smoke_suite \
-  --run-profile openclaw_smoke
+  --suite openclaw_examples \
+  --run-profile openclaw_examples
 ```
 
 With evaluation (example profile id in this repo):
 
 ```bash
 uv run pae run-eval \
-  --suite openclaw_smoke_suite \
-  --run-profile openclaw_smoke \
+  --suite openclaw_examples \
+  --run-profile openclaw_examples \
   --evaluation-profile judge_gpt54_mini
 ```
 
@@ -48,3 +54,4 @@ uv run pae run-eval \
 
 - [Configuration](../configuration.md) — OpenClaw fragments, harness steps, fingerprints
 - [Run artifacts](../run_artifacts.md) — `runner_metadata.openclaw` evidence and storage layout
+- [Runnable examples](runnable_examples.md) — output tree and example commands

@@ -1,0 +1,36 @@
+schema_version: 1
+case_id: llm_probe_browser_example
+title: llm_probe browser example
+runner:
+  type: llm_probe
+input:
+  messages:
+    - role: user
+      content: |
+        Usa `web_search` para encontrar la página oficial de documentación de Python que hable
+        de la versión estable actual.
+        Después dame una respuesta corta con:
+        - el título o página encontrada
+        - la URL oficial consultada
+        - una frase explicando por qué esa fuente es fiable
+  context:
+    llm_probe:
+      tools:
+        - web_search
+expectations:
+  hard_expectations:
+    - text: Uses web_search instead of relying only on training memory.
+    - text: Includes an official Python source URL in the final answer.
+  soft_expectations:
+    - text: Response is concise and readable.
+deterministic_checks:
+  - check_id: llm-probe-browser-example-final
+    dimensions:
+      - task
+    declarative:
+      kind: final_response_present
+tags:
+  - example
+  - llm_probe
+  - browser
+  - web
