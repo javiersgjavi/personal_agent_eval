@@ -149,14 +149,17 @@ def render_failed_evaluation_markdown(
     else:
         lines.append("- Warnings: none")
 
-    lines.extend(
-        [
-            "",
-            "## Why There Is No Final Result",
-            "- The workflow could not compute a final aggregated evaluation artifact for this case.",
-            "- Check `raw_outputs/` for the raw judge result and prompt payload.",
-        ]
-    )
+        lines.extend(
+            [
+                "",
+                "## Why There Is No Final Result",
+                (
+                    "- The workflow could not compute a final aggregated "
+                    "evaluation artifact for this case."
+                ),
+                "- Check `raw_outputs/` for the raw judge result and prompt payload.",
+            ]
+        )
     return "\n".join(lines).rstrip() + "\n"
 
 

@@ -80,7 +80,9 @@ _DEFAULT_TOOL_DEFINITIONS: dict[str, dict[str, Any]] = {
         "type": "function",
         "function": {
             "name": "write_file",
-            "description": "Writes UTF-8 text content to a file, creating parent directories if needed.",
+            "description": (
+                "Writes UTF-8 text content to a file, creating parent directories if needed."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -414,7 +416,11 @@ def run_llm_probe_case(
                 trace_builder.add_runner_event(
                     name="provider_error",
                     detail=str(exc),
-                    metadata={"attempt": attempt_count, "code": exc.code, "retryable": exc.retryable},
+                    metadata={
+                        "attempt": attempt_count,
+                        "code": exc.code,
+                        "retryable": exc.retryable,
+                    },
                 )
                 exhausted = attempt_index >= retries or not exc.retryable
                 if not exhausted:
@@ -638,7 +644,11 @@ def _resolve_tool_runtime(
                 if stripped:
                     tool_names.append(stripped)
 
-    deduped_names = tuple(name for name in dict.fromkeys(tool_names) if name in _DEFAULT_TOOL_DEFINITIONS)
+    deduped_names = tuple(
+        name
+        for name in dict.fromkeys(tool_names)
+        if name in _DEFAULT_TOOL_DEFINITIONS
+    )
     request_metadata["resolved_tools"] = list(deduped_names)
     tool_choice = _coerce_tool_choice(llm_probe_context.get("tool_choice")) or (
         "auto" if deduped_names else None
@@ -662,7 +672,7 @@ def _run_provider_turns(
     trace_builder: _TraceBuilder,
     usage_totals: _UsageAccumulator,
 ) -> ProviderTurnResult:
-    for turn_index in range(max_turns):
+    for _turn_index in range(max_turns):
         try:
             response = client.create_chat_completion(
                 OpenRouterChatRequest(
@@ -726,7 +736,10 @@ def _run_provider_turns(
             return ProviderTurnResult(response=response)
 
         for tool_call in response.assistant_message.tool_calls:
-            tool_result = _execute_tool_call(tool_name=tool_call.tool_name, arguments=tool_call.parsed_arguments)
+            tool_result = _execute_tool_call(
+                tool_name=tool_call.tool_name,
+                arguments=tool_call.parsed_arguments,
+            )
             trace_builder.add_tool_result(
                 call_id=tool_call.call_id,
                 status=tool_result["status"],
@@ -750,7 +763,10 @@ def _run_provider_turns(
             )
 
     return ProviderTurnResult(
-        error=ValueError(f"Tool-enabled conversation exceeded max_turns={max_turns} without a final answer.")
+        error=ValueError(
+            f"Tool-enabled conversation exceeded max_turns={max_turns} "
+            "without a final answer."
+        )
     )
 
 

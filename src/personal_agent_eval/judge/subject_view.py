@@ -49,7 +49,8 @@ def render_judge_user_text(subject_view: dict[str, Any]) -> str:
     """Render the subject view as a compact human-readable text prompt."""
     lines: list[str] = []
     lines.append("EVALUATION TARGET")
-    lines.append(f"Dimensions: {', '.join(subject_view.get('evaluation_target', {}).get('dimensions', []))}")
+    dimensions = subject_view.get("evaluation_target", {}).get("dimensions", [])
+    lines.append(f"Dimensions: {', '.join(dimensions)}")
 
     task_messages = subject_view.get("evaluation_target", {}).get("task_messages", [])
     if isinstance(task_messages, list) and task_messages:
@@ -121,9 +122,14 @@ def render_judge_user_text(subject_view: dict[str, Any]) -> str:
         if isinstance(tool_summary, dict):
             tool_count = tool_summary.get("tool_call_count")
             tools_used = tool_summary.get("tools_used", [])
+            rendered_tools = (
+                ", ".join(tools_used)
+                if isinstance(tools_used, list) and tools_used
+                else "none"
+            )
             lines.append(
                 f"Tool activity: {tool_count if isinstance(tool_count, int) else 0} tool calls; "
-                f"tools used: {', '.join(tools_used) if isinstance(tools_used, list) and tools_used else 'none'}"
+                f"tools used: {rendered_tools}"
             )
 
     execution_evidence = subject_view.get("execution_evidence", {})
@@ -173,7 +179,8 @@ def render_judge_user_text(subject_view: dict[str, Any]) -> str:
                 excerpt = item.get("excerpt")
                 lines.append(f"- {artifact_type}: {basename}")
                 if isinstance(excerpt, str) and excerpt.strip():
-                    lines.extend(_indent_block(_truncate_text(excerpt.strip(), max_chars=1200), prefix="  "))
+                    excerpt_text = _truncate_text(excerpt.strip(), max_chars=1200)
+                    lines.extend(_indent_block(excerpt_text, prefix="  "))
 
     return "\n".join(lines).strip() + "\n"
 
@@ -213,7 +220,11 @@ def _serialize_input_messages(message: Any) -> list[dict[str, Any]]:
         return compact
 
     if message.content is not None:
-        return [_compact_message({"role": message.role, "content": message.content, "name": message.name})]
+        return [
+            _compact_message(
+                {"role": message.role, "content": message.content, "name": message.name}
+            )
+        ]
     source = getattr(message, "source", None)
     if source is None:
         return [_compact_message({"role": message.role, "content": None, "name": message.name})]
@@ -235,12 +246,24 @@ def _load_message_source_payload(
     try:
         raw = path.read_text(encoding="utf-8")
     except OSError:
-        return [_compact_loaded_message(default_role, f"[unresolved message source: {path.name}]", default_name)]
+        return [
+            _compact_loaded_message(
+                default_role,
+                f"[unresolved message source: {path.name}]",
+                default_name,
+            )
+        ]
 
     try:
         payload = _parse_message_source_payload(raw, path=path, source_format=source_format)
     except Exception:
-        return [_compact_loaded_message(default_role, _truncate_text(raw, max_chars=_MAX_TEXT_CHARS), default_name)]
+        return [
+            _compact_loaded_message(
+                default_role,
+                _truncate_text(raw, max_chars=_MAX_TEXT_CHARS),
+                default_name,
+            )
+        ]
 
     return _coerce_message_source_payload(
         payload,
@@ -278,7 +301,15 @@ def _coerce_message_source_payload(
         if isinstance(payload.get("messages"), list):
             payload = payload["messages"]
         else:
-            return [_compact_message({"role": str(payload.get("role", default_role)), "content": payload.get("content"), "name": payload.get("name", default_name)})]
+            return [
+                _compact_message(
+                    {
+                        "role": str(payload.get("role", default_role)),
+                        "content": payload.get("content"),
+                        "name": payload.get("name", default_name),
+                    }
+                )
+            ]
     if isinstance(payload, list):
         items: list[dict[str, Any]] = []
         for item in payload:
@@ -789,7 +820,10 @@ def _looks_like_log(text: str) -> bool:
     markers = sum(
         1
         for line in lines[:10]
-        if any(token in line.lower() for token in ("[debug]", "[info]", "[error]", "traceback", "returncode:"))
+        if any(
+            token in line.lower()
+            for token in ("[debug]", "[info]", "[error]", "traceback", "returncode:")
+        )
     )
     return markers >= 2
 

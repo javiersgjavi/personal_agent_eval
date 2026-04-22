@@ -2,9 +2,9 @@
 
 from personal_agent_eval.judge.models import (
     AggregatedJudgeResult,
-    JudgeDimensions,
     JudgeDimensionAssessment,
     JudgeDimensionAssessments,
+    JudgeDimensions,
     JudgeEvidence,
     JudgeIterationStatus,
     JudgeOutputContract,

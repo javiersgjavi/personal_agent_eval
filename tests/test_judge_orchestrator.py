@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -13,9 +14,9 @@ from personal_agent_eval.artifacts import (
 from personal_agent_eval.artifacts.run_artifact import (
     FinalOutputTraceEvent,
     MessageTraceEvent,
-    TraceEvent,
     ToolCallTraceEvent,
     ToolResultTraceEvent,
+    TraceEvent,
 )
 from personal_agent_eval.config import load_evaluation_profile
 from personal_agent_eval.config.test_config import load_test_config
@@ -23,8 +24,8 @@ from personal_agent_eval.judge import (
     JudgeIterationStatus,
     JudgeOrchestrator,
     RawJudgeRunResult,
-    build_judge_prompt_bundle,
     build_judge_messages,
+    build_judge_prompt_bundle,
 )
 from personal_agent_eval.judge.system_prompt import resolve_judge_system_prompt_text
 
@@ -172,7 +173,9 @@ def test_build_judge_messages_includes_case_artifact_and_deterministic_summary()
     ]
     assert "case_id" not in payload["evaluation_target"]
     assert "title" not in payload["evaluation_target"]
-    assert payload["subject_response"]["final_output"]["text"] == "Task completed with a concise answer."
+    assert payload["subject_response"]["final_output"]["text"] == (
+        "Task completed with a concise answer."
+    )
     assert payload["subject_response"]["assistant_visible_messages"][0]["text_excerpt"] == (
         "I will use a tool first."
     )
@@ -247,7 +250,8 @@ def test_build_judge_messages_filters_raw_run_artifact_fields() -> None:
     assert payload["execution_evidence"]["material_failures"] == []
 
 
-def test_build_judge_messages_summarizes_search_outputs_without_breaking_on_unknown_shapes() -> None:
+def test_build_judge_messages_summarizes_search_outputs_without_breaking_on_unknown_shapes(
+    ) -> None:
     artifact = _build_artifact().model_copy(
         update={
             "trace": [

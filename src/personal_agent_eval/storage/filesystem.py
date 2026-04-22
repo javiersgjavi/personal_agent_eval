@@ -20,7 +20,6 @@ from personal_agent_eval.artifacts.run_artifact import ArtifactModel, RunArtifac
 from personal_agent_eval.fingerprints import EvaluationFingerprintInput, RunFingerprintInput
 from personal_agent_eval.judge.models import AggregatedJudgeResult
 from personal_agent_eval.reporting.final_result_summary import (
-    render_final_result_markdown,
     render_final_result_markdown_with_judge,
 )
 from personal_agent_eval.storage.models import (

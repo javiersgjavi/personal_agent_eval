@@ -104,7 +104,8 @@ class NormalizedJudgeIterationResult(ArtifactModel):
         if self.status is JudgeIterationStatus.SUCCESS:
             if self.dimensions is None or self.evidence is None or self.summary is None:
                 raise ValueError(
-                    "Successful judge iterations require summary and normalized dimensions/evidence."
+                    "Successful judge iterations require summary and normalized "
+                    "dimensions/evidence."
                 )
             if self.raw_result_ref is None:
                 raise ValueError("Successful judge iterations require a raw_result_ref.")
