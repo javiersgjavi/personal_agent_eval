@@ -76,14 +76,14 @@ The judge **system** message (instructions to return JSON with `summary`, `dimen
 1. **`judge_system_prompt`** in the evaluation profile YAML (multiline string; lines joined with spaces), or
 2. **`judge_system_prompt_path`** in the same YAML (path to a UTF-8 `.txt` file, relative to that YAML), or
 3. Otherwise, if the profile is loaded from disk, the shared default file
-   **`prompts/judge_system_default.txt` relative to that YAML**.
+   **`prompts/judge_system_default.md` relative to that YAML**.
 
 Recommended project layout:
 
 - `configs/evaluation_profiles/<profile_id>.yaml`
-- `configs/evaluation_profiles/prompts/judge_system_default.txt`
+- `configs/evaluation_profiles/prompts/judge_system_default.md`
 
-In this repository, profiles also set `judge_system_prompt_path: prompts/judge_system_default.txt`
+In this repository, profiles also set `judge_system_prompt_path: prompts/judge_system_default.md`
 explicitly so the source is visible to the user inside the YAML itself. The evaluation fingerprint
 includes a hash of the resolved prompt text, so changing the prompt or the referenced file changes
 the evaluation campaign identity.

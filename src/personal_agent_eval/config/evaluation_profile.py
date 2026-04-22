@@ -150,7 +150,7 @@ class EvaluationProfileConfig(ConfigModel):
         default=None,
         description="Optional path to a UTF-8 text file, relative to this profile's YAML file. "
         "Mutually exclusive with judge_system_prompt. Recommended shared location: "
-        "'prompts/judge_system_default.txt' relative to this YAML.",
+        "'prompts/judge_system_default.md' relative to this YAML.",
     )
 
     @field_validator("judge_system_prompt", "judge_system_prompt_path", mode="before")

@@ -97,10 +97,22 @@ def render_final_result_markdown_with_judge(
             insertion_index = index
             break
 
-    if judge_result is not None and (judge_result.summary or judge_result.evidence is not None):
+    if judge_result is not None and (
+        judge_result.summary
+        or judge_result.evidence is not None
+        or judge_result.overall_score is not None
+        or judge_result.overall_evidence
+    ):
         judge_lines = ["", "## Judge Assessment", ""]
         if judge_result.summary:
             judge_lines.append(f"- Summary: {judge_result.summary}")
+        if judge_result.overall_score is not None:
+            judge_lines.append(f"- Overall score: `{_format_score(judge_result.overall_score)}`")
+        if judge_result.overall_evidence:
+            judge_lines.append("- Overall evidence:")
+            judge_lines.extend(
+                [f"  - {entry}" for entry in judge_result.overall_evidence if entry.strip()]
+            )
         judge_evidence_lines = _render_judge_evidence(judge_result)
         if judge_evidence_lines:
             judge_lines.append("- Evidence:")

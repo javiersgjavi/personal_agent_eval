@@ -9,7 +9,7 @@ from typing import Any
 from personal_agent_eval.config._base import ConfigError
 from personal_agent_eval.config.evaluation_profile import EvaluationProfileConfig
 
-DEFAULT_JUDGE_SYSTEM_PROMPT_BASENAME = "judge_system_default.txt"
+DEFAULT_JUDGE_SYSTEM_PROMPT_BASENAME = "judge_system_default.md"
 DEFAULT_JUDGE_SYSTEM_PROMPT_RELATIVE_PATH = Path("prompts") / DEFAULT_JUDGE_SYSTEM_PROMPT_BASENAME
 
 
@@ -21,7 +21,10 @@ def _normalize_multiline_prompt(raw: str) -> str:
 
 def _read_prompt_file(path: Path) -> str:
     raw = path.read_text(encoding="utf-8")
-    text = _normalize_multiline_prompt(raw)
+    if path.suffix.lower() == ".md":
+        text = raw.strip().replace("\r\n", "\n").replace("\r", "\n")
+    else:
+        text = _normalize_multiline_prompt(raw)
     if not text:
         raise ConfigError(f"Judge system prompt file is empty: {path}")
     return text
@@ -90,7 +93,7 @@ def resolve_judge_system_prompt_text(profile: EvaluationProfileConfig) -> str:
     1. ``judge_system_prompt`` (inline YAML multiline string).
     2. ``judge_system_prompt_path`` (UTF-8 file path relative to the profile YAML).
     3. Otherwise, if the profile was loaded from a file, the shared default at
-       ``prompts/judge_system_default.txt`` relative to that YAML.
+       ``prompts/judge_system_default.md`` relative to that YAML.
 
     If none of the above apply, a :class:`ConfigError` is raised.
     """

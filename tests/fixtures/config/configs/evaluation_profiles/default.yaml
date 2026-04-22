@@ -1,7 +1,7 @@
 schema_version: 1
 evaluation_profile_id: default
 title: Default evaluation profile
-judge_system_prompt_path: prompts/judge_system_default.txt
+judge_system_prompt_path: prompts/judge_system_default.md
 judges:
   - judge_id: rubric_judge
     type: llm_probe

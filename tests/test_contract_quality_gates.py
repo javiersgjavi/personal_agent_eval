@@ -304,7 +304,7 @@ def test_storage_layout_is_frozen_and_isolates_results_per_run_fingerprint(tmp_p
             evaluation_profile_id=evaluation_profile_id,
             aggregation_method="median",
             default_dimension_policy="judge_only",
-            judge_system_prompt_source="path:prompts/judge_system_default.txt",
+            judge_system_prompt_source="path:prompts/judge_system_default.md",
             judge_system_prompt="You are a strict evaluation judge.",
         )
     )

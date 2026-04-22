@@ -29,10 +29,10 @@ title: Minimal
         encoding="utf-8",
     )
     cfg = load_evaluation_profile(prof_dir / "minimal.yaml")
-    assert resolve_judge_system_prompt_text(cfg) == "Hello World"
+    assert resolve_judge_system_prompt_text(cfg) == "Hello\nWorld"
     assert resolve_judge_system_prompt_details(cfg) == {
         "source": f"default:{DEFAULT_JUDGE_SYSTEM_PROMPT_RELATIVE_PATH.as_posix()}",
-        "text": "Hello World",
+        "text": "Hello\nWorld",
     }
 
 
@@ -46,7 +46,7 @@ def test_resolve_repo_evaluation_profile_uses_configs_default_file() -> None:
     assert "`dimensions`" in text
     assert (
         resolve_judge_system_prompt_details(cfg)["source"]
-        == "path:prompts/judge_system_default.txt"
+        == "path:prompts/judge_system_default.md"
     )
 
 

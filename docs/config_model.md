@@ -172,7 +172,7 @@ repetitions, and how scores are aggregated into a final verdict.
 ```yaml
 schema_version: 1
 evaluation_profile_id: judge_gpt54
-judge_system_prompt_path: prompts/judge_system_default.txt
+judge_system_prompt_path: prompts/judge_system_default.md
 judges:
   - name: primary_judge
     model_id: openai/gpt-5.4

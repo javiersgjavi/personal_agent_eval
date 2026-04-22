@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import textwrap
 from hashlib import sha256
 from pathlib import Path
 from typing import TypeVar
@@ -1032,7 +1033,7 @@ class FilesystemStorage:
                 debug_sections.extend(
                     [
                         "SYSTEM PROMPT:",
-                        system_text,
+                        self._format_prompt_debug_text(system_text),
                     ]
                 )
             if user_text is not None:
@@ -1069,6 +1070,63 @@ class FilesystemStorage:
                 ),
                 json.dumps(raw_result.prompt_payload, indent=2, sort_keys=True, ensure_ascii=False),
             )
+
+    def _format_prompt_debug_text(self, text: str) -> str:
+        """Pretty-print a prompt string for debug .md files.
+
+        The actual provider prompt may be normalized (e.g. system prompt lines joined with spaces).
+        For human-facing `judge_*.prompt.debug.md` files, we re-introduce structure and wrap long
+        lines so the prompt is readable.
+        """
+        normalized = text.strip().replace("\r\n", "\n").replace("\r", "\n")
+        if not normalized:
+            return ""
+
+        # If the prompt is already multi-line, keep it and just wrap very long lines.
+        if "\n" in normalized:
+            return "\n".join(
+                textwrap.fill(line, width=100, break_long_words=False, break_on_hyphens=False)
+                if len(line) > 120 and not line.lstrip().startswith("```")
+                else line
+                for line in normalized.splitlines()
+            ).rstrip()
+
+        # Otherwise, heuristically re-introduce structure for the common "flattened" system prompt.
+        reformatted = normalized
+        # Headings like "## Foo"
+        reformatted = re.sub(r"\s+(##\s+)", r"\n\n\1", reformatted)
+        # Numbered sections like "1) Foo"
+        reformatted = re.sub(r"\s+(\d+\)\s+)", r"\n\1", reformatted)
+        # Bullets "- Foo"
+        reformatted = re.sub(r"\s+(-\s+)", r"\n\1", reformatted)
+
+        paragraphs = [p.strip() for p in reformatted.split("\n\n") if p.strip()]
+        wrapped: list[str] = []
+        for paragraph in paragraphs:
+            lines = paragraph.splitlines()
+            is_structured = bool(
+                lines
+                and (
+                    lines[0].startswith("## ")
+                    or lines[0].startswith("- ")
+                    or re.match(r"^\d+\)\s", lines[0])
+                )
+            )
+            if is_structured:
+                wrapped.extend(lines)
+                wrapped.append("")
+                continue
+            wrapped.append(
+                textwrap.fill(
+                    paragraph,
+                    width=100,
+                    break_long_words=False,
+                    break_on_hyphens=False,
+                )
+            )
+            wrapped.append("")
+
+        return "\n".join(wrapped).rstrip()
 
     def _persist_optional_output_artifact_ref(
         self,
