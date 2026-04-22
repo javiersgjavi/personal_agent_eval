@@ -143,12 +143,12 @@ evaluation fingerprint:
 
 ```text
 outputs/evaluations/suit_<suite_id>/evaluation_profile_<run_profile_fingerprint_short6>/eval_profile_<evaluation_profile_id>_<evaluation_fingerprint_short6>/
-  manifest.json
-  fingerprint_input.json
-  <model_id>/
-    <case_id>/
-      manifest.json
-      summary_1.md
+    manifest.json
+    fingerprint_input.json
+    <model_id>/
+      <case_id>/
+        manifest.json
+        evaluation_result_summary_1.md
       judge_1.prompt.debug.md
       raw_outputs/
         judge_1.json
@@ -159,7 +159,7 @@ outputs/evaluations/suit_<suite_id>/evaluation_profile_<run_profile_fingerprint_
 
 Within one evaluation `<model_id>/<case_id>/` directory:
 
-- `summary_N.md` is the human-readable evaluation summary for repetition `N`
+- `evaluation_result_summary_N.md` is the human-readable evaluation summary for repetition `N`
 - `judge_N.prompt.debug.md` is the human-readable judge prompt debug view containing both the
   system prompt and the rendered user prompt
 - `raw_outputs/judge_N.json` is the aggregated judge result for repetition `N`

@@ -576,6 +576,7 @@ class WorkflowOrchestrator:
                 repetition_index=repetition_index,
                 run_fingerprint=run_fingerprint,
                 result=final_result,
+                judge_result=judge_result,
             )
             judge_usage = _usage_from_judge_result(judge_result)
             evaluation_action = EvaluationAction.FINAL_RECOMPUTED
@@ -680,6 +681,7 @@ class WorkflowOrchestrator:
                 repetition_index=repetition_index,
                 run_fingerprint=run_fingerprint,
                 result=final_result,
+                judge_result=judge_result,
             )
             judge_usage = _usage_from_judge_result(judge_result)
             evaluation_action = EvaluationAction.EXECUTED

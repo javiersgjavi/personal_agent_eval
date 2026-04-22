@@ -419,6 +419,10 @@ def run_openclaw_case(
         workspace_snapshot_path=workspace_snapshot_path,
         workspace_diff_path=workspace_diff_path,
         key_output_paths=key_output_paths,
+        observable_summary=_build_openclaw_observable_summary(
+            run_payload_text=run_payload_text,
+            key_output_paths=key_output_paths,
+        ),
     )
 
 
@@ -635,6 +639,7 @@ def _attach_openclaw_evidence(
     workspace_snapshot_path: Path,
     workspace_diff_path: Path,
     key_output_paths: list[Path],
+    observable_summary: dict[str, Any] | None = None,
 ) -> RunArtifact:
     evidence = OpenClawRunEvidence(
         agent_id=agent_id,
@@ -678,8 +683,85 @@ def _attach_openclaw_evidence(
             )
             for index, path in enumerate(key_output_paths)
         ],
+        metadata={"observable_summary": observable_summary} if observable_summary else {},
     )
     return with_openclaw_run_evidence(artifact, evidence)
+
+
+def _build_openclaw_observable_summary(
+    *,
+    run_payload_text: str,
+    key_output_paths: list[Path],
+) -> dict[str, Any] | None:
+    payload = _parse_openclaw_payload(run_payload_text)
+    if payload is None:
+        return None
+    meta = payload.get("meta") if isinstance(payload.get("meta"), Mapping) else {}
+    summary: dict[str, Any] = {}
+
+    final_prompt_text = payload.get("finalPromptText") or meta.get("finalPromptText")
+    if isinstance(final_prompt_text, str) and final_prompt_text.strip():
+        summary["final_prompt_text"] = final_prompt_text.strip()
+
+    final_visible_text = payload.get("finalAssistantVisibleText")
+    if not isinstance(final_visible_text, str) or not final_visible_text.strip():
+        final_visible_text = _extract_payload_text(payload)
+    if isinstance(final_visible_text, str) and final_visible_text.strip():
+        summary["final_assistant_visible_text"] = final_visible_text.strip()
+
+    tool_summary = meta.get("toolSummary")
+    if isinstance(tool_summary, Mapping):
+        summary["tool_summary"] = dict(tool_summary)
+
+    key_output_basenames = [path.name for path in key_output_paths if path.name]
+    if key_output_basenames:
+        summary["key_output_basenames"] = key_output_basenames
+
+    return summary or None
+
+
+def _parse_openclaw_payload(raw_text: str) -> dict[str, Any] | None:
+    stripped = raw_text.strip()
+    if not stripped:
+        return None
+    decoder = json.JSONDecoder()
+    for start_index, char in enumerate(stripped):
+        if char != "{":
+            continue
+        try:
+            payload, _ = decoder.raw_decode(stripped[start_index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict) and (
+            "payloads" in payload
+            or "finalAssistantVisibleText" in payload
+            or "finalPromptText" in payload
+            or (
+                isinstance(payload.get("meta"), Mapping)
+                and "toolSummary" in payload["meta"]
+            )
+        ):
+            return payload
+    return None
+
+
+def _extract_payload_text(payload: Mapping[str, Any]) -> str | None:
+    for key in ("content", "message", "response", "text"):
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    payloads = payload.get("payloads")
+    if isinstance(payloads, list):
+        texts: list[str] = []
+        for item in payloads:
+            if not isinstance(item, Mapping):
+                continue
+            text = item.get("text")
+            if isinstance(text, str) and text.strip():
+                texts.append(text.strip())
+        if texts:
+            return "\n\n".join(texts)
+    return None
 
 
 def _artifact_ref_for_path(

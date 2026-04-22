@@ -3,10 +3,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from personal_agent_eval.artifacts import (
+    OpenClawRunEvidence,
     RunArtifact,
     RunArtifactIdentity,
     RunRequestMetadata,
     RunStatus,
+    with_openclaw_run_evidence,
 )
 from personal_agent_eval.artifacts.run_artifact import (
     FinalOutputTraceEvent,
@@ -203,6 +205,7 @@ def test_build_judge_messages_includes_case_artifact_and_deterministic_summary()
     assert "judge_name" not in payload
     assert "judge_model" not in payload
     assert "run_artifact" not in payload
+    assert "Material failures\n- none\n\nProcess trace" in messages[1]["content"]
 
 
 def test_build_judge_messages_filters_raw_run_artifact_fields() -> None:
@@ -291,10 +294,21 @@ def test_build_judge_messages_summarizes_search_outputs_without_breaking_on_unkn
     assert summary["content_type"] == "search_results"
     assert summary["query"] == "benchmark judge prompt"
     assert "docs.example.com" in summary["top_sources"]
+    rendered = build_judge_messages(
+        judge_name="rubric_judge",
+        judge_model="openai/gpt-5-mini",
+        test_config=config,
+        run_artifact=artifact,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
+        deterministic_summary=None,
+    )[1]["content"]
+    assert "query: benchmark judge prompt" in rendered
+    assert "top_sources: docs.example.com" not in rendered
 
 
 def test_build_judge_messages_normalizes_html_and_unknown_tool_outputs_resiliently() -> None:
-    artifact = _build_artifact().model_copy(
+    artifact = with_openclaw_run_evidence(
+        _build_artifact().model_copy(
         update={
             "trace": [
                 MessageTraceEvent(
@@ -340,6 +354,11 @@ def test_build_judge_messages_normalizes_html_and_unknown_tool_outputs_resilient
                 ),
             ]
         }
+        ),
+        OpenClawRunEvidence(
+            agent_id="support_agent",
+            metadata={"observable_summary": {"key_output_basenames": ["report.md"]}},
+        ),
     )
     config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
     payload = build_judge_prompt_bundle(
@@ -359,29 +378,37 @@ def test_build_judge_messages_normalizes_html_and_unknown_tool_outputs_resilient
 
 def test_build_judge_messages_extracts_visible_text_from_openclaw_embedded_json() -> None:
     embedded = (
-        "[agent/embedded] workspace bootstrap file AGENTS.md is 10 chars\\n"
+        "[tools] browser failed: gateway closed\\n"
+        "Bind: loopback raw_params={\"action\":\"open\",\"url\":\"https://www.python.org/downloads/\"}\\n"
         "{"
-        "\"payloads\":[{\"text\":\"Respuesta visible final\"}],"
+        "\"payloads\":[{\"text\":\"Respuesta visible final https://www.python.org/downloads/\"}],"
         "\"finalPromptText\":\"[1] user\\nEnunciado\","
-        "\"finalAssistantVisibleText\":\"Respuesta visible final\""
+        "\"finalAssistantVisibleText\":\"Respuesta visible final https://www.python.org/downloads/\","
+        "\"meta\":{\"toolSummary\":{\"calls\":2,\"tools\":[\"exec\",\"write\"],\"failures\":0}}"
         "}"
     )
-    artifact = _build_artifact().model_copy(
-        update={
-            "trace": [
-                MessageTraceEvent(
-                    sequence=0,
-                    event_type="message",
-                    role="user",
-                    content="Please complete the task.",
-                ),
-                FinalOutputTraceEvent(
-                    sequence=1,
-                    event_type="final_output",
-                    content=embedded,
-                ),
-            ]
-        }
+    artifact = with_openclaw_run_evidence(
+        _build_artifact().model_copy(
+            update={
+                "trace": [
+                    MessageTraceEvent(
+                        sequence=0,
+                        event_type="message",
+                        role="user",
+                        content="Please complete the task.",
+                    ),
+                    FinalOutputTraceEvent(
+                        sequence=1,
+                        event_type="final_output",
+                        content=embedded,
+                    ),
+                ]
+            }
+        ),
+        OpenClawRunEvidence(
+            agent_id="support_agent",
+            metadata={"observable_summary": {"key_output_basenames": ["report.md"]}},
+        ),
     )
     config = load_test_config(FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml")
     payload = build_judge_prompt_bundle(
@@ -392,8 +419,29 @@ def test_build_judge_messages_extracts_visible_text_from_openclaw_embedded_json(
         system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
         deterministic_summary=None,
     ).user_payload
-    assert payload["subject_response"]["final_output"]["text"] == "Respuesta visible final"
-    assert payload["execution_evidence"]["process_trace"] == []
+    assert payload["subject_response"]["final_output"]["text"] == (
+        "Respuesta visible final https://www.python.org/downloads/"
+    )
+    assert payload["subject_response"]["tool_activity_summary"]["tool_call_count"] == 2
+    assert payload["subject_response"]["tool_activity_summary"]["tools_used"] == ["exec", "write"]
+    assert payload["execution_evidence"]["process_trace"][0]["kind"] == "tool_call"
+    assert payload["execution_evidence"]["process_trace"][0]["tool_name"] == "exec"
+    assert payload["execution_evidence"]["process_trace"][1]["kind"] == "tool_result"
+    assert payload["execution_evidence"]["process_trace"][2]["tool_name"] == "write"
+    write_summary = payload["execution_evidence"]["process_trace"][3]["output_summary"]
+    assert write_summary["artifact_basenames"] == ["report.md"]
+    rendered = build_judge_messages(
+        judge_name="rubric_judge",
+        judge_model="openai/gpt-5-mini",
+        test_config=config,
+        run_artifact=artifact,
+        system_prompt=_FIXTURE_JUDGE_SYSTEM_PROMPT,
+        deterministic_summary=None,
+    )[1]["content"]
+    assert "extracted from OpenClaw" not in rendered
+    assert "Recovered from embedded OpenClaw" not in rendered
+    assert "Tool activity: 2 tool calls; tools used: exec, write" in rendered
+    assert "artifact_basenames: report.md" in rendered
 
 
 def test_build_judge_messages_preserves_utf8_in_prompt_text() -> None:
@@ -459,6 +507,7 @@ def test_orchestrator_records_successful_iteration_and_aggregation() -> None:
     assert result.excluded_repetition_indices == []
     assert result.dimensions is not None
     assert result.dimensions.task == 4.0
+    assert result.summary == "Helpful overall result."
     assert result.iteration_results[0].status is JudgeIterationStatus.SUCCESS
 
 
@@ -649,3 +698,6 @@ def test_orchestrator_aggregates_successful_iterations_only_with_median() -> Non
     assert result.dimensions is not None
     assert result.dimensions.task == 3.0
     assert result.dimensions.efficiency == 3.0
+    assert result.summary is not None
+    assert "[repetition 0] Helpful overall result." in result.summary
+    assert "[repetition 2] Helpful overall result." in result.summary

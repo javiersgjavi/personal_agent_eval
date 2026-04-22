@@ -230,6 +230,6 @@ The first implementation should do four things only:
 1. Stop embedding `judge_name` and `judge_model` in the `user` prompt payload.
 2. Replace `run_artifact` in the prompt with a new `judge_subject_view`.
 3. Filter OpenClaw evidence down to response, key outputs, relevant trace, and material failures.
-4. Persist `judge_N.prompt.debug.md`, `raw_outputs/judge_N.prompt.user.json`, and a `summary_N.md` under `outputs/evaluations/...`.
+4. Persist `judge_N.prompt.debug.md`, `raw_outputs/judge_N.prompt.user.json`, and an `evaluation_result_summary_N.md` under `outputs/evaluations/...`.
 
 This gives a meaningful reduction in prompt noise without forcing a full storage redesign.

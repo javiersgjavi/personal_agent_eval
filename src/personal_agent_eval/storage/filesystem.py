@@ -19,7 +19,10 @@ from personal_agent_eval.artifacts import (
 from personal_agent_eval.artifacts.run_artifact import ArtifactModel, RunArtifact
 from personal_agent_eval.fingerprints import EvaluationFingerprintInput, RunFingerprintInput
 from personal_agent_eval.judge.models import AggregatedJudgeResult
-from personal_agent_eval.reporting.final_result_summary import render_final_result_markdown
+from personal_agent_eval.reporting.final_result_summary import (
+    render_final_result_markdown,
+    render_final_result_markdown_with_judge,
+)
 from personal_agent_eval.storage.models import (
     EvaluationCaseStorageManifest,
     EvaluationIterationRecord,
@@ -319,7 +322,7 @@ class FilesystemStorage:
             / f"judge_{repetition_index + 1}.prompt.debug.md"
         )
 
-    def case_summary_path(
+    def case_evaluation_result_summary_path(
         self,
         suite_id: str,
         run_profile_fingerprint: str,
@@ -338,7 +341,27 @@ class FilesystemStorage:
                 model_id,
                 case_id,
             )
-            / f"summary_{repetition_index + 1}.md"
+            / f"evaluation_result_summary_{repetition_index + 1}.md"
+        )
+
+    def case_summary_path(
+        self,
+        suite_id: str,
+        run_profile_fingerprint: str,
+        evaluation_profile_id: str,
+        evaluation_fingerprint: str,
+        model_id: str,
+        case_id: str,
+        repetition_index: int,
+    ) -> Path:
+        return self.case_evaluation_result_summary_path(
+            suite_id,
+            run_profile_fingerprint,
+            evaluation_profile_id,
+            evaluation_fingerprint,
+            model_id,
+            case_id,
+            repetition_index,
         )
 
     def case_final_result_path(
@@ -722,6 +745,7 @@ class FilesystemStorage:
         repetition_index: int,
         run_fingerprint: str,
         result: FinalEvaluationResult,
+        judge_result: AggregatedJudgeResult | None = None,
     ) -> Path:
         path = self._write_model(
             self.case_final_result_path(
@@ -736,7 +760,7 @@ class FilesystemStorage:
             result,
         )
         self._write_text(
-            self.case_summary_path(
+            self.case_evaluation_result_summary_path(
                 suite_id,
                 run_profile_fingerprint,
                 evaluation_profile_id,
@@ -745,7 +769,7 @@ class FilesystemStorage:
                 result.case_id,
                 repetition_index,
             ),
-            render_final_result_markdown(result),
+            render_final_result_markdown_with_judge(result, judge_result=judge_result),
         )
         self._upsert_evaluation_case_manifest(
             suite_id=suite_id,
@@ -773,7 +797,7 @@ class FilesystemStorage:
         content: str,
     ) -> Path:
         return self._write_text(
-            self.case_summary_path(
+            self.case_evaluation_result_summary_path(
                 suite_id,
                 run_profile_fingerprint,
                 evaluation_profile_id,

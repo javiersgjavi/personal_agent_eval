@@ -166,6 +166,43 @@ def test_run_openclaw_case_extracts_final_output_from_stderr(
     assert artifact.trace[-1].content == "from-stderr"
 
 
+def test_run_openclaw_case_persists_observable_summary_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = (
+        "[tools] browser failed: gateway closed\n"
+        'Bind: loopback raw_params={"action":"open","url":"https://www.python.org/downloads/"}\n'
+        "{"
+        "\"payloads\":[{\"text\":\"Consulta completada en python.org/downloads/\"}],"
+        "\"finalAssistantVisibleText\":\"Consulta completada en python.org/downloads/\","
+        "\"meta\":{\"toolSummary\":{\"calls\":2,\"tools\":[\"web_search\",\"write\"],\"failures\":0}}"
+        "}"
+    )
+    patch_openclaw_docker_run(monkeypatch, run_stdout=payload)
+
+    case_config = _write_openclaw_case(tmp_path)
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "openclaw.yaml")
+    agent_config = load_openclaw_agent(FIXTURES_ROOT / "configs" / "agents" / "support_agent")
+    artifact = run_openclaw_case(
+        run_id="run_observable_summary",
+        suite_id="example_suite",
+        case_config=case_config,
+        run_profile=run_profile,
+        model_selection=ModelConfig.model_validate(
+            {"model_id": "baseline_model", "requested_model": "openai/gpt-4o-mini"}
+        ),
+        agent_config=agent_config,
+        runtime_root=tmp_path / "runtime-observable",
+    )
+
+    evidence = parse_openclaw_run_evidence(artifact.runner_metadata)
+    assert evidence is not None
+    observable_summary = evidence.metadata.get("observable_summary")
+    assert isinstance(observable_summary, dict)
+    assert observable_summary["final_assistant_visible_text"].startswith("Consulta completada")
+    assert observable_summary["tool_summary"]["tools"] == ["web_search", "write"]
+
+
 def _write_openclaw_case(tmp_path: Path) -> CaseConfig:
     case_path = tmp_path / "test.yaml"
     case_path.write_text(

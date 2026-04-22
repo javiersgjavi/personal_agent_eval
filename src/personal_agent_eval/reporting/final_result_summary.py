@@ -73,6 +73,33 @@ def render_final_result_markdown(result: FinalEvaluationResult) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def render_final_result_markdown_with_judge(
+    result: FinalEvaluationResult,
+    *,
+    judge_result: AggregatedJudgeResult | None,
+) -> str:
+    """Render the final summary with the aggregated judge narrative when available."""
+    lines = render_final_result_markdown(result).rstrip().splitlines()
+    insertion_index = len(lines)
+    for index, line in enumerate(lines):
+        if line == "## Dimension Breakdown":
+            insertion_index = index
+            break
+
+    if judge_result is not None and (judge_result.summary or judge_result.evidence is not None):
+        judge_lines = ["", "## Judge Assessment", ""]
+        if judge_result.summary:
+            judge_lines.append(f"- Summary: {judge_result.summary}")
+        judge_evidence_lines = _render_judge_evidence(judge_result)
+        if judge_evidence_lines:
+            judge_lines.append("- Evidence:")
+            judge_lines.extend(judge_evidence_lines)
+        judge_lines.append("")
+        lines[insertion_index:insertion_index] = judge_lines
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def render_failed_evaluation_markdown(
     *,
     case_id: str,
@@ -131,6 +158,21 @@ def render_failed_evaluation_markdown(
         ]
     )
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_judge_evidence(judge_result: AggregatedJudgeResult) -> list[str]:
+    evidence = judge_result.evidence
+    if evidence is None:
+        return []
+    lines: list[str] = []
+    for name in ("task", "process", "autonomy", "closeness", "efficiency", "spark"):
+        entries = getattr(evidence, name)
+        if not entries:
+            continue
+        joined = "; ".join(entry.strip() for entry in entries if entry.strip())
+        if joined:
+            lines.append(f"  - `{name}`: {joined}")
+    return lines
 
 
 def _render_dimension_table(result: FinalEvaluationResult) -> str:

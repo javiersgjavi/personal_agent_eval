@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import html
 import json
+import re
+import subprocess
+from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Literal, Protocol, cast
+from urllib import parse, request
 
 import yaml
 
@@ -28,6 +33,7 @@ from personal_agent_eval.artifacts.run_artifact import (
     MessageTraceEvent,
     RunnerTraceEvent,
     ToolCallTraceEvent,
+    ToolResultTraceEvent,
     TraceEvent,
     UsageMetadata,
 )
@@ -42,7 +48,62 @@ from personal_agent_eval.domains.llm_probe.openrouter import (
 )
 
 DEFAULT_RETRIES = 5
+DEFAULT_MAX_TOOL_TURNS = 8
 MessageRole = Literal["system", "user", "assistant", "tool"]
+
+_DEFAULT_TOOL_DEFINITIONS: dict[str, dict[str, Any]] = {
+    "exec_shell": {
+        "type": "function",
+        "function": {
+            "name": "exec_shell",
+            "description": "Executes a shell command on Linux and returns stdout+stderr.",
+            "parameters": {
+                "type": "object",
+                "properties": {"command": {"type": "string"}},
+                "required": ["command"],
+            },
+        },
+    },
+    "read_file": {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Reads a UTF-8 text file and returns its contents.",
+            "parameters": {
+                "type": "object",
+                "properties": {"path": {"type": "string"}},
+                "required": ["path"],
+            },
+        },
+    },
+    "write_file": {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "Writes UTF-8 text content to a file, creating parent directories if needed.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "content": {"type": "string"},
+                },
+                "required": ["path", "content"],
+            },
+        },
+    },
+    "web_search": {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Searches the public web and returns a small list of results.",
+            "parameters": {
+                "type": "object",
+                "properties": {"query": {"type": "string"}},
+                "required": ["query"],
+            },
+        },
+    },
+}
 
 
 class ChatCompletionClient(Protocol):
@@ -78,6 +139,68 @@ class ResolvedInputMessage:
         return payload
 
 
+@dataclass(frozen=True, slots=True)
+class ToolRuntime:
+    enabled: bool
+    tool_names: tuple[str, ...]
+    tool_definitions: tuple[dict[str, Any], ...]
+    tool_choice: str | dict[str, Any] | None
+
+
+@dataclass(frozen=True, slots=True)
+class ProviderTurnResult:
+    response: OpenRouterChatResponse | None = None
+    error: Exception | None = None
+
+
+class _UsageAccumulator:
+    def __init__(self) -> None:
+        self._normalized: defaultdict[str, float] = defaultdict(float)
+        self._cost_usd = 0.0
+        self._seen_cost = False
+        self._last_raw_usage: dict[str, Any] | None = None
+
+    def add_response(self, response: OpenRouterChatResponse) -> None:
+        usage = _build_usage(response)
+        normalized = usage.normalized
+        for field_name in (
+            "input_tokens",
+            "output_tokens",
+            "total_tokens",
+            "reasoning_tokens",
+            "cached_input_tokens",
+            "cache_write_tokens",
+        ):
+            value = getattr(normalized, field_name)
+            if value is not None:
+                self._normalized[field_name] += float(value)
+        if usage.cost_usd is not None:
+            self._cost_usd += usage.cost_usd
+            self._seen_cost = True
+        if usage.raw_provider_usage is not None:
+            self._last_raw_usage = usage.raw_provider_usage
+
+    def to_usage_metadata(self) -> UsageMetadata:
+        def _int(field_name: str) -> int | None:
+            value = self._normalized.get(field_name)
+            if value is None:
+                return None
+            return int(value)
+
+        return UsageMetadata(
+            normalized=NormalizedUsage(
+                input_tokens=_int("input_tokens"),
+                output_tokens=_int("output_tokens"),
+                total_tokens=_int("total_tokens"),
+                reasoning_tokens=_int("reasoning_tokens"),
+                cached_input_tokens=_int("cached_input_tokens"),
+                cache_write_tokens=_int("cache_write_tokens"),
+            ),
+            cost_usd=self._cost_usd if self._seen_cost else None,
+            raw_provider_usage=self._last_raw_usage,
+        )
+
+
 def run_llm_probe_case(
     *,
     run_id: str,
@@ -104,6 +227,10 @@ def run_llm_probe_case(
     )
 
     request_metadata["resolved_messages"] = []
+    tool_runtime = _resolve_tool_runtime(
+        case_config=case_config,
+        request_metadata=request_metadata,
+    )
     resolved_retries = _coerce_int(execution_settings.get("retries"))
     request_model = RunRequestMetadata(
         requested_model=requested_model,
@@ -206,8 +333,14 @@ def run_llm_probe_case(
         top_p=request_model.execution_parameters.top_p,
         max_tokens=request_model.execution_parameters.max_tokens,
         seed=request_model.execution_parameters.seed,
-        tool_choice=request_model.execution_parameters.tool_choice,
+        tool_choice=tool_runtime.tool_choice or request_model.execution_parameters.tool_choice,
+        tools=tool_runtime.tool_definitions,
     )
+    conversation_messages = [message.to_request_payload() for message in resolved_messages]
+    max_turns = request_model.execution_parameters.max_turns or (
+        DEFAULT_MAX_TOOL_TURNS if tool_runtime.enabled else 1
+    )
+    usage_totals = _UsageAccumulator()
 
     retries = (
         DEFAULT_RETRIES
@@ -218,92 +351,116 @@ def run_llm_probe_case(
 
     for attempt_index in range(retries + 1):
         attempt_count = attempt_index + 1
+        conversation_messages = [message.to_request_payload() for message in resolved_messages]
+        chat_request = OpenRouterChatRequest(
+            model=chat_request.model,
+            messages=tuple(conversation_messages),
+            temperature=chat_request.temperature,
+            top_p=chat_request.top_p,
+            max_tokens=chat_request.max_tokens,
+            seed=chat_request.seed,
+            tool_choice=chat_request.tool_choice,
+            tools=chat_request.tools,
+            metadata=dict(chat_request.metadata),
+        )
         trace_builder.add_runner_event(
             name="provider_attempt",
             detail=f"Starting provider attempt {attempt_count}.",
             metadata={"attempt": attempt_count},
         )
-        try:
-            response = client.create_chat_completion(
-                chat_request,
-                timeout_seconds=request_model.execution_parameters.timeout_seconds,
-            )
-        except OpenRouterConfigurationError as exc:
-            return _build_terminal_artifact(
-                identity=_build_identity(
-                    run_id=run_id,
-                    suite_id=suite_id,
-                    case_config=case_config,
-                    run_profile=run_profile,
-                ),
-                status=RunStatus.FAILED,
-                timing=_build_timing(
-                    queued_at=queued_timestamp,
-                    started_at=started_at,
-                    started_monotonic=started_monotonic,
-                ),
-                request_model=request_model,
-                trace=trace_builder.events,
-                provider=provider_metadata,
-                error=RunError(
-                    code="runner_configuration_error",
-                    message=str(exc),
-                    error_type=type(exc).__name__,
-                    retryable=False,
-                ),
-                runner_metadata={
-                    "attempt_count": attempt_count,
-                    "model_id": model_selection.model_id,
-                },
-            )
-        except OpenRouterError as exc:
-            trace_builder.add_runner_event(
-                name="provider_error",
-                detail=str(exc),
-                metadata={"attempt": attempt_count, "code": exc.code, "retryable": exc.retryable},
-            )
-            exhausted = attempt_index >= retries or not exc.retryable
-            if not exhausted:
-                trace_builder.add_runner_event(
-                    name="retry_scheduled",
-                    detail=f"Retrying after attempt {attempt_count}.",
-                    metadata={"attempt": attempt_count + 1},
-                )
-                continue
-            status = RunStatus.TIMED_OUT if exc.code == "timeout" else RunStatus.PROVIDER_ERROR
-            return _build_terminal_artifact(
-                identity=_build_identity(
-                    run_id=run_id,
-                    suite_id=suite_id,
-                    case_config=case_config,
-                    run_profile=run_profile,
-                ),
-                status=status,
-                timing=_build_timing(
-                    queued_at=queued_timestamp,
-                    started_at=started_at,
-                    started_monotonic=started_monotonic,
-                ),
-                request_model=request_model,
-                trace=trace_builder.events,
-                provider=provider_metadata,
-                error=RunError(
-                    code=exc.code,
-                    message=str(exc),
-                    error_type=type(exc).__name__,
-                    retryable=exc.retryable,
-                    provider_code=exc.provider_code,
-                    metadata={
+        turn_result = _run_provider_turns(
+            chat_request=chat_request,
+            conversation_messages=conversation_messages,
+            client=client,
+            timeout_seconds=request_model.execution_parameters.timeout_seconds,
+            max_turns=max_turns,
+            tool_runtime=tool_runtime,
+            trace_builder=trace_builder,
+            usage_totals=usage_totals,
+        )
+        if turn_result.error is not None:
+            if isinstance(turn_result.error, OpenRouterConfigurationError):
+                return _build_terminal_artifact(
+                    identity=_build_identity(
+                        run_id=run_id,
+                        suite_id=suite_id,
+                        case_config=case_config,
+                        run_profile=run_profile,
+                    ),
+                    status=RunStatus.FAILED,
+                    timing=_build_timing(
+                        queued_at=queued_timestamp,
+                        started_at=started_at,
+                        started_monotonic=started_monotonic,
+                    ),
+                    request_model=request_model,
+                    trace=trace_builder.events,
+                    provider=provider_metadata,
+                    error=RunError(
+                        code="runner_configuration_error",
+                        message=str(turn_result.error),
+                        error_type=type(turn_result.error).__name__,
+                        retryable=False,
+                    ),
+                    runner_metadata={
                         "attempt_count": attempt_count,
-                        **exc.metadata,
+                        "model_id": model_selection.model_id,
+                        "tool_capable": tool_runtime.enabled,
+                        "tool_names": tool_runtime.tool_names,
                     },
-                ),
-                runner_metadata={
-                    "attempt_count": attempt_count,
-                    "model_id": model_selection.model_id,
-                },
-            )
-        except Exception as exc:
+                )
+            if isinstance(turn_result.error, OpenRouterError):
+                exc = turn_result.error
+                trace_builder.add_runner_event(
+                    name="provider_error",
+                    detail=str(exc),
+                    metadata={"attempt": attempt_count, "code": exc.code, "retryable": exc.retryable},
+                )
+                exhausted = attempt_index >= retries or not exc.retryable
+                if not exhausted:
+                    trace_builder.add_runner_event(
+                        name="retry_scheduled",
+                        detail=f"Retrying after attempt {attempt_count}.",
+                        metadata={"attempt": attempt_count + 1},
+                    )
+                    continue
+                status = RunStatus.TIMED_OUT if exc.code == "timeout" else RunStatus.PROVIDER_ERROR
+                return _build_terminal_artifact(
+                    identity=_build_identity(
+                        run_id=run_id,
+                        suite_id=suite_id,
+                        case_config=case_config,
+                        run_profile=run_profile,
+                    ),
+                    status=status,
+                    timing=_build_timing(
+                        queued_at=queued_timestamp,
+                        started_at=started_at,
+                        started_monotonic=started_monotonic,
+                    ),
+                    request_model=request_model,
+                    trace=trace_builder.events,
+                    provider=provider_metadata,
+                    usage=usage_totals.to_usage_metadata(),
+                    error=RunError(
+                        code=exc.code,
+                        message=str(exc),
+                        error_type=type(exc).__name__,
+                        retryable=exc.retryable,
+                        provider_code=exc.provider_code,
+                        metadata={
+                            "attempt_count": attempt_count,
+                            **exc.metadata,
+                        },
+                    ),
+                    runner_metadata={
+                        "attempt_count": attempt_count,
+                        "model_id": model_selection.model_id,
+                        "tool_capable": tool_runtime.enabled,
+                        "tool_names": tool_runtime.tool_names,
+                    },
+                )
+            exc = turn_result.error
             return _build_terminal_artifact(
                 identity=_build_identity(
                     run_id=run_id,
@@ -320,6 +477,7 @@ def run_llm_probe_case(
                 request_model=request_model,
                 trace=trace_builder.events,
                 provider=provider_metadata,
+                usage=usage_totals.to_usage_metadata(),
                 error=RunError(
                     code="runner_execution_failed",
                     message=str(exc),
@@ -329,9 +487,13 @@ def run_llm_probe_case(
                 runner_metadata={
                     "attempt_count": attempt_count,
                     "model_id": model_selection.model_id,
+                    "tool_capable": tool_runtime.enabled,
+                    "tool_names": tool_runtime.tool_names,
                 },
             )
 
+        assert turn_result.response is not None
+        response = turn_result.response
         provider_metadata = ProviderMetadata(
             gateway="openrouter",
             provider_name=response.provider_name,
@@ -342,23 +504,6 @@ def run_llm_probe_case(
             native_finish_reason=response.native_finish_reason,
             metadata=dict(response.metadata),
         )
-
-        trace_builder.add_message(
-            role=_validate_message_role(response.assistant_message.role),
-            content=response.assistant_message.content,
-            name=response.assistant_message.name,
-            metadata=response.assistant_message.metadata,
-        )
-        for tool_call in response.assistant_message.tool_calls:
-            trace_builder.add_tool_call(
-                call_id=tool_call.call_id,
-                tool_name=tool_call.tool_name,
-                raw_arguments=tool_call.raw_arguments,
-                parsed_arguments=tool_call.parsed_arguments,
-                metadata=tool_call.metadata,
-            )
-
-        usage = _build_usage(response)
         final_output = response.assistant_message.content
         if final_output is None or not final_output.strip():
             error_code = (
@@ -387,7 +532,7 @@ def run_llm_probe_case(
                 request_model=request_model,
                 trace=trace_builder.events,
                 provider=provider_metadata,
-                usage=usage,
+                usage=usage_totals.to_usage_metadata(),
                 error=RunError(
                     code=error_code,
                     message=error_message,
@@ -398,6 +543,8 @@ def run_llm_probe_case(
                 runner_metadata={
                     "attempt_count": attempt_count,
                     "model_id": model_selection.model_id,
+                    "tool_capable": tool_runtime.enabled,
+                    "tool_names": tool_runtime.tool_names,
                 },
             )
 
@@ -417,12 +564,13 @@ def run_llm_probe_case(
             ),
             request=request_model,
             provider=provider_metadata,
-            usage=usage,
+            usage=usage_totals.to_usage_metadata(),
             trace=trace_builder.events,
             runner_metadata={
                 "attempt_count": attempt_count,
                 "model_id": model_selection.model_id,
-                "tool_capable": True,
+                "tool_capable": tool_runtime.enabled,
+                "tool_names": tool_runtime.tool_names,
             },
         )
 
@@ -455,6 +603,257 @@ def _build_usage(response: OpenRouterChatResponse) -> UsageMetadata:
         cost_usd=_coerce_float(response.usage.get("cost")),
         raw_provider_usage=response.raw_usage,
     )
+
+
+def _resolve_tool_runtime(
+    *,
+    case_config: TestConfig,
+    request_metadata: dict[str, Any],
+) -> ToolRuntime:
+    llm_probe_context = case_config.input.context.get("llm_probe")
+    if not isinstance(llm_probe_context, Mapping):
+        request_metadata["resolved_tools"] = []
+        return ToolRuntime(
+            enabled=False,
+            tool_names=(),
+            tool_definitions=(),
+            tool_choice=None,
+        )
+
+    raw_tools = llm_probe_context.get("tools")
+    if raw_tools is None:
+        request_metadata["resolved_tools"] = []
+        return ToolRuntime(
+            enabled=False,
+            tool_names=(),
+            tool_definitions=(),
+            tool_choice=None,
+        )
+
+    tool_names: list[str] = []
+    if isinstance(raw_tools, list):
+        for item in raw_tools:
+            if isinstance(item, str):
+                stripped = item.strip()
+                if stripped:
+                    tool_names.append(stripped)
+
+    deduped_names = tuple(name for name in dict.fromkeys(tool_names) if name in _DEFAULT_TOOL_DEFINITIONS)
+    request_metadata["resolved_tools"] = list(deduped_names)
+    tool_choice = _coerce_tool_choice(llm_probe_context.get("tool_choice")) or (
+        "auto" if deduped_names else None
+    )
+    return ToolRuntime(
+        enabled=bool(deduped_names),
+        tool_names=deduped_names,
+        tool_definitions=tuple(_DEFAULT_TOOL_DEFINITIONS[name] for name in deduped_names),
+        tool_choice=tool_choice,
+    )
+
+
+def _run_provider_turns(
+    *,
+    chat_request: OpenRouterChatRequest,
+    conversation_messages: list[dict[str, Any]],
+    client: ChatCompletionClient,
+    timeout_seconds: float | None,
+    max_turns: int,
+    tool_runtime: ToolRuntime,
+    trace_builder: _TraceBuilder,
+    usage_totals: _UsageAccumulator,
+) -> ProviderTurnResult:
+    for turn_index in range(max_turns):
+        try:
+            response = client.create_chat_completion(
+                OpenRouterChatRequest(
+                    model=chat_request.model,
+                    messages=tuple(conversation_messages),
+                    temperature=chat_request.temperature,
+                    top_p=chat_request.top_p,
+                    max_tokens=chat_request.max_tokens,
+                    seed=chat_request.seed,
+                    tool_choice=chat_request.tool_choice,
+                    tools=chat_request.tools,
+                    metadata=dict(chat_request.metadata),
+                ),
+                timeout_seconds=timeout_seconds,
+            )
+        except Exception as exc:
+            return ProviderTurnResult(error=exc)
+
+        usage_totals.add_response(response)
+        trace_builder.add_message(
+            role=_validate_message_role(response.assistant_message.role),
+            content=response.assistant_message.content,
+            name=response.assistant_message.name,
+            metadata=response.assistant_message.metadata,
+        )
+        assistant_payload: dict[str, Any] = {"role": response.assistant_message.role}
+        if response.assistant_message.content is not None:
+            assistant_payload["content"] = response.assistant_message.content
+        if response.assistant_message.name is not None:
+            assistant_payload["name"] = response.assistant_message.name
+        tool_call_payloads: list[dict[str, Any]] = []
+        for tool_call in response.assistant_message.tool_calls:
+            trace_builder.add_tool_call(
+                call_id=tool_call.call_id,
+                tool_name=tool_call.tool_name,
+                raw_arguments=tool_call.raw_arguments,
+                parsed_arguments=tool_call.parsed_arguments,
+                metadata=tool_call.metadata,
+            )
+            tool_call_payloads.append(
+                {
+                    "id": tool_call.call_id,
+                    "type": "function",
+                    "function": {
+                        "name": tool_call.tool_name,
+                        "arguments": (
+                            tool_call.raw_arguments
+                            if isinstance(tool_call.raw_arguments, str | Mapping)
+                            else json.dumps(tool_call.parsed_arguments or {}, ensure_ascii=False)
+                        ),
+                    },
+                }
+            )
+        if tool_call_payloads:
+            assistant_payload["tool_calls"] = tool_call_payloads
+        conversation_messages.append(assistant_payload)
+
+        if not response.assistant_message.tool_calls:
+            return ProviderTurnResult(response=response)
+        if not tool_runtime.enabled:
+            return ProviderTurnResult(response=response)
+
+        for tool_call in response.assistant_message.tool_calls:
+            tool_result = _execute_tool_call(tool_name=tool_call.tool_name, arguments=tool_call.parsed_arguments)
+            trace_builder.add_tool_result(
+                call_id=tool_call.call_id,
+                status=tool_result["status"],
+                output=tool_result["output"],
+                metadata={},
+            )
+            tool_content = json.dumps(tool_result, ensure_ascii=False)
+            conversation_messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call.call_id,
+                    "name": tool_call.tool_name,
+                    "content": tool_content,
+                }
+            )
+            trace_builder.add_message(
+                role="tool",
+                content=tool_content,
+                name=tool_call.tool_name,
+                metadata={"tool_call_id": tool_call.call_id},
+            )
+
+    return ProviderTurnResult(
+        error=ValueError(f"Tool-enabled conversation exceeded max_turns={max_turns} without a final answer.")
+    )
+
+
+def _execute_tool_call(*, tool_name: str, arguments: dict[str, Any] | None) -> dict[str, Any]:
+    handlers = {
+        "exec_shell": _tool_exec_shell,
+        "read_file": _tool_read_file,
+        "write_file": _tool_write_file,
+        "web_search": _tool_web_search,
+    }
+    handler = handlers.get(tool_name)
+    if handler is None:
+        return {
+            "status": "error",
+            "output": {"error": f"Unsupported tool '{tool_name}'."},
+        }
+    try:
+        return {
+            "status": "success",
+            "output": handler(arguments or {}),
+        }
+    except Exception as exc:
+        return {
+            "status": "error",
+            "output": {"error": str(exc), "error_type": type(exc).__name__},
+        }
+
+
+def _tool_exec_shell(arguments: dict[str, Any]) -> dict[str, Any]:
+    command = arguments.get("command")
+    if not isinstance(command, str) or not command.strip():
+        raise ValueError("exec_shell requires a non-empty 'command' string.")
+    completed = subprocess.run(
+        ["bash", "-lc", command],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=15,
+    )
+    return {
+        "command": command,
+        "returncode": completed.returncode,
+        "stdout": completed.stdout,
+        "stderr": completed.stderr,
+    }
+
+
+def _tool_read_file(arguments: dict[str, Any]) -> dict[str, Any]:
+    raw_path = arguments.get("path")
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        raise ValueError("read_file requires a non-empty 'path' string.")
+    path = Path(raw_path).expanduser()
+    content = path.read_text(encoding="utf-8")
+    return {
+        "path": str(path),
+        "content": content,
+    }
+
+
+def _tool_write_file(arguments: dict[str, Any]) -> dict[str, Any]:
+    raw_path = arguments.get("path")
+    content = arguments.get("content")
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        raise ValueError("write_file requires a non-empty 'path' string.")
+    if not isinstance(content, str):
+        raise ValueError("write_file requires a string 'content'.")
+    path = Path(raw_path).expanduser()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    return {
+        "path": str(path),
+        "bytes_written": len(content.encode("utf-8")),
+    }
+
+
+def _tool_web_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    query = arguments.get("query")
+    if not isinstance(query, str) or not query.strip():
+        raise ValueError("web_search requires a non-empty 'query' string.")
+    encoded = parse.urlencode({"q": query})
+    req = request.Request(
+        url=f"https://html.duckduckgo.com/html/?{encoded}",
+        headers={"User-Agent": "personal_agent_eval/1.0 (+https://openclaw.ai)"},
+    )
+    with request.urlopen(req, timeout=15) as response:
+        body = response.read().decode("utf-8", errors="replace")
+
+    matches = re.findall(
+        r'<a[^>]+class="result__a"[^>]+href="(?P<url>[^"]+)"[^>]*>(?P<title>.*?)</a>',
+        body,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    results: list[dict[str, str]] = []
+    for url, raw_title in matches[:5]:
+        title = re.sub(r"<[^>]+>", "", raw_title)
+        title = html.unescape(title).strip()
+        clean_url = html.unescape(url)
+        if title and clean_url:
+            results.append({"title": title, "url": clean_url})
+    return {
+        "query": query,
+        "results": results,
+    }
 
 
 def _build_terminal_artifact(
@@ -774,6 +1173,25 @@ class _TraceBuilder:
                 tool_name=tool_name,
                 raw_arguments=raw_arguments,
                 parsed_arguments=parsed_arguments,
+                metadata=metadata,
+            )
+        )
+
+    def add_tool_result(
+        self,
+        *,
+        call_id: str,
+        status: Literal["success", "error"] | None,
+        output: Any,
+        metadata: dict[str, Any],
+    ) -> None:
+        self.events.append(
+            ToolResultTraceEvent(
+                sequence=len(self.events),
+                event_type="tool_result",
+                call_id=call_id,
+                status=status,
+                output=output,
                 metadata=metadata,
             )
         )

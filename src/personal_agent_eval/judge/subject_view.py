@@ -151,6 +151,7 @@ def render_judge_user_text(subject_view: dict[str, Any]) -> str:
                         continue
                     message = item.get("message") or item.get("detail") or "unknown failure"
                     lines.append(f"- {message}")
+            lines.append("")
         process_trace = execution_evidence.get("process_trace", [])
         if isinstance(process_trace, list):
             lines.append("Process trace")
@@ -159,6 +160,7 @@ def render_judge_user_text(subject_view: dict[str, Any]) -> str:
             else:
                 for index, event in enumerate(process_trace, start=1):
                     lines.extend(_render_trace_event(index, event))
+            lines.append("")
 
         artifacts = execution_evidence.get("artifacts", [])
         if isinstance(artifacts, list) and artifacts:
@@ -341,6 +343,16 @@ def _build_subject_response(run_artifact: RunArtifact) -> dict[str, Any]:
         for event in run_artifact.trace
         if isinstance(event, ToolCallTraceEvent)
     ]
+    openclaw_tool_summary = _extract_openclaw_tool_summary(run_artifact)
+    tool_call_count = len(tool_calls)
+    tools_used = sorted(set(tool_calls))
+    if tool_call_count == 0 and openclaw_tool_summary is not None:
+        calls = openclaw_tool_summary.get("calls")
+        tools = openclaw_tool_summary.get("tools")
+        if isinstance(calls, int):
+            tool_call_count = calls
+        if isinstance(tools, list):
+            tools_used = [str(item) for item in tools if isinstance(item, str) and item.strip()]
     response: dict[str, Any] = {
         "assistant_visible_messages": assistant_messages,
         "final_output": _format_visible_text(
@@ -349,8 +361,8 @@ def _build_subject_response(run_artifact: RunArtifact) -> dict[str, Any]:
             field_name="text",
         ),
         "tool_activity_summary": {
-            "tool_call_count": len(tool_calls),
-            "tools_used": sorted(set(tool_calls)),
+            "tool_call_count": tool_call_count,
+            "tools_used": tools_used,
         },
     }
     return response
@@ -426,6 +438,55 @@ def _build_process_trace(run_artifact: RunArtifact) -> list[dict[str, Any]]:
                 }
             )
             continue
+    if events:
+        return events
+    synthetic_openclaw = _build_synthetic_openclaw_process_trace(run_artifact)
+    if synthetic_openclaw:
+        return synthetic_openclaw
+    return events
+
+
+def _build_synthetic_openclaw_process_trace(run_artifact: RunArtifact) -> list[dict[str, Any]]:
+    summary = _extract_openclaw_tool_summary(run_artifact)
+    observable_summary = _extract_openclaw_observable_summary(run_artifact)
+    if summary is None:
+        return []
+    tools = summary.get("tools")
+    failures = summary.get("failures")
+    if not isinstance(tools, list) or not tools:
+        return []
+    key_output_basenames = _observable_key_output_basenames(observable_summary)
+    events: list[dict[str, Any]] = []
+    for index, tool_name in enumerate(tools, start=1):
+        if not isinstance(tool_name, str) or not tool_name.strip():
+            continue
+        call_id = f"openclaw_tool_{index}"
+        events.append(
+            {
+                "kind": "tool_call",
+                "tool_name": tool_name,
+                "call_id": call_id,
+            }
+        )
+        status = "success"
+        if isinstance(failures, int) and failures >= index:
+            status = "error"
+        output_summary: dict[str, Any] = {
+            "content_type": "openclaw_tool_summary",
+        }
+        if tool_name in {"web_search", "web_fetch", "browser", "memory_search", "memory_get"}:
+            pass
+        if tool_name == "write" and key_output_basenames:
+            output_summary["artifact_basenames"] = key_output_basenames
+        events.append(
+            {
+                "kind": "tool_result",
+                "tool_name": tool_name,
+                "call_id": call_id,
+                "status": status,
+                "output_summary": output_summary,
+            }
+        )
     return events
 
 
@@ -460,17 +521,53 @@ def _render_trace_event(index: int, event: dict[str, Any]) -> list[str]:
         lines.append(f"   tool: {tool_name}")
         lines.append(f"   status: {status}")
         if isinstance(summary, dict):
-            content_type = summary.get("content_type")
-            if content_type is not None:
-                lines.append(f"   output: {content_type}")
-            excerpt = summary.get("excerpt") or summary.get("text")
-            if isinstance(excerpt, str) and excerpt.strip():
-                lines.extend(_indent_block(_truncate_text(excerpt.strip(), max_chars=1200), prefix="   "))
-            elif isinstance(summary.get("summary"), str):
-                lines.extend(_indent_block(str(summary["summary"]), prefix="   "))
+            lines.extend(_indent_block(_render_output_summary(summary), prefix="   "))
         return lines
     lines.extend(_indent_block(_safe_pretty(event), prefix="   "))
     return lines
+
+
+def _render_output_summary(summary: dict[str, Any]) -> str:
+    lines: list[str] = []
+    content_type = summary.get("content_type")
+    if isinstance(content_type, str) and content_type.strip():
+        lines.append(f"output: {content_type.strip()}")
+    if content_type == "search_results":
+        query = summary.get("query")
+        if isinstance(query, str) and query.strip():
+            lines.append(f"query: {query.strip()}")
+        result_count = summary.get("result_count")
+        if isinstance(result_count, int):
+            lines.append(f"result_count: {result_count}")
+        top_titles = summary.get("top_titles")
+        if isinstance(top_titles, list) and top_titles:
+            rendered = ", ".join(str(item) for item in top_titles if str(item).strip())
+            if rendered:
+                lines.append(f"top_titles: {rendered}")
+        if summary.get("truncated") is True:
+            lines.append("truncated: true")
+        return "\n".join(lines)
+    if isinstance(summary.get("char_count"), int):
+        lines.append(f"char_count: {summary['char_count']}")
+    if isinstance(summary.get("item_count"), int):
+        lines.append(f"item_count: {summary['item_count']}")
+    if isinstance(summary.get("artifact_basenames"), list) and summary["artifact_basenames"]:
+        rendered_artifacts = ", ".join(
+            str(item) for item in summary["artifact_basenames"] if str(item).strip()
+        )
+        if rendered_artifacts:
+            lines.append(f"artifact_basenames: {rendered_artifacts}")
+    if isinstance(summary.get("keys"), list) and summary["keys"]:
+        rendered_keys = ", ".join(str(item) for item in summary["keys"] if str(item).strip())
+        if rendered_keys:
+            lines.append(f"keys: {rendered_keys}")
+    if isinstance(summary.get("excerpt"), str) and summary["excerpt"].strip():
+        lines.append(_truncate_text(summary["excerpt"].strip(), max_chars=1200))
+    elif isinstance(summary.get("summary"), str) and summary["summary"].strip():
+        lines.append(summary["summary"].strip())
+    if summary.get("truncated") is True:
+        lines.append("truncated: true")
+    return "\n".join(lines)
 
 
 def _indent_block(text: str, *, prefix: str) -> list[str]:
@@ -762,19 +859,22 @@ def _extract_observable_text(content: Any) -> str | None:
 
 
 def _extract_openclaw_embedded_payload(content: str) -> dict[str, Any] | None:
-    candidate_payloads = [content]
-    first_brace = content.find("{")
-    if first_brace > 0:
-        candidate_payloads.append(content[first_brace:])
-    for candidate in candidate_payloads:
+    decoder = json.JSONDecoder()
+    for start_index, char in enumerate(content):
+        if char != "{":
+            continue
         try:
-            payload = json.loads(candidate)
+            payload, _ = decoder.raw_decode(content[start_index:])
         except Exception:
             continue
         if isinstance(payload, dict) and (
             "payloads" in payload
             or "finalAssistantVisibleText" in payload
             or "finalPromptText" in payload
+            or (
+                isinstance(payload.get("meta"), dict)
+                and "toolSummary" in payload["meta"]
+            )
         ):
             return payload
     return None
@@ -800,6 +900,49 @@ def _extract_openclaw_visible_text(payload: dict[str, Any]) -> str | None:
         if isinstance(value, str) and value.strip():
             return value.strip()
     return None
+
+
+def _extract_openclaw_tool_summary(run_artifact: RunArtifact) -> dict[str, Any] | None:
+    observable_summary = _extract_openclaw_observable_summary(run_artifact)
+    if observable_summary is not None:
+        tool_summary = observable_summary.get("tool_summary")
+        if isinstance(tool_summary, dict):
+            return tool_summary
+    for event in reversed(run_artifact.trace):
+        if not isinstance(event, FinalOutputTraceEvent):
+            continue
+        if not isinstance(event.content, str):
+            continue
+        payload = _extract_openclaw_embedded_payload(event.content.strip())
+        if payload is None:
+            continue
+        meta = payload.get("meta")
+        if not isinstance(meta, dict):
+            continue
+        tool_summary = meta.get("toolSummary")
+        if isinstance(tool_summary, dict):
+            return tool_summary
+    return None
+
+
+def _extract_openclaw_observable_summary(run_artifact: RunArtifact) -> dict[str, Any] | None:
+    evidence = parse_openclaw_run_evidence(run_artifact.runner_metadata)
+    if evidence is None:
+        return None
+    metadata = evidence.metadata
+    if not isinstance(metadata, dict):
+        return None
+    summary = metadata.get("observable_summary")
+    return summary if isinstance(summary, dict) else None
+
+
+def _observable_key_output_basenames(observable_summary: dict[str, Any] | None) -> list[str]:
+    if observable_summary is None:
+        return []
+    value = observable_summary.get("key_output_basenames")
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if isinstance(item, str) and item.strip()]
 
 
 def _read_text_excerpt(ref: OutputArtifactRef, *, max_chars: int) -> str | None:

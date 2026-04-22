@@ -169,7 +169,7 @@ def test_run_eval_persists_resolved_judge_prompt_in_evaluation_manifest(tmp_path
         result.results[0].case_id,
         0,
     )
-    summary_path = storage.case_summary_path(
+    summary_path = storage.case_evaluation_result_summary_path(
         "example_suite",
         run_profile_fingerprint,
         "default",
@@ -220,7 +220,7 @@ def test_eval_recomputes_only_missing_final_result(tmp_path: Path) -> None:
         target.case_id,
         0,
     )
-    summary_path = storage.case_summary_path(
+    summary_path = storage.case_evaluation_result_summary_path(
         "example_suite",
         run_profile_fingerprint,
         "default",
@@ -362,7 +362,7 @@ def test_run_eval_marks_evaluation_failed_when_judge_produces_no_successful_iter
     evaluation_fingerprint = result.results[0].evaluation_fingerprint
     assert evaluation_fingerprint is not None
     storage = FilesystemStorage(workspace_root)
-    summary_path = storage.case_summary_path(
+    summary_path = storage.case_evaluation_result_summary_path(
         "example_suite",
         run_profile_fingerprint,
         "default",

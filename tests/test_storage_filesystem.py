@@ -259,6 +259,7 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
         repetition_index=0,
         run_fingerprint=run_fingerprint,
         result=final_result,
+        judge_result=judge_result,
     )
 
     assert (
@@ -350,7 +351,7 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
         ).read_text(encoding="utf-8")
         .startswith("SYSTEM PROMPT:\n")
     )
-    summary_text = storage.case_summary_path(
+    summary_text = storage.case_evaluation_result_summary_path(
         suite_id,
         run_profile_fingerprint,
         evaluation_profile_id,
@@ -360,6 +361,10 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
         0,
     ).read_text(encoding="utf-8")
     assert summary_text.startswith("# Final Evaluation Summary")
+    assert "## Judge Assessment" in summary_text
+    assert "## Judge Assessment\n\n- Summary:" in summary_text
+    assert "The result is acceptable." in summary_text
+    assert "`task`: Task evidence" in summary_text
     judge_json = storage.case_judge_path(
         suite_id,
         run_profile_fingerprint,

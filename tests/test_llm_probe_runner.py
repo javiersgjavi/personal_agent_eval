@@ -8,6 +8,8 @@ from personal_agent_eval.artifacts.run_artifact import (
     FinalOutputTraceEvent,
     MessageTraceEvent,
     RunnerTraceEvent,
+    ToolCallTraceEvent,
+    ToolResultTraceEvent,
 )
 from personal_agent_eval.config import (
     RunProfileConfig,
@@ -257,3 +259,66 @@ def test_llm_probe_runner_marks_tool_only_response_as_invalid() -> None:
     assert artifact.status is RunStatus.INVALID
     assert artifact.error is not None
     assert artifact.error.code == "tool_calls_not_supported"
+
+
+def test_llm_probe_runner_executes_local_tools_when_enabled() -> None:
+    case_config, run_profile, model_selection = _load_case_and_profile()
+    case_config = case_config.model_copy(
+        update={
+            "input": case_config.input.model_copy(
+                update={
+                    "context": {
+                        **case_config.input.context,
+                        "llm_probe": {
+                            "tools": ["exec_shell", "write_file", "read_file"],
+                        },
+                    }
+                }
+            )
+        }
+    )
+    client = FakeClient(
+        responses=[
+            OpenRouterChatResponse(
+                assistant_message=OpenRouterAssistantMessage(
+                    role="assistant",
+                    content=None,
+                    tool_calls=(
+                        OpenRouterToolCall(
+                            call_id="call_1",
+                            tool_name="exec_shell",
+                            raw_arguments='{"command":"printf \\"hello-smoke\\\\n\\""}',
+                            parsed_arguments={"command": 'printf "hello-smoke\\n"'},
+                        ),
+                    ),
+                )
+            ),
+            _build_success_response(content="Done after using the tool."),
+        ]
+    )
+
+    artifact = run_llm_probe_case(
+        run_id="run-1006",
+        suite_id="example_suite",
+        case_config=case_config,
+        run_profile=run_profile,
+        model_selection=model_selection,
+        client=client,
+    )
+
+    assert artifact.status is RunStatus.SUCCESS
+    assert any(isinstance(event, ToolCallTraceEvent) for event in artifact.trace)
+    assert any(isinstance(event, ToolResultTraceEvent) for event in artifact.trace)
+    tool_messages = [
+        event
+        for event in artifact.trace
+        if isinstance(event, MessageTraceEvent) and event.role == "tool"
+    ]
+    assert len(tool_messages) == 1
+    assert "hello-smoke" in (tool_messages[0].content or "")
+    assert artifact.runner_metadata["tool_capable"] is True
+    assert artifact.runner_metadata["tool_names"] == ("exec_shell", "write_file", "read_file")
+    assert client.requests is not None
+    assert len(client.requests) == 2
+    second_request_messages = client.requests[1].messages
+    assert any(message["role"] == "tool" for message in second_request_messages)

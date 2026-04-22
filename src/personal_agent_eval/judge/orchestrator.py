@@ -346,9 +346,12 @@ def aggregate_judge_results(
             efficiency=_median_dimension(successful, "efficiency"),
             spark=_median_dimension(successful, "spark"),
         )
-        summary = "\n".join(
-            f"[repetition {result.repetition_index}] {result.summary}" for result in successful
-        )
+        if len(successful) == 1:
+            summary = successful[0].summary
+        else:
+            summary = "\n".join(
+                f"[repetition {result.repetition_index}] {result.summary}" for result in successful
+            )
         evidence = JudgeEvidence(
             task=_merge_evidence(successful, "task"),
             process=_merge_evidence(successful, "process"),
