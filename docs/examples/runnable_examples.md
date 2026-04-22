@@ -4,6 +4,8 @@ This repository ships two small example campaigns that are designed to be run as
 
 Both are intentionally minimal: one model, two cases, one judge call per case.
 
+For documentation purposes, the repository also commits regenerated artifacts for these two campaigns under `outputs/`. Treat them as example outputs that show the expected layout and reporting format for a real run.
+
 ---
 
 ## llm_probe campaign
@@ -45,7 +47,7 @@ Tests a full autonomous agent running in Docker.
 
 | File | Path |
 |---|---|
-| Reusable agent | `configs/agents/support_agent/` |
+| Reusable agent | `configs/agents/basic_agent/` |
 | Tool case | `configs/cases/openclaw_tool_example/test.yaml` |
 | Browser case | `configs/cases/openclaw_browser_example/test.yaml` |
 | Suite | `configs/suites/openclaw_examples.yaml` |
@@ -94,10 +96,18 @@ outputs/
                         ├── evaluation_result_summary_1.md   ← start here
                         ├── judge_1.prompt.debug.md          ← exact judge prompt
                         └── raw_outputs/
-                            ├── final_result_1.json          ← hybrid score JSON
+                            ├── final_result_1.json          ← structured final evaluation result
                             ├── judge_1.json                 ← raw judge response
                             └── judge_1.prompt.user.json     ← structured subject view
 ```
+
+In this repository, the checked-in example artifacts live under the concrete example campaign paths:
+
+- `outputs/runs/suit_llm_probe_examples/`
+- `outputs/evaluations/suit_llm_probe_examples/`
+- `outputs/runs/suit_openclaw_examples/`
+- `outputs/evaluations/suit_openclaw_examples/`
+- `outputs/charts/judge_gpt54/`
 
 ---
 
@@ -115,7 +125,7 @@ This shows exactly what the judge saw: the task, the response, the tool activity
 
 **3. Open `raw_outputs/final_result_1.json`**
 
-This is the structured `FinalEvaluationResult`. It includes `dimension_resolutions` that show how each dimension score was derived (which policy was used, what the judge and deterministic scores were before combination).
+This is the structured `FinalEvaluationResult`. It keeps the judge scores, deterministic summaries, and final reported dimensions side by side so you can audit what the judge saw and what was reported.
 
 **4. Open `run_1.json` (if needed)**
 

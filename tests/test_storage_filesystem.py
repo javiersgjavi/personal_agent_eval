@@ -4,8 +4,6 @@ from pathlib import Path
 from typing import cast
 
 from personal_agent_eval.aggregation.models import (
-    DimensionResolution,
-    DimensionResolutions,
     DimensionScores,
     FinalEvaluationResult,
     HybridAggregationSummary,
@@ -217,7 +215,6 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
         evaluation_fingerprint=evaluation_fingerprint,
         evaluation_profile_id=evaluation_profile_id,
         aggregation_method="median",
-        default_dimension_policy="judge_only",
         judge_system_prompt_source="path:prompts/judge_system_default.md",
         judge_system_prompt="You are a strict evaluation judge.",
     )
@@ -365,6 +362,7 @@ def test_storage_round_trips_evaluation_space_files(tmp_path: Path) -> None:
     assert "## Judge Assessment\n\n- Summary:" in summary_text
     assert "The result is acceptable." in summary_text
     assert "`task`: Task evidence" in summary_text
+    assert "Resolution Notes" not in summary_text
     judge_json = storage.case_judge_path(
         suite_id,
         run_profile_fingerprint,
@@ -491,12 +489,6 @@ def _build_judge_result() -> AggregatedJudgeResult:
 
 
 def _build_final_result() -> FinalEvaluationResult:
-    resolution = DimensionResolution(
-        policy="judge_only",
-        source_used="judge",
-        judge_score=8.0,
-        final_score=8.0,
-    )
     return FinalEvaluationResult(
         case_id="example_case",
         run_id="run_001",
@@ -516,14 +508,6 @@ def _build_final_result() -> FinalEvaluationResult:
             closeness=6.5,
             efficiency=5.0,
             spark=6.0,
-        ),
-        dimension_resolutions=DimensionResolutions(
-            task=resolution,
-            process=resolution,
-            autonomy=resolution,
-            closeness=resolution,
-            efficiency=resolution,
-            spark=resolution,
         ),
         judge_overall={"score": 6.5, "evidence": ["Overall evidence"]},
         final_score=6.5,

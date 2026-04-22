@@ -370,7 +370,6 @@ Defines the judges, their repetition plans, aggregation policies, and security c
 | `judges` | list of `JudgeConfig` | no | Named judge definitions |
 | `judge_runs` | list of `JudgeRunConfig` | no | Execution plans referencing a judge |
 | `aggregation` | `JudgeAggregationConfig` | no | How to aggregate judge iterations |
-| `final_aggregation` | `FinalAggregationConfig` | no | How to compute the hybrid final score |
 | `anchors` | `AnchorsConfig` | no | Calibration anchors for the judge prompt |
 | `security_policy` | `SecurityPolicy` | no | Execution security controls |
 | `judge_system_prompt_path` | path | no | Path to system prompt file, relative to this YAML |
@@ -402,26 +401,8 @@ Defines the judges, their repetition plans, aggregation policies, and security c
 | `method` | `"median"` / `"mean"` / `"majority_vote"` / `"all_pass"` | `"median"` | Aggregation across successful iterations |
 | `pass_threshold` | float or null | null | Score threshold below which a dimension is considered failed |
 
-### `final_aggregation` — hybrid scoring policy
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `default_policy` | `"judge_only"` | `"judge_only"` | Fallback for dimensions not explicitly overridden |
-| `dimensions` | per-dimension config | all `judge_only` | Per-dimension policy overrides |
-| `final_score_weights` | per-dimension float | all `1.0` | Informational in V1; not used for `final_score` |
-
-#### Per-dimension policy
-
-| Field | Type | Description |
-|---|---|---|
-| `policy` | `"judge_only"` / `"deterministic_only"` / `"weighted"` | Scoring source |
-| `judge_weight` | float | Required when `policy: weighted` |
-| `deterministic_weight` | float | Required when `policy: weighted` |
-
-When `policy: weighted` and deterministic scoring is missing (no checks mapped to that dimension), the aggregator falls back to the judge score and emits a warning.
-
 !!! note "`final_score`"
-    `final_score` comes from `judge_overall.score`, not from a weighted average of dimension scores. The dimension weights are preserved for compatibility and per-dimension analysis.
+    `final_score` comes from `judge_overall.score`. Deterministic checks are informative evidence for the judge and for debugging, but there is no separate weighting policy for the final score.
 
 ### `anchors` — calibration examples
 
@@ -461,20 +442,6 @@ judge_runs:
     repetitions: 3
 aggregation:
   method: median
-final_aggregation:
-  default_policy: judge_only
-  dimensions:
-    process:
-      policy: weighted
-      judge_weight: 0.9
-      deterministic_weight: 0.1
-  final_score_weights:
-    task: 0.3
-    process: 0.15
-    autonomy: 0.2
-    closeness: 0.1
-    efficiency: 0.15
-    spark: 0.1
 anchors:
   enabled: false
 security_policy:

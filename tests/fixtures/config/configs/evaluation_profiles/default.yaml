@@ -13,24 +13,6 @@ judge_runs:
 aggregation:
   method: median
   pass_threshold: 0.8
-final_aggregation:
-  default_policy: judge_only
-  dimensions:
-    task:
-      policy: weighted
-      judge_weight: 0.7
-      deterministic_weight: 0.3
-    process:
-      policy: weighted
-      judge_weight: 0.6
-      deterministic_weight: 0.4
-  final_score_weights:
-    task: 0.3
-    process: 0.15
-    autonomy: 0.2
-    closeness: 0.1
-    efficiency: 0.15
-    spark: 0.1
 anchors:
   enabled: true
   references:

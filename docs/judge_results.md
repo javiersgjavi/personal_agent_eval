@@ -1,6 +1,6 @@
 # Judge Results
 
-The judge is an LLM that reads a compact, structured view of the run and produces a scored assessment across six dimensions. It runs after the deterministic layer and before hybrid aggregation.
+The judge is an LLM that reads a compact, structured view of the run and produces a scored assessment across six dimensions. It runs after the deterministic layer, and its output defines the final score.
 
 ---
 
@@ -101,11 +101,11 @@ After evaluation, three files are written per `(model, case, repetition)`:
 
 | File | Contents |
 |---|---|
-| `evaluation_result_summary_1.md` | Human-readable Markdown summary: score, dimensions, evidence |
+| `evaluation_result_summary_1.md` | Human-readable Markdown summary: score, dimensions, evidence, deterministic context |
 | `judge_1.prompt.debug.md` | The exact prompt shown to the judge (system + user, rendered as readable text) |
 | `raw_outputs/judge_1.json` | Raw aggregated judge result (structured JSON) |
 | `raw_outputs/judge_1.prompt.user.json` | Structured subject view payload sent as the user message |
-| `raw_outputs/final_result_1.json` | Final hybrid evaluation result (after aggregation) |
+| `raw_outputs/final_result_1.json` | Final evaluation result with judge output and deterministic summaries |
 
 **Start with `evaluation_result_summary_1.md`** to understand the verdict. Open `judge_1.prompt.debug.md` to audit what the judge saw. Use `raw_outputs/final_result_1.json` for downstream processing.
 
@@ -129,14 +129,14 @@ Example (abbreviated):
 
 ## Dimension scores
 
-| Dimension   | Score | Policy        |
-|-------------|-------|---------------|
-| task        | 8.5   | judge_only    |
-| process     | 9.0   | weighted      |
-| autonomy    | 8.0   | judge_only    |
-| closeness   | 8.5   | judge_only    |
-| efficiency  | 7.5   | judge_only    |
-| spark       | 6.0   | judge_only    |
+| Dimension   | Deterministic | Judge | Final |
+|-------------|---------------|-------|-------|
+| task        | 10.0          | 8.5   | 8.5   |
+| process     | 10.0          | 9.0   | 9.0   |
+| autonomy    | n/a           | 8.0   | 8.0   |
+| closeness   | n/a           | 8.5   | 8.5   |
+| efficiency  | n/a           | 7.5   | 7.5   |
+| spark       | n/a           | 6.0   | 6.0   |
 
 ## Deterministic checks
 
@@ -171,4 +171,4 @@ judges:
 
 The `judge_system_prompt_path` field points to a Markdown file that contains the scoring contract. The framework includes a default system prompt that encodes the six dimensions and the expected JSON output schema. You can override it per evaluation profile.
 
-→ [Hybrid evaluation](hybrid_evaluation.md) — how judge scores combine with deterministic results
+→ [Hybrid evaluation](hybrid_evaluation.md) — how judge scores and deterministic signals are stored together

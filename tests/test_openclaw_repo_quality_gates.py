@@ -48,6 +48,34 @@ def test_repo_support_agent_loads() -> None:
     assert (agent.workspace_dir / "AGENTS.md").is_file()
 
 
+def test_repo_basic_agent_workspace_matches_default_openclaw_bootstrap() -> None:
+    agent = load_openclaw_agent(REPO_ROOT / "configs" / "agents" / "basic_agent")
+    assert agent.agent_id == "basic_agent"
+    assert _openclaw_cli_agent_id(agent) == "basic-agent"
+    assert agent.workspace_dir is not None
+    files = {
+        path.relative_to(agent.workspace_dir).as_posix()
+        for path in agent.workspace_dir.rglob("*")
+        if path.is_file()
+    }
+    assert files == {
+        ".openclaw/workspace-state.json",
+        "AGENTS.md",
+        "BOOTSTRAP.md",
+        "HEARTBEAT.md",
+        "IDENTITY.md",
+        "SOUL.md",
+        "TOOLS.md",
+        "USER.md",
+    }
+    assert (agent.workspace_dir / "BOOTSTRAP.md").read_text(encoding="utf-8").startswith(
+        "# BOOTSTRAP.md - Hello, World"
+    )
+    assert (agent.workspace_dir / "HEARTBEAT.md").read_text(encoding="utf-8").startswith(
+        "# HEARTBEAT.md Template"
+    )
+
+
 def test_repo_openclaw_smoke_gpt4o_mini_suite_expands() -> None:
     expanded = expand_suite(BUNDLED_WORKSPACE_ROOT, "openclaw_smoke_gpt4o_mini_suite")
     assert len(expanded) == 1

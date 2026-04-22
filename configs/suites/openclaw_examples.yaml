@@ -11,5 +11,5 @@ case_selection:
     - openclaw_browser_example
 metadata:
   owner: qa
-  agent: support_agent
+  agent: basic_agent
   run_profile: openclaw_examples

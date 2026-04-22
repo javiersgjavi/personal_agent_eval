@@ -1,0 +1,244 @@
+{
+  "error": null,
+  "identity": {
+    "case_id": "openclaw_browser_example",
+    "run_id": "run_5635087977e14f18803c4ad8de929e5e",
+    "run_profile_id": "openclaw_examples",
+    "runner_type": "openclaw",
+    "schema_version": 1,
+    "suite_id": "openclaw_examples"
+  },
+  "output_artifacts": [
+    {
+      "artifact_id": "openclaw_key_output_1",
+      "artifact_type": "openclaw_key_output",
+      "byte_size": 450,
+      "media_type": "text/plain",
+      "metadata": {},
+      "sha256": "94e85b06ed00cfafef25520c19e7b74fa5d1151032f84dd1bfed497438954c16",
+      "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/outputs/runs/suit_openclaw_examples/run_profile_8d6552/minimax_m27/openclaw_browser_example/run_1.artifacts/openclaw_key_output_1--report.md"
+    }
+  ],
+  "provider": {
+    "finish_reason": null,
+    "gateway": "openclaw",
+    "metadata": {
+      "returncode": 0
+    },
+    "native_finish_reason": null,
+    "provider_model_id": null,
+    "provider_name": null,
+    "request_id": null,
+    "response_id": null
+  },
+  "request": {
+    "execution_parameters": {
+      "max_tokens": null,
+      "max_turns": null,
+      "retries": null,
+      "seed": null,
+      "temperature": null,
+      "timeout_seconds": 300.0,
+      "tool_choice": null,
+      "top_p": null
+    },
+    "gateway": "openclaw",
+    "metadata": {
+      "attachments": [],
+      "case_metadata": {},
+      "input_context": {
+        "openclaw": {
+          "expected_artifact": "report.md"
+        }
+      },
+      "model_selection": {
+        "label": "minimax/minimax-m2.7",
+        "model_id": "minimax_m27",
+        "requested_model": "minimax/minimax-m2.7"
+      },
+      "openclaw": {
+        "agent_id": "basic_agent",
+        "container_image": "ghcr.io/openclaw/openclaw:2026.4.15",
+        "docker_cli": "docker",
+        "execution": "docker"
+      },
+      "requested_runner_config": {
+        "type": "openclaw"
+      }
+    },
+    "requested_model": "minimax/minimax-m2.7"
+  },
+  "runner_metadata": {
+    "openclaw": {
+      "agent_id": "basic_agent",
+      "container_image": "ghcr.io/openclaw/openclaw:2026.4.15",
+      "generated_openclaw_config": {
+        "artifact_id": "openclaw_config",
+        "artifact_type": "openclaw_generated_config",
+        "byte_size": 1248,
+        "media_type": "application/json",
+        "metadata": {},
+        "sha256": "d5f092929218e36f47b257bdbb908ed592c9170281d4a9015e446b867644b15f",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/outputs/runs/suit_openclaw_examples/run_profile_8d6552/minimax_m27/openclaw_browser_example/run_1.artifacts/openclaw_config--openclaw.json"
+      },
+      "key_output_artifacts": [
+        {
+          "artifact_id": "openclaw_key_output_1",
+          "artifact_type": "openclaw_key_output",
+          "byte_size": 450,
+          "media_type": "text/plain",
+          "metadata": {},
+          "sha256": "94e85b06ed00cfafef25520c19e7b74fa5d1151032f84dd1bfed497438954c16",
+          "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/outputs/runs/suit_openclaw_examples/run_profile_8d6552/minimax_m27/openclaw_browser_example/run_1.artifacts/openclaw_key_output_1--report.md"
+        }
+      ],
+      "metadata": {
+        "observable_summary": {
+          "final_assistant_visible_text": "The current stable version of Python is **3.14.4**, released April 7, 2026. It's available for download on the official Python website at `python.org/downloads/`, which is maintained by the Python Software Foundation — the authoritative source for all Python releases.\n\nThe `report.md` has been saved to your workspace with the official URL and a reliability justification.",
+          "final_prompt_text": "[1] user\nUse the browser or web search to find an official Python page about the current stable version.\nCreate a `report.md` in the workspace with:\n- a title `# Browser Example`\n- the official URL you consulted\n- a short sentence justifying why that source is reliable\n\nThen reply in 2–3 lines summarizing what you found.\n\n\n[openclaw_hints]\n{\n  \"expected_artifact\": \"report.md\"\n}",
+          "key_output_basenames": [
+            "report.md"
+          ],
+          "tool_summary": {
+            "calls": 2,
+            "failures": 0,
+            "tools": [
+              "web_search",
+              "write"
+            ]
+          }
+        }
+      },
+      "openclaw_logs": {
+        "artifact_id": "openclaw_logs",
+        "artifact_type": "openclaw_logs",
+        "byte_size": 10252,
+        "media_type": "text/plain",
+        "metadata": {},
+        "sha256": "5aaf21fc07b9a36327c6a4bfa826c586ae3c64ed3d2fce770cde35318be18682",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/outputs/runs/suit_openclaw_examples/run_profile_8d6552/minimax_m27/openclaw_browser_example/run_1.artifacts/openclaw_logs--openclaw.log"
+      },
+      "raw_session_trace": {
+        "artifact_id": "openclaw_raw_trace",
+        "artifact_type": "openclaw_raw_session_trace",
+        "byte_size": 10077,
+        "media_type": "application/json",
+        "metadata": {},
+        "sha256": "0ea3df4372a5a496df6d3ff55b178f3c8b62c37c8cb25e6ada620c68ac323823",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/outputs/runs/suit_openclaw_examples/run_profile_8d6552/minimax_m27/openclaw_browser_example/run_1.artifacts/openclaw_raw_trace--raw_session_trace.json"
+      },
+      "schema_version": 1,
+      "workspace_diff": {
+        "artifact_id": "openclaw_workspace_diff",
+        "artifact_type": "openclaw_workspace_diff",
+        "byte_size": 522,
+        "media_type": "text/x-diff",
+        "metadata": {},
+        "sha256": "e81f5570517813413efe2dd9f8358c5bbacdb37fc353ce6745c193e938207239",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/outputs/runs/suit_openclaw_examples/run_profile_8d6552/minimax_m27/openclaw_browser_example/run_1.artifacts/openclaw_workspace_diff--workspace.diff"
+      },
+      "workspace_snapshot": {
+        "artifact_id": "openclaw_workspace_snapshot",
+        "artifact_type": "openclaw_workspace_snapshot",
+        "byte_size": 5853,
+        "media_type": "application/gzip",
+        "metadata": {},
+        "sha256": "ff89f3e2d2a62841fdbdfcd944b16c44d8f9327eed6a75fe9c7f94df34815245",
+        "uri": "file:///home/javier/Projects/benchmark-openclaw-llm/outputs/runs/suit_openclaw_examples/run_profile_8d6552/minimax_m27/openclaw_browser_example/run_1.artifacts/openclaw_workspace_snapshot--workspace_snapshot.tar.gz"
+      }
+    }
+  },
+  "status": "success",
+  "timing": {
+    "completed_at": "2026-04-22T21:55:10.846103Z",
+    "duration_seconds": 40.0941,
+    "queued_at": "2026-04-22T21:54:30.751980Z",
+    "started_at": "2026-04-22T21:54:30.751983Z"
+  },
+  "trace": [
+    {
+      "detail": "Docker-only execution using the run profile image.",
+      "event_type": "runner",
+      "metadata": {
+        "docker_cli": "docker",
+        "pinned_image": "ghcr.io/openclaw/openclaw:2026.4.15"
+      },
+      "name": "openclaw_executor_selected",
+      "sequence": 0,
+      "timestamp": null
+    },
+    {
+      "detail": "Materialized OpenClaw workspace template.",
+      "event_type": "runner",
+      "metadata": {
+        "placeholder_files": [],
+        "workspace_dir": "/tmp/pae-openclaw-u6vkyd8y/workspace"
+      },
+      "name": "workspace_materialized",
+      "sequence": 1,
+      "timestamp": null
+    },
+    {
+      "content": "Use the browser or web search to find an official Python page about the current stable version.\nCreate a `report.md` in the workspace with:\n- a title `# Browser Example`\n- the official URL you consulted\n- a short sentence justifying why that source is reliable\n\nThen reply in 2–3 lines summarizing what you found.\n",
+      "event_type": "message",
+      "metadata": {},
+      "name": null,
+      "role": "user",
+      "sequence": 2,
+      "timestamp": null
+    },
+    {
+      "detail": "Host env forwarded into OpenClaw container (filtered: OpenRouter, providers, proxy/TLS).",
+      "event_type": "runner",
+      "metadata": {
+        "env_file": ".pae-openclaw.docker.env",
+        "forwarded_var_count": 3,
+        "mode": "filtered",
+        "openrouter_api_key_set": true
+      },
+      "name": "openclaw_container_env",
+      "sequence": 3,
+      "timestamp": null
+    },
+    {
+      "detail": "Validated generated OpenClaw config.",
+      "event_type": "runner",
+      "metadata": {
+        "returncode": 0
+      },
+      "name": "config_validated",
+      "sequence": 4,
+      "timestamp": null
+    },
+    {
+      "detail": "Running OpenClaw local agent turn.",
+      "event_type": "runner",
+      "metadata": {
+        "agent_directory_id": "basic_agent",
+        "agent_id": "basic-agent"
+      },
+      "name": "agent_invoked",
+      "sequence": 5,
+      "timestamp": null
+    },
+    {
+      "content": "{\n  \"payloads\": [\n    {\n      \"text\": \"The current stable version of Python is **3.14.4**, released April 7, 2026. It's available for download on the official Python website at `python.org/downloads/`, which is maintained by the Python Software Foundation — the authoritative source for all Python releases.\\n\\nThe `report.md` has been saved to your workspace with the official URL and a reliability justification.\",\n      \"mediaUrl\": null\n    }\n  ],\n  \"meta\": {\n    \"durationMs\": 20783,\n    \"agentMeta\": {\n      \"sessionId\": \"5f352b65-d0d0-407a-8983-6dd9d569c301\",\n      \"provider\": \"openrouter\",\n      \"model\": \"minimax/minimax-m2.7\",\n      \"usage\": {\n        \"input\": 12125,\n        \"output\": 416,\n        \"cacheRead\": 23168,\n        \"total\": 12189\n      },\n      \"lastCallUsage\": {\n        \"input\": 170,\n        \"output\": 115,\n        \"cacheRead\": 11904,\n        \"cacheWrite\": 0,\n        \"total\": 12189\n      },\n      \"promptTokens\": 12074\n    },\n    \"aborted\": false,\n    \"systemPromptReport\": {\n      \"source\": \"run\",\n      \"generatedAt\": 1776894902260,\n      \"sessionId\": \"5f352b65-d0d0-407a-8983-6dd9d569c301\",\n      \"sessionKey\": \"agent:basic-agent:main\",\n      \"provider\": \"openrouter\",\n      \"model\": \"minimax/minimax-m2.7\",\n      \"workspaceDir\": \"/work/workspace\",\n      \"bootstrapMaxChars\": 12000,\n      \"bootstrapTotalMaxChars\": 60000,\n      \"bootstrapTruncation\": {\n        \"warningMode\": \"once\",\n        \"warningShown\": false,\n        \"truncatedFiles\": 0,\n        \"nearLimitFiles\": 0,\n        \"totalNearLimit\": false\n      },\n      \"sandbox\": {\n        \"mode\": \"off\",\n        \"sandboxed\": false\n      },\n      \"systemPrompt\": {\n        \"chars\": 68,\n        \"projectContextChars\": 0,\n        \"nonProjectContextChars\": 68\n      },\n      \"injectedWorkspaceFiles\": [\n        {\n          \"name\": \"AGENTS.md\",\n          \"path\": \"/work/workspace/AGENTS.md\",\n          \"missing\": false,\n          \"rawChars\": 4307,\n          \"injectedChars\": 4307,\n          \"truncated\": false\n        },\n        {\n          \"name\": \"SOUL.md\",\n          \"path\": \"/work/workspace/SOUL.md\",\n          \"missing\": false,\n          \"rawChars\": 1738,\n          \"injectedChars\": 1738,\n          \"truncated\": false\n        },\n        {\n          \"name\": \"TOOLS.md\",\n          \"path\": \"/work/workspace/TOOLS.md\",\n          \"missing\": false,\n          \"rawChars\": 850,\n          \"injectedChars\": 850,\n          \"truncated\": false\n        },\n        {\n          \"name\": \"IDENTITY.md\",\n          \"path\": \"/work/workspace/IDENTITY.md\",\n          \"missing\": false,\n          \"rawChars\": 494,\n          \"injectedChars\": 494,\n          \"truncated\": false\n        },\n        {\n          \"name\": \"USER.md\",\n          \"path\": \"/work/workspace/USER.md\",\n          \"missing\": false,\n          \"rawChars\": 954,\n          \"injectedChars\": 954,\n          \"truncated\": false\n        },\n        {\n          \"name\": \"HEARTBEAT.md\",\n          \"path\": \"/work/workspace/HEARTBEAT.md\",\n          \"missing\": false,\n          \"rawChars\": 192,\n          \"injectedChars\": 192,\n          \"truncated\": false\n        },\n        {\n          \"name\": \"BOOTSTRAP.md\",\n          \"path\": \"/work/workspace/BOOTSTRAP.md\",\n          \"missing\": false,\n          \"rawChars\": 1450,\n          \"injectedChars\": 1450,\n          \"truncated\": false\n        }\n      ],\n      \"skills\": {\n        \"promptChars\": 3342,\n        \"entries\": [\n          {\n            \"name\": \"healthcheck\",\n            \"blockChars\": 456\n          },\n          {\n            \"name\": \"node-connect\",\n            \"blockChars\": 506\n          },\n          {\n            \"name\": \"skill-creator\",\n            \"blockChars\": 724\n          },\n          {\n            \"name\": \"taskflow\",\n            \"blockChars\": 508\n          },\n          {\n            \"name\": \"taskflow-inbox-triage\",\n            \"blockChars\": 383\n          },\n          {\n            \"name\": \"weather\",\n            \"blockChars\": 381\n          }\n        ]\n      },\n      \"tools\": {\n        \"listChars\": 0,\n        \"schemaChars\": 26704,\n        \"entries\": [\n          {\n            \"name\": \"read\",\n            \"summaryChars\": 298,\n            \"schemaChars\": 304,\n            \"propertiesCount\": 3\n          },\n          {\n            \"name\": \"edit\",\n            \"summaryChars\": 326,\n            \"schemaChars\": 834,\n            \"propertiesCount\": 2\n          },\n          {\n            \"name\": \"write\",\n            \"summaryChars\": 127,\n            \"schemaChars\": 225,\n            \"propertiesCount\": 2\n          },\n          {\n            \"name\": \"exec\",\n            \"summaryChars\": 539,\n            \"schemaChars\": 1098,\n            \"propertiesCount\": 12\n          },\n          {\n            \"name\": \"process\",\n            \"summaryChars\": 416,\n            \"schemaChars\": 961,\n            \"propertiesCount\": 12\n          },\n          {\n            \"name\": \"canvas\",\n            \"summaryChars\": 106,\n            \"schemaChars\": 661,\n            \"propertiesCount\": 18\n          },\n          {\n            \"name\": \"nodes\",\n            \"summaryChars\": 118,\n            \"schemaChars\": 1589,\n            \"propertiesCount\": 32\n          },\n          {\n            \"name\": \"cron\",\n            \"summaryChars\": 3726,\n            \"schemaChars\": 6700,\n            \"propertiesCount\": 13\n          },\n          {\n            \"name\": \"message\",\n            \"summaryChars\": 89,\n            \"schemaChars\": 5613,\n            \"propertiesCount\": 105\n          },\n          {\n            \"name\": \"tts\",\n            \"summaryChars\": 152,\n            \"schemaChars\": 223,\n            \"propertiesCount\": 2\n          },\n          {\n            \"name\": \"gateway\",\n            \"summaryChars\": 494,\n            \"schemaChars\": 497,\n            \"propertiesCount\": 12\n          },\n          {\n            \"name\": \"agents_list\",\n            \"summaryChars\": 118,\n            \"schemaChars\": 33,\n            \"propertiesCount\": 0\n          },\n          {\n            \"name\": \"sessions_list\",\n            \"summaryChars\": 177,\n            \"schemaChars\": 212,\n            \"propertiesCount\": 4\n          },\n          {\n            \"name\": \"sessions_history\",\n            \"summaryChars\": 180,\n            \"schemaChars\": 161,\n            \"propertiesCount\": 3\n          },\n          {\n            \"name\": \"sessions_send\",\n            \"summaryChars\": 208,\n            \"schemaChars\": 274,\n            \"propertiesCount\": 5\n          },\n          {\n            \"name\": \"sessions_yield\",\n            \"summaryChars\": 97,\n            \"schemaChars\": 60,\n            \"propertiesCount\": 1\n          },\n          {\n            \"name\": \"sessions_spawn\",\n            \"summaryChars\": 302,\n            \"schemaChars\": 1333,\n            \"propertiesCount\": 18\n          },\n          {\n            \"name\": \"subagents\",\n            \"summaryChars\": 105,\n            \"schemaChars\": 191,\n            \"propertiesCount\": 4\n          },\n          {\n            \"name\": \"session_status\",\n            \"summaryChars\": 336,\n            \"schemaChars\": 89,\n            \"propertiesCount\": 2\n          },\n          {\n            \"name\": \"web_search\",\n            \"summaryChars\": 188,\n            \"schemaChars\": 1222,\n            \"propertiesCount\": 10\n          },\n          {\n            \"name\": \"web_fetch\",\n            \"summaryChars\": 129,\n            \"schemaChars\": 374,\n            \"propertiesCount\": 3\n          },\n          {\n            \"name\": \"image\",\n            \"summaryChars\": 260,\n            \"schemaChars\": 342,\n            \"propertiesCount\": 6\n          },\n          {\n            \"name\": \"pdf\",\n            \"summaryChars\": 275,\n            \"schemaChars\": 400,\n            \"propertiesCount\": 6\n          },\n          {\n            \"name\": \"browser\",\n            \"summaryChars\": 1066,\n            \"schemaChars\": 2799,\n            \"propertiesCount\": 48\n          },\n          {\n            \"name\": \"memory_search\",\n            \"summaryChars\": 385,\n            \"schemaChars\": 260,\n            \"propertiesCount\": 4\n          },\n          {\n            \"name\": \"memory_get\",\n            \"summaryChars\": 239,\n            \"schemaChars\": 249,\n            \"propertiesCount\": 4\n          }\n        ]\n      }\n    },\n    \"finalPromptText\": \"[1] user\\nUse the browser or web search to find an official Python page about the current stable version.\\nCreate a `report.md` in the workspace with:\\n- a title `# Browser Example`\\n- the official URL you consulted\\n- a short sentence justifying why that source is reliable\\n\\nThen reply in 2–3 lines summarizing what you found.\\n\\n\\n[openclaw_hints]\\n{\\n  \\\"expected_artifact\\\": \\\"report.md\\\"\\n}\",\n    \"finalAssistantVisibleText\": \"The current stable version of Python is **3.14.4**, released April 7, 2026. It's available for download on the official Python website at `python.org/downloads/`, which is maintained by the Python Software Foundation — the authoritative source for all Python releases.\\n\\nThe `report.md` has been saved to your workspace with the official URL and a reliability justification.\",\n    \"finalAssistantRawText\": \"The current stable version of Python is **3.14.4**, released April 7, 2026. It's available for download on the official Python website at `python.org/downloads/`, which is maintained by the Python Software Foundation — the authoritative source for all Python releases.\\n\\nThe `report.md` has been saved to your workspace with the official URL and a reliability justification.\",\n    \"replayInvalid\": true,\n    \"livenessState\": \"working\",\n    \"stopReason\": \"stop\",\n    \"executionTrace\": {\n      \"winnerProvider\": \"openrouter\",\n      \"winnerModel\": \"minimax/minimax-m2.7\",\n      \"attempts\": [\n        {\n          \"provider\": \"openrouter\",\n          \"model\": \"minimax/minimax-m2.7\",\n          \"result\": \"success\",\n          \"stage\": \"assistant\"\n        }\n      ],\n      \"fallbackUsed\": false,\n      \"runner\": \"embedded\"\n    },\n    \"requestShaping\": {\n      \"thinking\": \"low\"\n    },\n    \"toolSummary\": {\n      \"calls\": 2,\n      \"tools\": [\n        \"web_search\",\n        \"write\"\n      ],\n      \"failures\": 0\n    },\n    \"completion\": {\n      \"stopReason\": \"stop\",\n      \"finishReason\": \"stop\"\n    }\n  }\n}",
+      "event_type": "final_output",
+      "metadata": {},
+      "sequence": 6,
+      "timestamp": null
+    }
+  ],
+  "usage": {
+    "cost_usd": null,
+    "normalized": {
+      "cache_write_tokens": null,
+      "cached_input_tokens": null,
+      "input_tokens": null,
+      "output_tokens": null,
+      "reasoning_tokens": null,
+      "total_tokens": null
+    },
+    "raw_provider_usage": null
+  }
+}

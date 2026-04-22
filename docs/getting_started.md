@@ -127,7 +127,7 @@ uv run pae run-eval \
 
 The framework:
 
-1. Materializes an ephemeral workspace from `configs/agents/support_agent/`
+1. Materializes an ephemeral workspace from `configs/agents/basic_agent/`
 2. Generates a per-run `openclaw.json` config file in that workspace
 3. Invokes `docker run ghcr.io/openclaw/openclaw:2026.4.15 openclaw ...`
 4. Captures the workspace diff, logs, and key outputs as evidence
@@ -173,7 +173,7 @@ You can mix and match: the same case can appear in multiple suites, the same sui
 
 ## Next steps
 
-- [Concepts](concepts.md) — scoring dimensions, how hybrid aggregation works
+- [Concepts](concepts.md) — scoring dimensions, judge-first evaluation, and reuse
 - [Configuration reference](configuration.md) — complete YAML field reference
 - [CLI reference](cli.md) — all `pae` commands and flags
 - [Fingerprints & reuse](fingerprints.md) — how to force a re-run, what changes a fingerprint

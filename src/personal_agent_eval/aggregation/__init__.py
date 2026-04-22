@@ -1,9 +1,7 @@
-"""Hybrid aggregation over deterministic and judge outputs."""
+"""Aggregation over deterministic signals and judge outputs."""
 
 from personal_agent_eval.aggregation.aggregator import HybridAggregator
 from personal_agent_eval.aggregation.models import (
-    DimensionResolution,
-    DimensionResolutions,
     DimensionScores,
     FinalEvaluationResult,
     HybridAggregationSummary,
@@ -11,8 +9,6 @@ from personal_agent_eval.aggregation.models import (
 )
 
 __all__ = [
-    "DimensionResolution",
-    "DimensionResolutions",
     "DimensionScores",
     "FinalEvaluationResult",
     "HybridAggregationSummary",

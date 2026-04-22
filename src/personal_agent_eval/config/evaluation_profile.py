@@ -40,71 +40,6 @@ class JudgeAggregationConfig(ConfigModel):
     pass_threshold: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
-class FinalDimensionAggregationConfig(ConfigModel):
-    """Per-dimension hybrid aggregation policy."""
-
-    policy: Literal["judge_only", "deterministic_only", "weighted"] = "judge_only"
-    judge_weight: float | None = Field(default=None, gt=0)
-    deterministic_weight: float | None = Field(default=None, gt=0)
-
-    @model_validator(mode="after")
-    def _validate_weighted_policy(self) -> FinalDimensionAggregationConfig:
-        if self.policy == "weighted":
-            if self.judge_weight is None or self.deterministic_weight is None:
-                raise ValueError(
-                    "Weighted final aggregation requires both 'judge_weight' and "
-                    "'deterministic_weight'."
-                )
-        return self
-
-
-class FinalAggregationDimensions(ConfigModel):
-    """Dimension-level aggregation policy overrides."""
-
-    task: FinalDimensionAggregationConfig = Field(default_factory=FinalDimensionAggregationConfig)
-    process: FinalDimensionAggregationConfig = Field(
-        default_factory=FinalDimensionAggregationConfig
-    )
-    autonomy: FinalDimensionAggregationConfig = Field(
-        default_factory=FinalDimensionAggregationConfig
-    )
-    closeness: FinalDimensionAggregationConfig = Field(
-        default_factory=FinalDimensionAggregationConfig
-    )
-    efficiency: FinalDimensionAggregationConfig = Field(
-        default_factory=FinalDimensionAggregationConfig
-    )
-    spark: FinalDimensionAggregationConfig = Field(default_factory=FinalDimensionAggregationConfig)
-
-
-class FinalScoreWeights(ConfigModel):
-    """Weights used to compute the final score from final dimensions."""
-
-    task: float = Field(default=1.0, ge=0)
-    process: float = Field(default=1.0, ge=0)
-    autonomy: float = Field(default=1.0, ge=0)
-    closeness: float = Field(default=1.0, ge=0)
-    efficiency: float = Field(default=1.0, ge=0)
-    spark: float = Field(default=1.0, ge=0)
-
-    @model_validator(mode="after")
-    def _validate_non_zero_sum(self) -> FinalScoreWeights:
-        if (
-            self.task + self.process + self.autonomy + self.closeness + self.efficiency + self.spark
-            <= 0
-        ):
-            raise ValueError("At least one final_score_weight must be greater than zero.")
-        return self
-
-
-class FinalAggregationConfig(ConfigModel):
-    """Config-driven policy for hybrid final aggregation."""
-
-    default_policy: Literal["judge_only"] = "judge_only"
-    dimensions: FinalAggregationDimensions = Field(default_factory=FinalAggregationDimensions)
-    final_score_weights: FinalScoreWeights = Field(default_factory=FinalScoreWeights)
-
-
 class Anchor(ConfigModel):
     """An anchor example that can be referenced by judges."""
 
@@ -137,7 +72,6 @@ class EvaluationProfileConfig(ConfigModel):
     judges: list[JudgeConfig] = Field(default_factory=list)
     judge_runs: list[JudgeRunConfig] = Field(default_factory=list)
     aggregation: JudgeAggregationConfig = Field(default_factory=JudgeAggregationConfig)
-    final_aggregation: FinalAggregationConfig = Field(default_factory=FinalAggregationConfig)
     anchors: AnchorsConfig = Field(default_factory=AnchorsConfig)
     security_policy: SecurityPolicy = Field(default_factory=SecurityPolicy)
     metadata: dict[str, Any] = Field(default_factory=dict)

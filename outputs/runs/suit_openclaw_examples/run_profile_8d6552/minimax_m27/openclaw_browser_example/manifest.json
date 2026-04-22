@@ -1,0 +1,16 @@
+{
+  "case_id": "openclaw_browser_example",
+  "iterations": [
+    {
+      "repetition_index": 0,
+      "run_fingerprint": "f2121b39f5bad35f6bac9bda0737aece50c3b642d89383cfe9add98b01fcbe00"
+    }
+  ],
+  "model_id": "minimax_m27",
+  "openclaw_agent_id": "basic_agent",
+  "run_profile_fingerprint": "8d6552dcfa64209ddefc724f86e3d24cbd7d7a08098c7d93b22bfb990d321762",
+  "run_profile_id": "openclaw_examples",
+  "runner_type": "openclaw",
+  "schema_version": 1,
+  "suite_id": "openclaw_examples"
+}

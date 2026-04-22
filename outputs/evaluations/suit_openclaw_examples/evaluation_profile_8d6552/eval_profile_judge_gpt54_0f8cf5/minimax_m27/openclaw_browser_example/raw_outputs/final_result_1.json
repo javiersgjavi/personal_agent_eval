@@ -1,0 +1,50 @@
+{
+  "case_id": "openclaw_browser_example",
+  "deterministic_dimensions": {
+    "autonomy": null,
+    "closeness": null,
+    "efficiency": null,
+    "process": 10.0,
+    "spark": null,
+    "task": 10.0
+  },
+  "final_dimensions": {
+    "autonomy": 10.0,
+    "closeness": 6.0,
+    "efficiency": 9.0,
+    "process": 10.0,
+    "spark": 8.0,
+    "task": 9.0
+  },
+  "final_score": 8.0,
+  "judge_dimensions": {
+    "autonomy": 10.0,
+    "closeness": 6.0,
+    "efficiency": 9.0,
+    "process": 10.0,
+    "spark": 8.0,
+    "task": 9.0
+  },
+  "judge_overall": {
+    "evidence": [
+      "report.md was created and contains https://www.python.org/downloads/",
+      "Deterministic checks passed: 2/2",
+      "Final response includes an unsupported version/date claim"
+    ],
+    "score": 8.0
+  },
+  "run_id": "run_5635087977e14f18803c4ad8de929e5e",
+  "schema_version": 1,
+  "security": {
+    "verdict": "not_evaluated",
+    "warnings": []
+  },
+  "summary": {
+    "deterministic_error_checks": 0,
+    "deterministic_failed_checks": 0,
+    "deterministic_passed_checks": 2,
+    "judge_failed_iterations": 0,
+    "judge_successful_iterations": 1
+  },
+  "warnings": []
+}

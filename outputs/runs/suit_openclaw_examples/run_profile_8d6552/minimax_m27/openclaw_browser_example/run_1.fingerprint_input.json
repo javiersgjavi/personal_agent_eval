@@ -1,0 +1,31 @@
+{
+  "fingerprint": "f2121b39f5bad35f6bac9bda0737aece50c3b642d89383cfe9add98b01fcbe00",
+  "fingerprint_version": 1,
+  "hash_algorithm": "sha256",
+  "kind": "run",
+  "payload": {
+    "attachments": [],
+    "case_metadata": {},
+    "input_context": {
+      "openclaw": {
+        "expected_artifact": "report.md"
+      }
+    },
+    "input_messages": [
+      {
+        "content": "Use the browser or web search to find an official Python page about the current stable version.\nCreate a `report.md` in the workspace with:\n- a title `# Browser Example`\n- the official URL you consulted\n- a short sentence justifying why that source is reliable\n\nThen reply in 2–3 lines summarizing what you found.\n",
+        "metadata": {},
+        "name": null,
+        "role": "user"
+      }
+    ],
+    "requested_model": "minimax/minimax-m2.7",
+    "runner_config": {
+      "agent_fingerprint": "42d5d1e1ec8a80bc5ba75580a9988fbf0c0bbf6b3485a6ad8fc102de93211140",
+      "docker_cli": "docker",
+      "image": "ghcr.io/openclaw/openclaw:2026.4.15",
+      "openclaw_primary_model_ref": "openrouter/minimax/minimax-m2.7"
+    },
+    "runner_type": "openclaw"
+  }
+}

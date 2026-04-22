@@ -1,8 +1,8 @@
 # Hybrid Evaluation
 
-Hybrid evaluation combines the **deterministic layer** (stable, pass/fail, free) with the **judge layer** (LLM-based, nuanced, 0–10) into a single `FinalEvaluationResult`.
+Evaluation combines the **deterministic layer** (stable, pass/fail, free) with the **judge layer** (LLM-based, nuanced, 0–10) into a single `FinalEvaluationResult`.
 
-The combination is configurable per dimension: you can let the judge drive everything, rely only on deterministic checks, or blend both with explicit weights.
+The deterministic layer is informative. The judge reads that evidence and assigns the dimension scores and the final score.
 
 ---
 
@@ -41,22 +41,6 @@ The combination is configurable per dimension: you can let the judge drive every
     "efficiency": 7.5,
     "spark": 6.0
   },
-  "dimension_resolutions": {
-    "task": {
-      "policy": "judge_only",
-      "source_used": "judge",
-      "judge_score": 8.5,
-      "deterministic_score": 10.0,
-      "final_score": 8.5
-    },
-    "process": {
-      "policy": "weighted",
-      "source_used": "weighted",
-      "judge_score": 9.0,
-      "deterministic_score": 10.0,
-      "final_score": 9.1
-    }
-  },
   "final_score": 8.5,
   "summary": {
     "deterministic_passed_checks": 2,
@@ -78,46 +62,17 @@ The per-dimension `final_dimensions` scores exist for diagnostics: to understand
 
 ---
 
-## Dimension policies
+## Deterministic signals
 
-Each dimension can be configured independently in the evaluation profile:
+Deterministic checks still produce per-dimension summaries. A check tagged with `dimensions: [task, process]` contributes evidence to both those dimensions. If the check passes the dimension gets 10.0; if it fails, 0.0. The deterministic dimension score is the average across all checks tagged to that dimension.
 
-```yaml
-final_aggregation:
-  default_policy: judge_only      # applied to all dimensions not listed below
-  dimensions:
-    process:
-      policy: weighted
-      judge_weight: 0.9
-      deterministic_weight: 0.1
-```
-
-### `judge_only` (default)
-
-The final dimension score is the judge's score for that dimension. The deterministic result is recorded for reference but does not affect the score.
-
-### `deterministic_only`
-
-The final dimension score is derived from the deterministic checks mapped to that dimension. The judge score is ignored.
-
-Deterministic checks produce a 0 or 10 per check. If multiple checks are mapped to the same dimension, the score is the proportion of passed checks, scaled to 0–10.
-
-### `weighted`
-
-```
-final = (judge_score × judge_weight) + (deterministic_score × deterministic_weight)
-```
-
-Weights do not need to sum to 1.0; they are normalised internally. Useful when you want deterministic evidence to nudge the judge without overriding it.
+Check errors are excluded and generate a warning.
 
 ---
 
 ## Hard expectation failure
 
-If a deterministic check that maps to `task` fails, the aggregator treats it as a signal that the task was not completed. Depending on the dimension policy, this can:
-
-- reduce the `process` or `task` dimension score if `weighted` or `deterministic_only` is configured
-- appear as a warning in the final result for `judge_only` dimensions
+If a deterministic check that maps to `task` fails, that is strong evidence that the task was not completed and the judge sees it in the evaluation packet.
 
 Hard expectations in `test.yaml` (`expectations.hard_expectations`) are presented to the judge as part of the evaluation target and influence the judge's own assessment, but they do not mechanically cap scores on their own.
 
@@ -136,16 +91,13 @@ This gives a more reliable estimate of model behaviour at the cost of additional
 
 ---
 
-## Inspecting the resolution
+## Inspecting the result
 
-The `dimension_resolutions` field in the final result records, for every dimension:
+The final result records three useful views side by side:
 
-- which policy was applied
-- what source was used (`judge`, `deterministic`, `weighted`, or `missing`)
-- the raw judge and deterministic scores before combination
-- the final score after combination
-
-This makes the aggregation fully auditable — you can always see exactly how each dimension score was derived.
+- `judge_dimensions` — the judge's 0–10 scores per dimension
+- `deterministic_dimensions` — the deterministic summaries per dimension when checks are mapped there
+- `final_dimensions` — the reported dimension scores, which mirror the judge scores
 
 ---
 

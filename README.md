@@ -1,133 +1,214 @@
 # personal_agent_eval
 
-`personal_agent_eval` is a reusable evaluation library for LLM and agent-style systems.
+**Reproducible benchmarks for LLMs and autonomous agents.**
 
-V1 focuses on `llm_probe` and provides:
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
 
-- YAML-driven case, suite, run-profile, and evaluation-profile configuration
-- canonical run artifacts
-- deterministic evaluation
-- judge orchestration
-- hybrid aggregation
-- a Python package under `src/personal_agent_eval/`
-- a CLI entrypoint named `pae`
+---
 
-`openclaw` is part of the design, but it is a later runtime extension rather than a V1
-execution target.
+`personal_agent_eval` (`pae`) is an open evaluation framework that benchmarks both raw LLMs and full autonomous agents. It runs your test cases against any model or agent, scores the results using a combination of deterministic checks and an LLM judge, and stores every artifact so you can inspect, reproduce, or extend the evaluation at any time.
 
-For benchmark-owned OpenClaw runs, the effective model must stay exact: OpenClaw agent configs in
-this repo do not support `fallbacks`. If a suite selects `minimax/minimax-m2.7`, the run must not
-silently answer with a different provider/model.
+The key property: every run is identified by a SHA-256 fingerprint of its inputs. Re-running the same configuration reuses stored results instead of spending tokens again. Adding a new model or case to an existing campaign only runs what is missing — nothing already computed is touched.
 
-## Status
+---
 
-Implemented in the current V1 codebase:
-
-- package bootstrap
-- canonical config loading and validation
-- case and suite discovery
-- canonical run artifact models
-- `llm_probe` runner
-- deterministic evaluation
-- judge orchestration
-- hybrid aggregation
-- fingerprints and reuse rules
-- filesystem storage
-- workflow orchestration in `pae`
-- reporting over structured workflow results
-
-Still pending in V1:
-
-- no remaining mandatory implementation steps in the current V1 plan
-
-## Install
+## Quick start
 
 ```bash
 uv sync --group dev
+export OPENROUTER_API_KEY=sk-or-v1-...
+
+# Run the shipped llm_probe example (no Docker required)
+uv run pae run-eval \
+  --suite llm_probe_examples \
+  --run-profile llm_probe_examples \
+  --evaluation-profile judge_gpt54_mini
 ```
 
-## Running the CLI
+Run it a second time. Every row prints `reuse` — no API calls made, no tokens spent.
 
-If you're working inside this repository, prefer running the CLI via `uv` so the entrypoint is
-resolved from the project environment:
+---
 
-```bash
-uv run pae --help
+## Two things it can benchmark
+
+### LLMs with tool use — `llm_probe`
+
+The direct path: send a prompt to any model on [OpenRouter](https://openrouter.ai/), optionally with tools (`exec_shell`, `write_file`, `read_file`, `web_search`), and score what comes back. No infrastructure required beyond an API key.
+
+### Autonomous agents — `openclaw`
+
+This is where things get interesting.
+
+OpenClaw is an autonomous coding agent that runs inside a Docker container with its own workspace, tools, and decision loop — the way real agents work in production. Evaluating it is a different problem from evaluating an LLM: you need to examine what the agent *did*, not just what it *said*. Which files did it create? Does the workspace match the expected state? Did it complete the task without being asked twice?
+
+`personal_agent_eval` handles the full lifecycle: it spins up the container with a pinned image, captures the workspace diff, extracts key output artifacts, and feeds everything into the same evaluation pipeline used for LLMs. The framework scores the agent on the same six dimensions as any other model — with deterministic checks verifying workspace state and the LLM judge assessing quality and process.
+
+```yaml
+# configs/cases/my_agent_case/test.yaml
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: user
+      content: |
+        Write a Python script that reads a CSV file and outputs summary statistics.
+        Save it as analysis.py and confirm when done.
+  context:
+    openclaw:
+      expected_artifact: analysis.py
+expectations:
+  hard_expectations:
+    - text: Creates analysis.py in the workspace.
+    - text: The script reads a CSV file and computes statistics.
+deterministic_checks:
+  - check_id: script-present
+    dimensions: [task]
+    declarative:
+      kind: openclaw_workspace_file_present
+      relative_path: analysis.py
+      contains: import
 ```
-
-If you have installed `personal_agent_eval` into an active virtualenv (or globally), you can
-also run:
-
-```bash
-pae --help
-```
-
-## Package Layout
-
-- source code: `src/personal_agent_eval/`
-- tests: `tests/`
-- configs: `configs/`
-- generated artifacts: `outputs/`
-- public docs: `docs/`
-
-## Public Docs
-
-- [Docs index](docs/index.md)
-- [Getting started](docs/getting_started.md)
-- [Config Model](docs/config_model.md)
-- [Configuration](docs/configuration.md)
-- [Run artifacts](docs/run_artifacts.md)
-- [Judge results](docs/judge_results.md)
-- [Hybrid evaluation](docs/hybrid_evaluation.md)
-- [Reporting](docs/reporting.md)
-- [Minimal llm_probe example](docs/examples/minimal_llm_probe.md)
-- [Minimal OpenClaw example](docs/examples/minimal_openclaw.md)
-- [Runnable examples](docs/examples/runnable_examples.md)
-
-## CLI Commands
-
-V1 currently exposes:
-
-- `pae run`
-- `pae eval`
-- `pae run-eval`
-- `pae report`
-
-The CLI renders human-readable terminal reporting by default and also supports JSON output
-with `--output json`.
-
-The config flags accept either explicit YAML paths or ids discovered from the conventional
-workspace directories. For example, these are equivalent:
 
 ```bash
 uv run pae run-eval \
-  --suite configs/suites/example_suite.yaml \
-  --run-profile configs/run_profiles/default.yaml \
-  --evaluation-profile configs/evaluation_profiles/default.yaml
-
-uv run pae run-eval \
-  --suite example_suite \
-  --run-profile default \
-  --evaluation-profile default
+  --suite openclaw_examples \
+  --run-profile openclaw_examples \
+  --evaluation-profile judge_gpt54_mini
 ```
 
-## Documentation Site
+Both runner modes share the same config schema, the same scoring pipeline, and the same output format.
 
-The repository now includes an `mkdocs` configuration. MkDocs lives in the optional `docs`
-dependency group, so use:
+---
+
+## How it works
+
+```
+  test cases + suite
+        │
+        ▼
+    pae run     ──→  RunArtifact  (trace, tool calls, token usage, workspace diff)
+        │
+        ▼
+  deterministic ──→  per-check pass/fail  (no LLM, always stable)
+   evaluation
+        │
+        ▼
+     judge      ──→  6-dimension scores + evidence  (LLM judge via OpenRouter)
+        │
+        ▼
+  aggregation   ──→  FinalEvaluationResult  (hybrid score 0–10)
+        │
+        ▼
+  reporting     ──→  terminal tables · JSON · PNG chart
+```
+
+The deterministic and judge layers are independent. Changing the judge model re-evaluates without re-running the model. Changing a run parameter re-runs without touching evaluations from other configurations.
+
+---
+
+## Scoring
+
+Every case is scored on six dimensions (0–10 scale):
+
+| Dimension | What it measures |
+|---|---|
+| `task` | Did the output fulfill the stated goal? |
+| `process` | Was the approach sound? Right tools, constraints respected, no hallucinations. |
+| `autonomy` | Independent operation — sensible decisions, no over-asking. |
+| `closeness` | Does the response resemble what a skilled human would produce? |
+| `efficiency` | Achieved the goal without unnecessary noise or extra steps. |
+| `spark` | Something noteworthy — an elegant shortcut, a useful insight. |
+
+The `final_score` is the judge's holistic verdict, not a weighted average. Per-dimension scores exist to tell you *why* a model scored the way it did.
+
+Scores combine two layers:
+
+- **Deterministic checks** — file existence, content matching, tool call counts. Fast, free, always stable.
+- **LLM judge** — flexible evaluation of anything deterministic checks cannot capture.
+
+Deterministic checks are informative evidence for the judge. The final score and per-dimension scores come from the judge.
+
+---
+
+## Everything is auditable
+
+Every artifact is a plain file you can inspect directly:
+
+```
+outputs/
+├── runs/suit_<id>/run_profile_<fp>/
+│   └── <model>/<case>/
+│       ├── run_1.json                     ← full trace: every message, tool call, token count
+│       └── run_1.fingerprint_input.json   ← exact inputs that produced this run
+└── evaluations/suit_<id>/evaluation_profile_<fp>/eval_profile_<id>_<fp>/
+    └── <model>/<case>/
+        ├── evaluation_result_summary_1.md ← human-readable verdict, start here
+        ├── judge_1.prompt.debug.md        ← the exact prompt the judge received
+        └── raw_outputs/
+            ├── final_result_1.json        ← judge scores + deterministic summaries
+            └── judge_1.json              ← raw judge response
+```
+
+If a score seems wrong, `judge_1.prompt.debug.md` shows exactly what the judge saw. If the run looks wrong, `run_1.json` has the full trace.
+
+---
+
+## Configuration
+
+Everything is YAML. No code required to add test cases, models, or campaigns.
+
+```
+configs/
+  cases/<case_id>/test.yaml          ← what to test
+  suites/<suite_id>.yaml             ← which cases × which models
+  run_profiles/<id>.yaml             ← temperature, retries, timeouts
+  evaluation_profiles/<id>.yaml      ← judge model, aggregation policy
+  agents/<agent_id>/agent.yaml       ← reusable OpenClaw agent definition
+```
+
+Flag values can be IDs or explicit paths — `--suite my_suite` resolves to `configs/suites/my_suite.yaml` automatically.
+
+---
+
+## Documentation
+
+| Topic | Link |
+|---|---|
+| Getting started | [docs/getting_started.md](docs/getting_started.md) |
+| Concepts: fingerprints, scoring, runner modes | [docs/concepts.md](docs/concepts.md) |
+| Full config reference | [docs/configuration.md](docs/configuration.md) |
+| CLI reference | [docs/cli.md](docs/cli.md) |
+| Deterministic checks | [docs/deterministic_checks.md](docs/deterministic_checks.md) |
+| Hybrid evaluation and scoring | [docs/hybrid_evaluation.md](docs/hybrid_evaluation.md) |
+| Run artifacts | [docs/run_artifacts.md](docs/run_artifacts.md) |
+| Shipped runnable examples | [docs/examples/runnable_examples.md](docs/examples/runnable_examples.md) |
+
+Browse the full docs locally:
 
 ```bash
 uv sync --group docs
-uv run --group docs mkdocs serve
+uv run mkdocs serve
 ```
 
-(`uv run mkdocs serve` alone will fail if `mkdocs` is not installed in the default environment.)
+---
 
-## Notes
+## Requirements
 
-- historical benchmark material remains under `archive/` for reference only
-- internal planning lives under `internal_docs/` and is not part of the public library docs
-- use the shipped example campaigns if you want a small runnable benchmark:
-  - `uv run pae run-eval --suite llm_probe_examples --run-profile llm_probe_examples --evaluation-profile judge_gpt54_mini`
-  - `uv run pae run-eval --suite openclaw_examples --run-profile openclaw_examples --evaluation-profile judge_gpt54_mini`
-- generated `outputs/` are local runtime artifacts and are not meant to be committed
+- Python ≥ 3.12
+- [uv](https://docs.astral.sh/uv/) for environment management
+- An [OpenRouter](https://openrouter.ai/) API key (`OPENROUTER_API_KEY`)
+- Docker — only required for `openclaw` runs
+
+---
+
+## Contributing
+
+This is a public library. Every module is a self-contained layer with explicit inputs and outputs — the code is meant to be read.
+
+If you want to add a deterministic check, a new runner mode, or a runnable example campaign, open an issue or a PR. The test suite runs without any API keys or Docker:
+
+```bash
+uv sync --group dev
+uv run pytest
+```

@@ -125,9 +125,6 @@ def build_evaluation_fingerprint_input(
         judge_aggregation=_normalize_for_hash(
             evaluation_profile.aggregation.model_dump(mode="json")
         ),
-        final_aggregation=_normalize_for_hash(
-            evaluation_profile.final_aggregation.model_dump(mode="json")
-        ),
         anchors={
             "enabled": evaluation_profile.anchors.enabled,
             "references": [

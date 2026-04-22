@@ -1,0 +1,144 @@
+{
+  "evaluation_target": {
+    "context": {
+      "openclaw": {
+        "expected_artifact": "report.md"
+      }
+    },
+    "deterministic_checks": [
+      {
+        "check_id": "openclaw-tool-example-final",
+        "dimensions": [
+          "task"
+        ],
+        "kind": "final_response_present"
+      },
+      {
+        "check_id": "openclaw-tool-example-report",
+        "dimensions": [
+          "process"
+        ],
+        "kind": "openclaw_workspace_file_present"
+      }
+    ],
+    "dimensions": [
+      "task",
+      "process",
+      "autonomy",
+      "closeness",
+      "efficiency",
+      "spark"
+    ],
+    "expectations": {
+      "hard": [
+        "Produces report.md in the workspace.",
+        "Includes the literal marker openclaw-tool-example in report.md."
+      ],
+      "soft": [
+        "Final response briefly confirms the artifact creation."
+      ]
+    },
+    "rubric": {
+      "criteria": [
+        {
+          "name": "Required artifact content",
+          "what_bad_looks_like": "report.md missing or missing required lines/marker.",
+          "what_good_looks_like": "report.md contains the title, a date line obtained via a command, and the literal marker line."
+        },
+        {
+          "name": "Tool-grounded evidence",
+          "what_bad_looks_like": "Claims file/date without evidence.",
+          "what_good_looks_like": "Uses tools to obtain the date and write the file; avoids unsupported claims."
+        },
+        {
+          "name": "Brief confirmation",
+          "what_bad_looks_like": "No confirmation or overly verbose response.",
+          "what_good_looks_like": "Final response confirms creation briefly."
+        }
+      ],
+      "scale": {
+        "anchors": {
+          "0": "No attempt / irrelevant / empty output.",
+          "10": "report.md exists with the exact required lines (title, date from command, marker); final response briefly confirms creation.",
+          "4": "Missing required content/marker or unclear confirmation.",
+          "7": "Mostly complete; minor formatting/clarity issues."
+        },
+        "max": 10.0,
+        "min": 0.0
+      },
+      "scoring_instructions": "Use this rubric to set overall.score. If a hard expectation or deterministic check fails, cap overall.score (typically <= 4). Cite 1–3 decisive facts in overall.evidence.\n",
+      "version": 1
+    },
+    "task_messages": [
+      {
+        "content": "Use real tools to create a file `report.md` in the workspace.\nThe file must contain:\n- a title `# Tool Example`\n- a line with the current date obtained via a command\n- a literal line `openclaw-tool-example`\n\nAt the end, briefly confirm that you created the file.\n"
+      }
+    ]
+  },
+  "execution_evidence": {
+    "artifacts": [
+      {
+        "artifact_type": "openclaw_key_output",
+        "basename": "report.md",
+        "excerpt": "# Tool Example\n2026-04-22\nopenclaw-tool-example\n"
+      }
+    ],
+    "deterministic_summary": {
+      "error_checks": 0,
+      "failed_checks": 0,
+      "passed_checks": 2,
+      "total_checks": 2
+    },
+    "material_failures": [],
+    "process_trace": [
+      {
+        "call_id": "openclaw_tool_1",
+        "kind": "tool_call",
+        "tool_name": "exec"
+      },
+      {
+        "call_id": "openclaw_tool_1",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "openclaw_tool_summary"
+        },
+        "status": "success",
+        "tool_name": "exec"
+      },
+      {
+        "call_id": "openclaw_tool_2",
+        "kind": "tool_call",
+        "tool_name": "write"
+      },
+      {
+        "call_id": "openclaw_tool_2",
+        "kind": "tool_result",
+        "output_summary": {
+          "artifact_basenames": [
+            "report.md"
+          ],
+          "content_type": "openclaw_tool_summary"
+        },
+        "status": "success",
+        "tool_name": "write"
+      }
+    ]
+  },
+  "schema_version": 2,
+  "subject_response": {
+    "assistant_visible_messages": [],
+    "final_output": {
+      "char_count": 223,
+      "content_type": "markdown",
+      "text": "I'll get the current date and then create the file with all the required content.\n\n**File `report.md` created successfully.**\n\nContents:\n- Title: `# Tool Example`\n- Date: `2026-04-22`\n- Literal text: `openclaw-tool-example`",
+      "truncated": false
+    },
+    "tool_activity_summary": {
+      "tool_call_count": 2,
+      "tools_used": [
+        "exec",
+        "write"
+      ]
+    }
+  }
+}

@@ -27,7 +27,7 @@ These are captured as six scoring dimensions on a 0–10 scale.
 | `efficiency` | Whether the agent achieved the goal with reasonable resource use — no unnecessary tool calls, no verbose noise |
 | `spark` | Whether the response showed something noteworthy — useful insight, elegant shortcut, thoughtful initiative |
 
-These dimensions are scored by the judge and, where possible, grounded by deterministic checks.
+These dimensions are scored by the judge, with deterministic checks preserved as supporting evidence.
 
 !!! note "Final score"
     The `final_score` (0–10) comes from the judge's overall assessment (`judge_overall.score`), not from a weighted average of the six dimensions. The dimensions are there for diagnosis — to understand *where* a model is strong or weak. The overall score is the judge's holistic verdict after reviewing all evidence.
@@ -44,7 +44,7 @@ Runs directly against the stored `RunArtifact` — no LLM required. Examples:
 - Was the right file created? (`file_contains`)
 - Was the tool called the expected number of times? (`tool_call_count`)
 
-These checks are fast, stable, and free. They produce hard pass/fail signals that the aggregator can use to cap or adjust the judge scores.
+These checks are fast, stable, and free. They produce hard pass/fail signals that help the judge and help you debug what happened in a run.
 
 ### Judge layer
 
@@ -62,31 +62,16 @@ The exact prompt sent to the judge is persisted as `judge_1.prompt.debug.md` nex
 
 ---
 
-## Hybrid aggregation
+## Judge-first evaluation
 
-The final score combines both layers according to the `evaluation_profile.yaml`:
+The evaluation flow has two layers, but only one scorer:
 
-```yaml
-final_aggregation:
-  default_policy: judge_only        # default: judge score drives everything
-  dimensions:
-    process:
-      policy: weighted
-      judge_weight: 0.9
-      deterministic_weight: 0.1    # nudge process score with deterministic evidence
-```
+- Deterministic checks create stable evidence and summaries.
+- The judge reads that evidence, plus the task and run outputs, and assigns the six dimension scores and the overall `final_score`.
 
-Three dimension policies are available:
+In other words: deterministic checks inform the evaluation, but the judge decides the score.
 
-| Policy | How the final dimension score is computed |
-|---|---|
-| `judge_only` | Takes the judge score as-is |
-| `deterministic_only` | Takes the deterministic score (0 or 10) only |
-| `weighted` | `(judge × judge_weight) + (deterministic × deterministic_weight)` |
-
-If a deterministic check fails a hard expectation, the aggregator can cap the score regardless of the judge's assessment.
-
-→ [Hybrid evaluation](hybrid_evaluation.md) — detailed policy reference
+→ [Hybrid evaluation](hybrid_evaluation.md) — artifact-level reference
 
 ---
 

@@ -47,7 +47,6 @@ The evaluation fingerprint covers everything that determines how runs are judged
 | `judges` | judge model, type, and all settings |
 | `judge_runs` | repetitions per judge |
 | `judge_aggregation` | aggregation method (e.g. `median`) |
-| `final_aggregation` | dimension policies and weights |
 | `anchors` | scoring anchors if enabled |
 | `security_policy` | redaction settings, allowed hooks |
 | `judge_system_prompt` | the fingerprint of the system prompt file |
@@ -77,7 +76,6 @@ The evaluation fingerprint covers everything that determines how runs are judged
 - the judge model
 - the number of judge repetitions
 - aggregation settings
-- dimension policies or weights
 - the judge system prompt file
 
 ---

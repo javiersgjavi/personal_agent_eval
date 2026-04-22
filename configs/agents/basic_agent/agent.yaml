@@ -1,0 +1,19 @@
+schema_version: 1
+agent_id: basic_agent
+title: Basic Agent
+description: Default-style OpenClaw agent workspace captured from `openclaw onboard` in ghcr.io/openclaw/openclaw:2026.4.15.
+tags:
+  - basic
+  - openclaw
+  - docs
+openclaw:
+  identity:
+    name: Basic Agent
+  agents_defaults:
+    sandbox: workspace-write
+  agent:
+    id: basic-agent
+    prompt: Follow the workspace files and behave like a default OpenClaw agent.
+  model_defaults:
+    aliases:
+      default: benchmark-primary

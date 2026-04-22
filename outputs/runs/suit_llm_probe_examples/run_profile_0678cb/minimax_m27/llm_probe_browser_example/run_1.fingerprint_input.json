@@ -1,0 +1,34 @@
+{
+  "fingerprint": "315e898b9aa742f598bb6a00bd759fcb691e0f280984725ed5921669ea4fbd60",
+  "fingerprint_version": 1,
+  "hash_algorithm": "sha256",
+  "kind": "run",
+  "payload": {
+    "attachments": [],
+    "case_metadata": {},
+    "input_context": {
+      "llm_probe": {
+        "tools": [
+          "web_search"
+        ]
+      }
+    },
+    "input_messages": [
+      {
+        "content": "Use `web_search` to find the official Python documentation page about the current stable version.\nThen give me a short answer with:\n- the title or page you found\n- the official URL you consulted\n- one sentence explaining why that source is reliable\n",
+        "metadata": {},
+        "name": null,
+        "role": "user"
+      }
+    ],
+    "requested_model": "minimax/minimax-m2.7",
+    "runner_config": {
+      "max_tokens": 768,
+      "max_turns": 6,
+      "retries": 0,
+      "temperature": 0,
+      "timeout_seconds": 90
+    },
+    "runner_type": "llm_probe"
+  }
+}

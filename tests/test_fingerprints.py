@@ -321,15 +321,7 @@ def test_evaluation_fingerprint_ignores_profile_id_but_changes_on_semantic_chang
     )
     changed_profile = evaluation_profile.model_copy(
         update={
-            "final_aggregation": evaluation_profile.final_aggregation.model_copy(
-                update={
-                    "final_score_weights": (
-                        evaluation_profile.final_aggregation.final_score_weights.model_copy(
-                            update={"task": 0.5}
-                        )
-                    )
-                }
-            )
+            "aggregation": evaluation_profile.aggregation.model_copy(update={"method": "mean"})
         }
     )
 

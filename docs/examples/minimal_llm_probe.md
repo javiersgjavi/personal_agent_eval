@@ -102,20 +102,6 @@ judge_runs:
     repetitions: 1
 aggregation:
   method: median
-final_aggregation:
-  default_policy: judge_only
-  dimensions:
-    process:
-      policy: weighted
-      judge_weight: 0.9
-      deterministic_weight: 0.1
-  final_score_weights:
-    task: 0.3
-    process: 0.15
-    autonomy: 0.2
-    closeness: 0.1
-    efficiency: 0.15
-    spark: 0.1
 anchors:
   enabled: false
   references: []
@@ -125,7 +111,7 @@ security_policy:
   redact_secrets: true
 ```
 
-The judge is called once per case. `process` uses a weighted blend of judge (90%) and deterministic (10%) signals. All other dimensions use `judge_only`. `redact_secrets: true` strips API keys from the judge prompt.
+The judge is called once per case. Deterministic checks are preserved as supporting evidence for the judge and for debugging. `redact_secrets: true` strips API keys from the judge prompt.
 
 ---
 
@@ -245,6 +231,8 @@ This case only checks for final response presence deterministically. The groundi
 ---
 
 ## What gets written to `outputs/`
+
+The repository commits regenerated artifacts for this example campaign under `outputs/` as reference output, so you can inspect a real example without running the suite first.
 
 ```text
 outputs/

@@ -43,7 +43,7 @@ def test_repo_examples_use_expected_models_and_profiles() -> None:
     assert llm_probe_profile.run_profile_id == "llm_probe_examples"
     assert openclaw_profile.run_profile_id == "openclaw_examples"
     assert openclaw_profile.openclaw is not None
-    assert openclaw_profile.openclaw.agent_id == "support_agent"
+    assert openclaw_profile.openclaw.agent_id == "basic_agent"
 
 
 def test_repo_discovers_public_example_cases() -> None:

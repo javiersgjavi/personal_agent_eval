@@ -337,7 +337,6 @@ def test_run_eval_marks_evaluation_failed_when_judge_produces_no_successful_iter
 
     eval_path = workspace_root / "configs" / "evaluation_profiles" / "default.yaml"
     eval_payload = yaml.safe_load(eval_path.read_text(encoding="utf-8"))
-    eval_payload["final_aggregation"]["dimensions"] = {}
     eval_path.write_text(yaml.safe_dump(eval_payload, sort_keys=False), encoding="utf-8")
 
     workflow = WorkflowOrchestrator(

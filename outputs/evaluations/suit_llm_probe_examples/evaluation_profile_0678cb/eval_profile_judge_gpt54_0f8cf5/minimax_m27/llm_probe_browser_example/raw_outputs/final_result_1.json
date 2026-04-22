@@ -1,0 +1,50 @@
+{
+  "case_id": "llm_probe_browser_example",
+  "deterministic_dimensions": {
+    "autonomy": null,
+    "closeness": null,
+    "efficiency": null,
+    "process": null,
+    "spark": null,
+    "task": 0.0
+  },
+  "final_dimensions": {
+    "autonomy": 2.0,
+    "closeness": 3.0,
+    "efficiency": 1.0,
+    "process": 0.0,
+    "spark": 1.0,
+    "task": 2.0
+  },
+  "final_score": 1.0,
+  "judge_dimensions": {
+    "autonomy": 2.0,
+    "closeness": 3.0,
+    "efficiency": 1.0,
+    "process": 0.0,
+    "spark": 1.0,
+    "task": 2.0
+  },
+  "judge_overall": {
+    "evidence": [
+      "Final answer missing.",
+      "Deterministic check failed and max_turns was exceeded.",
+      "Task asked for a short sourced answer, which was not delivered."
+    ],
+    "score": 1.0
+  },
+  "run_id": "run_fcaa8477ee494515bbfc71f573eeee13",
+  "schema_version": 1,
+  "security": {
+    "verdict": "not_evaluated",
+    "warnings": []
+  },
+  "summary": {
+    "deterministic_error_checks": 0,
+    "deterministic_failed_checks": 1,
+    "deterministic_passed_checks": 0,
+    "judge_failed_iterations": 0,
+    "judge_successful_iterations": 1
+  },
+  "warnings": []
+}

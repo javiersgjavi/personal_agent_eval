@@ -1,0 +1,363 @@
+{
+  "error": null,
+  "identity": {
+    "case_id": "llm_probe_tool_example",
+    "run_id": "run_3db27164a46f46f98640de809ff26ff0",
+    "run_profile_id": "llm_probe_examples",
+    "runner_type": "llm_probe",
+    "schema_version": 1,
+    "suite_id": "llm_probe_examples"
+  },
+  "output_artifacts": [],
+  "provider": {
+    "finish_reason": "stop",
+    "gateway": "openrouter",
+    "metadata": {
+      "created": 1776894860,
+      "response_headers": {
+        "access-control-allow-origin": "*",
+        "access-control-expose-headers": "X-Generation-Id,cf-ray",
+        "cf-ray": "9f07ddd09d26344b-MAD",
+        "connection": "close",
+        "content-type": "application/json",
+        "date": "Wed, 22 Apr 2026 21:54:21 GMT",
+        "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
+        "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
+        "server": "cloudflare",
+        "server-timing": "cfEdge;dur=4,cfOrigin;dur=0,cfWorker;dur=699",
+        "transfer-encoding": "chunked",
+        "x-content-type-options": "nosniff",
+        "x-generation-id": "gen-1776894860-f9UF0q5sXFYj2J968Yss"
+      },
+      "status_code": 200
+    },
+    "native_finish_reason": "stop",
+    "provider_model_id": "minimax/minimax-m2.7-20260318",
+    "provider_name": null,
+    "request_id": null,
+    "response_id": "gen-1776894860-f9UF0q5sXFYj2J968Yss"
+  },
+  "request": {
+    "execution_parameters": {
+      "max_tokens": 768,
+      "max_turns": 6,
+      "retries": 0,
+      "seed": null,
+      "temperature": 0.0,
+      "timeout_seconds": 90.0,
+      "tool_choice": null,
+      "top_p": null
+    },
+    "gateway": "openrouter",
+    "metadata": {
+      "attachments": [],
+      "case_metadata": {},
+      "input_context": {
+        "llm_probe": {
+          "tools": [
+            "exec_shell",
+            "write_file",
+            "read_file"
+          ]
+        }
+      },
+      "model_selection": {
+        "label": "minimax/minimax-m2.7",
+        "model_id": "minimax_m27",
+        "requested_model": "minimax/minimax-m2.7"
+      },
+      "requested_runner_config": {
+        "type": "llm_probe"
+      },
+      "resolved_messages": [
+        {
+          "content": "Use real tools and follow these steps exactly:\n1. Run `printf 'llm-probe-tool-example\\n'` with `exec_shell`.\n2. Write `/tmp/pae_llm_probe_tool_example.txt` with that content using `write_file`.\n3. Read the file using `read_file`.\n4. Reply in 2–4 lines confirming what you did and the final file content.\n",
+          "name": null,
+          "role": "user"
+        }
+      ],
+      "resolved_tools": [
+        "exec_shell",
+        "write_file",
+        "read_file"
+      ]
+    },
+    "requested_model": "minimax/minimax-m2.7"
+  },
+  "runner_metadata": {
+    "attempt_count": 1,
+    "model_id": "minimax_m27",
+    "tool_capable": true,
+    "tool_names": [
+      "exec_shell",
+      "write_file",
+      "read_file"
+    ]
+  },
+  "status": "success",
+  "timing": {
+    "completed_at": "2026-04-22T21:54:22.324380Z",
+    "duration_seconds": 6.2667,
+    "queued_at": "2026-04-22T21:54:16.057641Z",
+    "started_at": "2026-04-22T21:54:16.057644Z"
+  },
+  "trace": [
+    {
+      "content": "Use real tools and follow these steps exactly:\n1. Run `printf 'llm-probe-tool-example\\n'` with `exec_shell`.\n2. Write `/tmp/pae_llm_probe_tool_example.txt` with that content using `write_file`.\n3. Read the file using `read_file`.\n4. Reply in 2–4 lines confirming what you did and the final file content.\n",
+      "event_type": "message",
+      "metadata": {},
+      "name": null,
+      "role": "user",
+      "sequence": 0,
+      "timestamp": null
+    },
+    {
+      "detail": "Starting provider attempt 1.",
+      "event_type": "runner",
+      "metadata": {
+        "attempt": 1
+      },
+      "name": "provider_attempt",
+      "sequence": 1,
+      "timestamp": null
+    },
+    {
+      "content": null,
+      "event_type": "message",
+      "metadata": {
+        "reasoning": "The user wants me to follow exact steps using the tools provided. Let me execute each step in order.\n",
+        "reasoning_details": [
+          {
+            "format": "unknown",
+            "index": 0,
+            "text": "The user wants me to follow exact steps using the tools provided. Let me execute each step in order.\n",
+            "type": "reasoning.text"
+          }
+        ],
+        "refusal": null
+      },
+      "name": null,
+      "role": "assistant",
+      "sequence": 2,
+      "timestamp": null
+    },
+    {
+      "call_id": "call_function_e1q7phfjqtn1_1",
+      "event_type": "tool_call",
+      "metadata": {
+        "index": 0,
+        "type": "function"
+      },
+      "parsed_arguments": {
+        "command": "printf 'llm-probe-tool-example\\n'"
+      },
+      "raw_arguments": "{\"command\": \"printf 'llm-probe-tool-example\\\\n'\"}",
+      "sequence": 3,
+      "timestamp": null,
+      "tool_name": "exec_shell"
+    },
+    {
+      "call_id": "call_function_e1q7phfjqtn1_1",
+      "event_type": "tool_result",
+      "metadata": {},
+      "output": {
+        "command": "printf 'llm-probe-tool-example\\n'",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "llm-probe-tool-example\n"
+      },
+      "sequence": 4,
+      "status": "success",
+      "timestamp": null
+    },
+    {
+      "content": "{\"status\": \"success\", \"output\": {\"command\": \"printf 'llm-probe-tool-example\\\\n'\", \"returncode\": 0, \"stdout\": \"llm-probe-tool-example\\n\", \"stderr\": \"\"}}",
+      "event_type": "message",
+      "metadata": {
+        "tool_call_id": "call_function_e1q7phfjqtn1_1"
+      },
+      "name": "exec_shell",
+      "role": "tool",
+      "sequence": 5,
+      "timestamp": null
+    },
+    {
+      "content": null,
+      "event_type": "message",
+      "metadata": {
+        "reasoning": "The shell command executed successfully and printed the text. Now I'll write this to the file and then read it back.\n",
+        "reasoning_details": [
+          {
+            "format": "unknown",
+            "index": 0,
+            "text": "The shell command executed successfully and printed the text. Now I'll write this to the file and then read it back.\n",
+            "type": "reasoning.text"
+          }
+        ],
+        "refusal": null
+      },
+      "name": null,
+      "role": "assistant",
+      "sequence": 6,
+      "timestamp": null
+    },
+    {
+      "call_id": "call_function_9tbnxy4xgcxn_1",
+      "event_type": "tool_call",
+      "metadata": {
+        "index": 0,
+        "type": "function"
+      },
+      "parsed_arguments": {
+        "content": "llm-probe-tool-example",
+        "path": "/tmp/pae_llm_probe_tool_example.txt"
+      },
+      "raw_arguments": "{\"content\": \"llm-probe-tool-example\", \"path\": \"/tmp/pae_llm_probe_tool_example.txt\"}",
+      "sequence": 7,
+      "timestamp": null,
+      "tool_name": "write_file"
+    },
+    {
+      "call_id": "call_function_9tbnxy4xgcxn_1",
+      "event_type": "tool_result",
+      "metadata": {},
+      "output": {
+        "bytes_written": 22,
+        "path": "/tmp/pae_llm_probe_tool_example.txt"
+      },
+      "sequence": 8,
+      "status": "success",
+      "timestamp": null
+    },
+    {
+      "content": "{\"status\": \"success\", \"output\": {\"path\": \"/tmp/pae_llm_probe_tool_example.txt\", \"bytes_written\": 22}}",
+      "event_type": "message",
+      "metadata": {
+        "tool_call_id": "call_function_9tbnxy4xgcxn_1"
+      },
+      "name": "write_file",
+      "role": "tool",
+      "sequence": 9,
+      "timestamp": null
+    },
+    {
+      "content": null,
+      "event_type": "message",
+      "metadata": {
+        "reasoning": "Good, now I need to read the file to confirm the content.\n",
+        "reasoning_details": [
+          {
+            "format": "unknown",
+            "index": 0,
+            "text": "Good, now I need to read the file to confirm the content.\n",
+            "type": "reasoning.text"
+          }
+        ],
+        "refusal": null
+      },
+      "name": null,
+      "role": "assistant",
+      "sequence": 10,
+      "timestamp": null
+    },
+    {
+      "call_id": "call_function_om7a5q1w91yy_1",
+      "event_type": "tool_call",
+      "metadata": {
+        "index": 0,
+        "type": "function"
+      },
+      "parsed_arguments": {
+        "path": "/tmp/pae_llm_probe_tool_example.txt"
+      },
+      "raw_arguments": "{\"path\": \"/tmp/pae_llm_probe_tool_example.txt\"}",
+      "sequence": 11,
+      "timestamp": null,
+      "tool_name": "read_file"
+    },
+    {
+      "call_id": "call_function_om7a5q1w91yy_1",
+      "event_type": "tool_result",
+      "metadata": {},
+      "output": {
+        "content": "llm-probe-tool-example",
+        "path": "/tmp/pae_llm_probe_tool_example.txt"
+      },
+      "sequence": 12,
+      "status": "success",
+      "timestamp": null
+    },
+    {
+      "content": "{\"status\": \"success\", \"output\": {\"path\": \"/tmp/pae_llm_probe_tool_example.txt\", \"content\": \"llm-probe-tool-example\"}}",
+      "event_type": "message",
+      "metadata": {
+        "tool_call_id": "call_function_om7a5q1w91yy_1"
+      },
+      "name": "read_file",
+      "role": "tool",
+      "sequence": 13,
+      "timestamp": null
+    },
+    {
+      "content": "I ran the `printf` command, wrote `llm-probe-tool-example` to `/tmp/pae_llm_probe_tool_example.txt`, and confirmed the file content via `read_file`. The final file contains the text `llm-probe-tool-example`.",
+      "event_type": "message",
+      "metadata": {
+        "reasoning": "All three steps completed successfully. The file content matches the original string. I'll provide a brief confirmation.\n",
+        "reasoning_details": [
+          {
+            "format": "unknown",
+            "index": 0,
+            "text": "All three steps completed successfully. The file content matches the original string. I'll provide a brief confirmation.\n",
+            "type": "reasoning.text"
+          }
+        ],
+        "refusal": null
+      },
+      "name": null,
+      "role": "assistant",
+      "sequence": 14,
+      "timestamp": null
+    },
+    {
+      "content": "I ran the `printf` command, wrote `llm-probe-tool-example` to `/tmp/pae_llm_probe_tool_example.txt`, and confirmed the file content via `read_file`. The final file contains the text `llm-probe-tool-example`.",
+      "event_type": "final_output",
+      "metadata": {},
+      "sequence": 15,
+      "timestamp": null
+    }
+  ],
+  "usage": {
+    "cost_usd": 0.00062,
+    "normalized": {
+      "cache_write_tokens": 0,
+      "cached_input_tokens": 1344,
+      "input_tokens": 2111,
+      "output_tokens": 258,
+      "reasoning_tokens": 103,
+      "total_tokens": 2369
+    },
+    "raw_provider_usage": {
+      "completion_tokens": 77,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 31
+      },
+      "cost": 0.000168,
+      "cost_details": {
+        "upstream_inference_completions_cost": 9.2e-05,
+        "upstream_inference_cost": 0.000168,
+        "upstream_inference_prompt_cost": 7.6e-05
+      },
+      "is_byok": false,
+      "prompt_tokens": 662,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 512,
+        "video_tokens": 0
+      },
+      "total_tokens": 739
+    }
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "evaluation_target": {
+    "context": {
+      "llm_probe": {
+        "tools": [
+          "exec_shell",
+          "write_file",
+          "read_file"
+        ]
+      }
+    },
+    "deterministic_checks": [
+      {
+        "check_id": "llm-probe-tool-example-final",
+        "dimensions": [
+          "task"
+        ],
+        "kind": "final_response_present"
+      },
+      {
+        "check_id": "llm-probe-tool-example-file",
+        "dimensions": [
+          "process"
+        ],
+        "kind": "file_contains"
+      }
+    ],
+    "dimensions": [
+      "task",
+      "process",
+      "autonomy",
+      "closeness",
+      "efficiency",
+      "spark"
+    ],
+    "expectations": {
+      "hard": [
+        "Uses tools to obtain the content instead of inventing it.",
+        "Creates /tmp/pae_llm_probe_tool_example.txt and confirms the saved text."
+      ],
+      "soft": [
+        "Response is brief and clearly confirms the final file content."
+      ]
+    },
+    "rubric": {
+      "criteria": [
+        {
+          "name": "Tool-grounded correctness",
+          "what_bad_looks_like": "Invents results or skips required tool steps.",
+          "what_good_looks_like": "Uses exec_shell/write_file/read_file and reports the observed file contents."
+        },
+        {
+          "name": "Artifact correctness",
+          "what_bad_looks_like": "File missing or wrong content.",
+          "what_good_looks_like": "/tmp/pae_llm_probe_tool_example.txt exists and contains the marker line."
+        },
+        {
+          "name": "Concise confirmation",
+          "what_bad_looks_like": "Overly verbose or unclear confirmation.",
+          "what_good_looks_like": "Confirms actions and final content in 2–4 lines."
+        }
+      ],
+      "scale": {
+        "anchors": {
+          "0": "No attempt / irrelevant / empty output.",
+          "10": "Executes the required tool steps; file contains the exact marker; final answer confirms content briefly.",
+          "4": "Partial completion; missing a required step or confirmation.",
+          "7": "Mostly correct with minor clarity issues."
+        },
+        "max": 10.0,
+        "min": 0.0
+      },
+      "scoring_instructions": "Use this rubric to set overall.score. If a hard expectation or deterministic check fails, cap overall.score (typically <= 4).\n",
+      "version": 1
+    },
+    "task_messages": [
+      {
+        "content": "Use real tools and follow these steps exactly:\n1. Run `printf 'llm-probe-tool-example\\n'` with `exec_shell`.\n2. Write `/tmp/pae_llm_probe_tool_example.txt` with that content using `write_file`.\n3. Read the file using `read_file`.\n4. Reply in 2–4 lines confirming what you did and the final file content.\n"
+      }
+    ]
+  },
+  "execution_evidence": {
+    "artifacts": [],
+    "deterministic_summary": {
+      "error_checks": 0,
+      "failed_checks": 0,
+      "passed_checks": 2,
+      "total_checks": 2
+    },
+    "material_failures": [],
+    "process_trace": [
+      {
+        "arguments": {
+          "command": "printf 'llm-probe-tool-example\\n'"
+        },
+        "call_id": "call_function_e1q7phfjqtn1_1",
+        "kind": "tool_call",
+        "tool_name": "exec_shell"
+      },
+      {
+        "call_id": "call_function_e1q7phfjqtn1_1",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "object",
+          "keys": [
+            "command",
+            "returncode",
+            "stdout",
+            "stderr"
+          ],
+          "truncated": false,
+          "values": {
+            "command": {
+              "char_count": 33,
+              "content_type": "text",
+              "excerpt": "printf 'llm-probe-tool-example\\n'",
+              "truncated": false
+            },
+            "returncode": 0,
+            "stderr": {
+              "char_count": 0,
+              "content_type": "text",
+              "excerpt": "",
+              "truncated": false
+            },
+            "stdout": {
+              "char_count": 23,
+              "content_type": "text",
+              "excerpt": "llm-probe-tool-example\n",
+              "truncated": false
+            }
+          }
+        },
+        "status": "success",
+        "tool_name": "exec_shell"
+      },
+      {
+        "content": {
+          "char_count": 151,
+          "content_type": "json",
+          "text_excerpt": "{\"status\": \"success\", \"output\": {\"command\": \"printf 'llm-probe-tool-example\\\\n'\", \"returncode\": 0, \"stdout\": \"llm-probe-tool-example\\n\", \"stderr\": \"\"}}",
+          "truncated": false
+        },
+        "kind": "message",
+        "name": "exec_shell",
+        "role": "tool"
+      },
+      {
+        "arguments": {
+          "content": "llm-probe-tool-example",
+          "path": "/tmp/pae_llm_probe_tool_example.txt"
+        },
+        "call_id": "call_function_9tbnxy4xgcxn_1",
+        "kind": "tool_call",
+        "tool_name": "write_file"
+      },
+      {
+        "call_id": "call_function_9tbnxy4xgcxn_1",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "object",
+          "keys": [
+            "path",
+            "bytes_written"
+          ],
+          "truncated": false,
+          "values": {
+            "bytes_written": 22,
+            "path": {
+              "char_count": 35,
+              "content_type": "text",
+              "excerpt": "/tmp/pae_llm_probe_tool_example.txt",
+              "truncated": false
+            }
+          }
+        },
+        "status": "success",
+        "tool_name": "write_file"
+      },
+      {
+        "content": {
+          "char_count": 101,
+          "content_type": "json",
+          "text_excerpt": "{\"status\": \"success\", \"output\": {\"path\": \"/tmp/pae_llm_probe_tool_example.txt\", \"bytes_written\": 22}}",
+          "truncated": false
+        },
+        "kind": "message",
+        "name": "write_file",
+        "role": "tool"
+      },
+      {
+        "arguments": {
+          "path": "/tmp/pae_llm_probe_tool_example.txt"
+        },
+        "call_id": "call_function_om7a5q1w91yy_1",
+        "kind": "tool_call",
+        "tool_name": "read_file"
+      },
+      {
+        "call_id": "call_function_om7a5q1w91yy_1",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "object",
+          "keys": [
+            "path",
+            "content"
+          ],
+          "truncated": false,
+          "values": {
+            "content": {
+              "char_count": 22,
+              "content_type": "text",
+              "excerpt": "llm-probe-tool-example",
+              "truncated": false
+            },
+            "path": {
+              "char_count": 35,
+              "content_type": "text",
+              "excerpt": "/tmp/pae_llm_probe_tool_example.txt",
+              "truncated": false
+            }
+          }
+        },
+        "status": "success",
+        "tool_name": "read_file"
+      },
+      {
+        "content": {
+          "char_count": 117,
+          "content_type": "json",
+          "text_excerpt": "{\"status\": \"success\", \"output\": {\"path\": \"/tmp/pae_llm_probe_tool_example.txt\", \"content\": \"llm-probe-tool-example\"}}",
+          "truncated": false
+        },
+        "kind": "message",
+        "name": "read_file",
+        "role": "tool"
+      },
+      {
+        "content": {
+          "char_count": 207,
+          "content_type": "text",
+          "text_excerpt": "I ran the `printf` command, wrote `llm-probe-tool-example` to `/tmp/pae_llm_probe_tool_example.txt`, and confirmed the file content via `read_file`. The final file contains the text `llm-probe-tool-example`.",
+          "truncated": false
+        },
+        "kind": "message",
+        "role": "assistant"
+      }
+    ]
+  },
+  "schema_version": 2,
+  "subject_response": {
+    "assistant_visible_messages": [
+      {
+        "char_count": 207,
+        "content_type": "text",
+        "text_excerpt": "I ran the `printf` command, wrote `llm-probe-tool-example` to `/tmp/pae_llm_probe_tool_example.txt`, and confirmed the file content via `read_file`. The final file contains the text `llm-probe-tool-example`.",
+        "truncated": false
+      }
+    ],
+    "final_output": {
+      "char_count": 207,
+      "content_type": "text",
+      "text": "I ran the `printf` command, wrote `llm-probe-tool-example` to `/tmp/pae_llm_probe_tool_example.txt`, and confirmed the file content via `read_file`. The final file contains the text `llm-probe-tool-example`.",
+      "truncated": false
+    },
+    "tool_activity_summary": {
+      "tool_call_count": 3,
+      "tools_used": [
+        "exec_shell",
+        "read_file",
+        "write_file"
+      ]
+    }
+  }
+}

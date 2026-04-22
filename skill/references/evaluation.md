@@ -1,6 +1,6 @@
 # Evaluation Reference
 
-Everything about how `personal_agent_eval` scores a run: the six dimensions, what the judge sees, the hybrid aggregation pipeline, and how to read and debug evaluation artifacts.
+Everything about how `personal_agent_eval` scores a run: the six dimensions, what the judge sees, how deterministic signals are surfaced, and how to read and debug evaluation artifacts.
 
 ---
 
@@ -25,33 +25,11 @@ The six dimensions exist for diagnostics. They tell you *why* a model scored the
 
 ---
 
-## Hybrid aggregation
+## Deterministic signals
 
-For each dimension, the final score can come from three sources configured in the evaluation profile:
+Deterministic checks do not decide the final score. They produce grounded evidence that is preserved in the evaluation artifacts and shown to the judge.
 
-| Policy | Calculation |
-|---|---|
-| `judge_only` (default) | `final = judge_score` |
-| `deterministic_only` | `final = deterministic_score` (10.0 if all checks pass, 0.0 if any fail) |
-| `weighted` | `final = (judge_score × judge_weight) + (deterministic_score × deterministic_weight)` |
-
-Configure per-dimension policies in `evaluation_profile.yaml → final_aggregation`:
-
-```yaml
-final_aggregation:
-  default_policy: judge_only        # applies to all dimensions not listed below
-  dimensions:
-    process:
-      policy: weighted
-      judge_weight: 0.9
-      deterministic_weight: 0.1
-    task:
-      policy: deterministic_only
-```
-
-The shipped profile `judge_gpt54_mini` uses `weighted` for `process` (0.9 judge / 0.1 deterministic) and `judge_only` for all other dimensions.
-
-### How deterministic scores feed in
+### How deterministic scores are summarized
 
 A deterministic check tagged with `dimensions: [task, process]` contributes to both those dimensions. If the check passes the dimension gets 10.0; if it fails, 0.0. The deterministic dimension score is the average across all checks tagged to that dimension.
 
@@ -114,7 +92,7 @@ Human-readable Markdown containing:
 
 ### Drill down: `raw_outputs/final_result_1.json`
 
-The key field is `dimension_resolutions` — it shows exactly how each dimension score was derived:
+The key fields are `judge_dimensions`, `deterministic_dimensions`, and `final_dimensions`:
 
 ```json
 {
@@ -125,20 +103,9 @@ The key field is `dimension_resolutions` — it shows exactly how each dimension
     "closeness": 8.0, "efficiency": 7.5, "spark": 6.0
   },
   "deterministic_dimensions": { "task": 10.0, "process": 10.0 },
-  "final_dimensions": { "task": 9.0, "process": 8.18 },
-  "dimension_resolutions": {
-    "task": {
-      "policy": "judge_only",
-      "judge_score": 9.0,
-      "deterministic_score": 10.0,
-      "final_score": 9.0
-    },
-    "process": {
-      "policy": "weighted",
-      "judge_score": 8.0,
-      "deterministic_score": 10.0,
-      "final_score": 8.18
-    }
+  "final_dimensions": {
+    "task": 9.0, "process": 8.0, "autonomy": 8.5,
+    "closeness": 8.0, "efficiency": 7.5, "spark": 6.0
   },
   "summary": {
     "deterministic_passed_checks": 2,
@@ -162,7 +129,7 @@ Full event trace at `outputs/runs/suit_<suite_id>/run_profile_<fp6>/<model_id>/<
 ## Debugging a score that seems wrong
 
 1. Read `evaluation_result_summary_1.md` — which dimension is low?
-2. Check `raw_outputs/final_result_1.json → dimension_resolutions` — is the low score coming from the judge or from a deterministic check?
+2. Check `raw_outputs/final_result_1.json` — compare `judge_dimensions` with `deterministic_dimensions` to see what evidence the judge had for that dimension.
 3. If judge score seems off: open `judge_1.prompt.debug.md` — did the judge receive incomplete or misleading context? Did a hard expectation fail, which caps the score?
 4. If a deterministic check failed unexpectedly: look at `raw_outputs/final_result_1.json → summary` for counts, then check the check definitions in `test.yaml` — paths and substrings must match exactly.
 5. If the run itself looks wrong: read `run_1.json → trace` — inspect each tool call and result in sequence.

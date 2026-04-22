@@ -2,7 +2,7 @@
 
 A `RunArtifact` is the canonical JSON record of one runner execution. It is the single source of truth for everything that happened: the input, the trace, the output, the usage, and any errors.
 
-Everything downstream — deterministic checks, the judge, hybrid aggregation — reads from this artifact. Nothing mutates it.
+Everything downstream — deterministic checks, the judge, and final evaluation reporting — reads from this artifact. Nothing mutates it.
 
 ---
 

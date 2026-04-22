@@ -1,11 +1,11 @@
 ---
 name: personal-agent-eval
-description: Use this skill whenever working with the personal_agent_eval (pae) benchmark framework in this repository. Covers everything needed to operate the library: running benchmarks with `pae run-eval`, creating and modifying test cases, suites, run profiles, and evaluation profiles, understanding fingerprints and incremental reuse, reading and interpreting evaluation outputs, configuring the LLM judge, and all `pae` CLI commands and flags. Trigger on any of these: "run a benchmark", "create a test case", "add a model to a suite", "configure the judge", "why is it reusing results", "how does scoring work", "how do I re-run a case", "what is a fingerprint", "set up a campaign", "add a deterministic check", "what does each dimension measure", "how does the openclaw runner work", "how does hybrid scoring work", or any question about how this library works.
+description: Use this skill whenever working with the personal_agent_eval (pae) benchmark framework in this repository. Covers everything needed to operate the library: running benchmarks with `pae run-eval`, creating and modifying test cases, suites, run profiles, and evaluation profiles, understanding fingerprints and incremental reuse, reading and interpreting evaluation outputs, configuring the LLM judge, and all `pae` CLI commands and flags. Trigger on any of these: "run a benchmark", "create a test case", "add a model to a suite", "configure the judge", "why is it reusing results", "how does scoring work", "how do I re-run a case", "what is a fingerprint", "set up a campaign", "add a deterministic check", "what does each dimension measure", "how does the openclaw runner work", or any question about how this library works.
 ---
 
 # personal_agent_eval
 
-`personal_agent_eval` (CLI: `pae`) is an open benchmark framework for LLM and agent-based systems. It takes a set of **test cases**, a **model or agent**, and a **judge policy**, and produces a structured, reproducible score combining deterministic checks and an LLM judge.
+`personal_agent_eval` (CLI: `pae`) is an open benchmark framework for LLM and agent-based systems. It takes a set of **test cases**, a **model or agent**, and a **judge configuration**, and produces a structured, reproducible score where deterministic checks serve as evidence for an LLM judge.
 
 Every result is identified by a **SHA-256 fingerprint** of all inputs. Re-running the same configuration reuses stored results — no tokens spent twice. Adding a new case or model only runs what is missing.
 
@@ -29,7 +29,7 @@ Both modes share the same config schema, evaluation pipeline, and output format.
 | Test case | `configs/cases/<case_id>/test.yaml` | What to test |
 | Suite | `configs/suites/<suite_id>.yaml` | Which cases and which models |
 | Run profile | `configs/run_profiles/<id>.yaml` | How to execute (temperature, tokens, retries…) |
-| Evaluation profile | `configs/evaluation_profiles/<id>.yaml` | How to judge and aggregate scores |
+| Evaluation profile | `configs/evaluation_profiles/<id>.yaml` | How to judge and aggregate repeated judge runs |
 | OpenClaw agent | `configs/agents/<id>/agent.yaml` + `workspace/` | Reusable agent definition (openclaw only) |
 
 ---
@@ -255,13 +255,6 @@ judge_runs:
     repetitions: 1
 aggregation:
   method: median
-final_aggregation:
-  default_policy: judge_only
-  dimensions:
-    process:
-      policy: weighted
-      judge_weight: 0.9
-      deterministic_weight: 0.1
 security_policy:
   allow_local_python_hooks: false
   redact_secrets: true
@@ -273,7 +266,7 @@ The shipped profile `configs/evaluation_profiles/judge_gpt54_mini.yaml` uses `op
 
 ## Scoring dimensions
 
-The judge scores six dimensions on a **0–10 scale**. See `skill/references/evaluation.md` for detailed descriptions, hybrid aggregation logic, and how to debug scores.
+The judge scores six dimensions on a **0–10 scale**. See `skill/references/evaluation.md` for detailed descriptions, how deterministic signals are surfaced, and how to debug scores.
 
 | Dimension | What it measures |
 |---|---|
@@ -335,7 +328,7 @@ Before executing any `(model, case, repetition)`, the framework computes a SHA-2
 
 **What does NOT change the run fingerprint**: adding a new case to the suite, changing the suite title, increasing `run_repetitions` (new repetitions run; existing ones reuse).
 
-**Evaluation fingerprint is separate** — changing the judge model or aggregation weights re-evaluates without re-running the model.
+**Evaluation fingerprint is separate** — changing the judge model, judge aggregation, prompt, anchors, or security policy re-evaluates without re-running the model.
 
 **To force a re-run:**
 
@@ -369,7 +362,7 @@ outputs/
             ├── evaluation_result_summary_1.md   ← START HERE: verdict + evidence
             ├── judge_1.prompt.debug.md          ← exact prompt the judge saw
             └── raw_outputs/
-                ├── final_result_1.json          ← hybrid score + dimension resolution
+                ├── final_result_1.json          ← judge score + deterministic summaries
                 ├── judge_1.json                 ← raw aggregated judge response
                 └── judge_1.prompt.user.json     ← structured subject view payload
 ```
@@ -377,7 +370,7 @@ outputs/
 **Reading order:**
 1. `evaluation_result_summary_1.md` — final score, judge evidence, dimension breakdown
 2. `judge_1.prompt.debug.md` — what the judge actually saw (check here if a score seems wrong)
-3. `raw_outputs/final_result_1.json` — `dimension_resolutions` shows exactly how each score was derived
+3. `raw_outputs/final_result_1.json` — judge scores, deterministic summaries, and final reported dimensions
 4. `run_1.json` — full event trace (tool calls, messages, token usage) for runner-level debug
 
 ---
@@ -436,5 +429,5 @@ outputs/                          ← generated at runtime; not committed
 ## Deeper reference
 
 - `skill/references/config-fields.md` — full field-by-field YAML reference for all config types
-- `skill/references/evaluation.md` — scoring dimensions in depth, hybrid aggregation, what the judge sees, reading and debugging evaluation artifacts
+- `skill/references/evaluation.md` — scoring dimensions in depth, what the judge sees, and how to read and debug evaluation artifacts
 - `uv run mkdocs serve` — browse the full documentation site locally

@@ -1,4 +1,4 @@
-"""Typed hybrid aggregation models."""
+"""Typed evaluation aggregation models."""
 
 from __future__ import annotations
 
@@ -20,27 +20,6 @@ class DimensionScores(ArtifactModel):
     spark: float | None = Field(default=None, ge=0, le=10)
 
 
-class DimensionResolution(ArtifactModel):
-    """How one final dimension score was resolved."""
-
-    policy: Literal["judge_only", "deterministic_only", "weighted"]
-    source_used: Literal["judge", "deterministic", "weighted", "missing"]
-    judge_score: float | None = Field(default=None, ge=0, le=10)
-    deterministic_score: float | None = Field(default=None, ge=0, le=10)
-    final_score: float | None = Field(default=None, ge=0, le=10)
-
-
-class DimensionResolutions(ArtifactModel):
-    """Resolution metadata for every tracked dimension."""
-
-    task: DimensionResolution
-    process: DimensionResolution
-    autonomy: DimensionResolution
-    closeness: DimensionResolution
-    efficiency: DimensionResolution
-    spark: DimensionResolution
-
-
 class SecurityBlock(ArtifactModel):
     """Security status preserved on the final evaluation result."""
 
@@ -49,7 +28,7 @@ class SecurityBlock(ArtifactModel):
 
 
 class HybridAggregationSummary(ArtifactModel):
-    """Execution-level summary of hybrid aggregation inputs."""
+    """Execution-level summary of judge and deterministic inputs."""
 
     deterministic_passed_checks: int = Field(ge=0)
     deterministic_failed_checks: int = Field(ge=0)
@@ -66,7 +45,7 @@ class OverallAssessment(ArtifactModel):
 
 
 class FinalEvaluationResult(ArtifactModel):
-    """Final hybrid evaluation artifact for one run/case pair."""
+    """Final evaluation artifact for one run/case pair."""
 
     schema_version: Literal[1] = 1
     case_id: str
@@ -74,7 +53,6 @@ class FinalEvaluationResult(ArtifactModel):
     deterministic_dimensions: DimensionScores = Field(default_factory=DimensionScores)
     judge_dimensions: DimensionScores = Field(default_factory=DimensionScores)
     final_dimensions: DimensionScores = Field(default_factory=DimensionScores)
-    dimension_resolutions: DimensionResolutions
     judge_overall: OverallAssessment | None = None
     final_score: float = Field(ge=0, le=10)
     summary: HybridAggregationSummary

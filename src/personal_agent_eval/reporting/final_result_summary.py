@@ -59,9 +59,6 @@ def render_final_result_markdown(result: FinalEvaluationResult) -> str:
             "",
             "## Dimension Breakdown",
             _render_dimension_table(result),
-            "",
-            "## Resolution Notes",
-            *_render_resolution_notes(result),
         ]
     )
 
@@ -202,43 +199,17 @@ def _render_judge_evidence(judge_result: AggregatedJudgeResult) -> list[str]:
 
 
 def _render_dimension_table(result: FinalEvaluationResult) -> str:
-    headers = ["Dimension", "Deterministic", "Judge", "Final", "Policy", "Source"]
+    headers = ["Dimension", "Deterministic", "Judge", "Final"]
     rows = [
         [
             name.title(),
             _format_optional_score(getattr(result.deterministic_dimensions, name)),
             _format_optional_score(getattr(result.judge_dimensions, name)),
             _format_optional_score(getattr(result.final_dimensions, name)),
-            getattr(result.dimension_resolutions, name).policy,
-            getattr(result.dimension_resolutions, name).source_used,
         ]
         for name in ("task", "process", "autonomy", "closeness", "efficiency", "spark")
     ]
     return "\n".join([_markdown_table(headers, rows)])
-
-
-def _render_resolution_notes(result: FinalEvaluationResult) -> list[str]:
-    notes: list[str] = []
-    for name in ("task", "process", "autonomy", "closeness", "efficiency", "spark"):
-        resolution = getattr(result.dimension_resolutions, name)
-        deterministic_score = getattr(result.deterministic_dimensions, name)
-        judge_score = getattr(result.judge_dimensions, name)
-        final_score = getattr(result.final_dimensions, name)
-
-        detail: list[str] = []
-        if deterministic_score is None and judge_score is not None:
-            detail.append("deterministic score missing")
-        elif resolution.policy == "judge_only" and deterministic_score is not None:
-            detail.append("deterministic score present but ignored by policy")
-        elif resolution.policy == "weighted":
-            detail.append("resolved by weighted blend")
-        else:
-            detail.append("resolved without extra notes")
-
-        detail.append(f"final score `{_format_optional_score(final_score)}`")
-        notes.append(f"- `{name}`: {', '.join(detail)}.")
-
-    return notes
 
 
 def _markdown_table(headers: Iterable[str], rows: Iterable[Iterable[str]]) -> str:

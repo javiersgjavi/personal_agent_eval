@@ -4,8 +4,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from personal_agent_eval.aggregation.models import (
-    DimensionResolution,
-    DimensionResolutions,
     DimensionScores,
     FinalEvaluationResult,
     HybridAggregationSummary,
@@ -86,9 +84,7 @@ def test_v1_evaluation_profile_defaults_remain_frozen() -> None:
 
     assert evaluation_profile.schema_version == 1
     assert evaluation_profile.aggregation.method == "median"
-    assert evaluation_profile.final_aggregation.default_policy == "judge_only"
-    assert evaluation_profile.final_aggregation.dimensions.task.policy == "weighted"
-    assert evaluation_profile.final_aggregation.dimensions.autonomy.policy == "judge_only"
+    assert evaluation_profile.security_policy.network_access == "deny"
 
 
 def test_v1_run_artifact_json_shape_remains_stable() -> None:
@@ -137,7 +133,6 @@ def test_v1_final_evaluation_result_shape_remains_stable() -> None:
         "deterministic_dimensions",
         "judge_dimensions",
         "final_dimensions",
-        "dimension_resolutions",
         "judge_overall",
         "final_score",
         "summary",
@@ -145,14 +140,6 @@ def test_v1_final_evaluation_result_shape_remains_stable() -> None:
         "warnings",
     }
     assert set(payload["final_dimensions"]) == {
-        "task",
-        "process",
-        "autonomy",
-        "closeness",
-        "efficiency",
-        "spark",
-    }
-    assert set(payload["dimension_resolutions"]) == {
         "task",
         "process",
         "autonomy",
@@ -258,19 +245,7 @@ def test_evaluation_fingerprint_reorder_vs_aggregation_change() -> None:
     )
     changed = evaluation_profile.model_copy(
         update={
-            "final_aggregation": evaluation_profile.final_aggregation.model_copy(
-                update={
-                    "dimensions": evaluation_profile.final_aggregation.dimensions.model_copy(
-                        update={
-                            "task": (
-                                evaluation_profile.final_aggregation.dimensions.task.model_copy(
-                                    update={"judge_weight": 0.5, "deterministic_weight": 0.5}
-                                )
-                            )
-                        }
-                    )
-                }
-            )
+            "aggregation": evaluation_profile.aggregation.model_copy(update={"method": "mean"})
         }
     )
 
@@ -303,7 +278,6 @@ def test_storage_layout_is_frozen_and_isolates_results_per_run_fingerprint(tmp_p
             evaluation_fingerprint=evaluation_fingerprint,
             evaluation_profile_id=evaluation_profile_id,
             aggregation_method="median",
-            default_dimension_policy="judge_only",
             judge_system_prompt_source="path:prompts/judge_system_default.md",
             judge_system_prompt="You are a strict evaluation judge.",
         )
@@ -525,20 +499,6 @@ def _build_final_result(
     run_id: str,
     final_score: float = 8.0,
 ) -> FinalEvaluationResult:
-    task_resolution = DimensionResolution(
-        policy="judge_only",
-        source_used="judge",
-        judge_score=8.0,
-        deterministic_score=None,
-        final_score=8.0,
-    )
-    process_resolution = DimensionResolution(
-        policy="weighted",
-        source_used="weighted",
-        judge_score=6.0,
-        deterministic_score=10.0,
-        final_score=7.6,
-    )
     return FinalEvaluationResult(
         case_id=case_id,
         run_id=run_id,
@@ -553,19 +513,11 @@ def _build_final_result(
         ),
         final_dimensions=DimensionScores(
             task=8.0,
-            process=7.6,
+            process=6.0,
             autonomy=7.5,
             closeness=6.5,
             efficiency=5.0,
             spark=6.0,
-        ),
-        dimension_resolutions=DimensionResolutions(
-            task=task_resolution,
-            process=process_resolution,
-            autonomy=task_resolution,
-            closeness=task_resolution,
-            efficiency=task_resolution,
-            spark=task_resolution,
         ),
         judge_overall={"score": final_score, "evidence": ["Overall evidence"]},
         final_score=final_score,

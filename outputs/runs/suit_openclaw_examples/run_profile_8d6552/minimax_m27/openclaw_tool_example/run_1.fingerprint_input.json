@@ -1,0 +1,31 @@
+{
+  "fingerprint": "aa3f3b93744c3885d7791eb43b4caa77fed7d48740a72a6da91c2079e736d56d",
+  "fingerprint_version": 1,
+  "hash_algorithm": "sha256",
+  "kind": "run",
+  "payload": {
+    "attachments": [],
+    "case_metadata": {},
+    "input_context": {
+      "openclaw": {
+        "expected_artifact": "report.md"
+      }
+    },
+    "input_messages": [
+      {
+        "content": "Use real tools to create a file `report.md` in the workspace.\nThe file must contain:\n- a title `# Tool Example`\n- a line with the current date obtained via a command\n- a literal line `openclaw-tool-example`\n\nAt the end, briefly confirm that you created the file.\n",
+        "metadata": {},
+        "name": null,
+        "role": "user"
+      }
+    ],
+    "requested_model": "minimax/minimax-m2.7",
+    "runner_config": {
+      "agent_fingerprint": "42d5d1e1ec8a80bc5ba75580a9988fbf0c0bbf6b3485a6ad8fc102de93211140",
+      "docker_cli": "docker",
+      "image": "ghcr.io/openclaw/openclaw:2026.4.15",
+      "openclaw_primary_model_ref": "openrouter/minimax/minimax-m2.7"
+    },
+    "runner_type": "openclaw"
+  }
+}

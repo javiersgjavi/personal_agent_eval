@@ -1,0 +1,363 @@
+{
+  "evaluation_target": {
+    "context": {
+      "llm_probe": {
+        "tools": [
+          "web_search"
+        ]
+      }
+    },
+    "deterministic_checks": [
+      {
+        "check_id": "llm-probe-browser-example-final",
+        "dimensions": [
+          "task"
+        ],
+        "kind": "final_response_present"
+      }
+    ],
+    "dimensions": [
+      "task",
+      "process",
+      "autonomy",
+      "closeness",
+      "efficiency",
+      "spark"
+    ],
+    "expectations": {
+      "hard": [
+        "Uses web_search instead of relying only on training memory.",
+        "Includes an official Python source URL in the final answer."
+      ],
+      "soft": [
+        "Response is concise and readable."
+      ]
+    },
+    "rubric": {
+      "criteria": [
+        {
+          "name": "Task completion",
+          "what_bad_looks_like": "Missing key requested items (e.g., no official URL).",
+          "what_good_looks_like": "Includes the requested title/page, an official URL, and a brief reliability justification."
+        },
+        {
+          "name": "Evidence grounding",
+          "what_bad_looks_like": "Relies on training memory or makes unsupported claims.",
+          "what_good_looks_like": "Uses web_search and bases claims on retrieved evidence."
+        },
+        {
+          "name": "Clarity and brevity",
+          "what_bad_looks_like": "Verbose or hard to scan.",
+          "what_good_looks_like": "Short, readable bullets; no unnecessary text."
+        }
+      ],
+      "scale": {
+        "anchors": {
+          "0": "No attempt / irrelevant / empty output.",
+          "10": "Uses web_search and cites an official Python URL; concise, correct, and justified.",
+          "4": "Partially meets the task; weak sourcing or unclear answer.",
+          "7": "Meets the essentials but is missing minor details or clarity."
+        },
+        "max": 10.0,
+        "min": 0.0
+      },
+      "scoring_instructions": "Use this rubric to set overall.score. If a hard expectation or deterministic check fails, cap overall.score (typically <= 4). Cite 1–3 decisive facts in overall.evidence.\n",
+      "version": 1
+    },
+    "task_messages": [
+      {
+        "content": "Use `web_search` to find the official Python documentation page about the current stable version.\nThen give me a short answer with:\n- the title or page you found\n- the official URL you consulted\n- one sentence explaining why that source is reliable\n"
+      }
+    ]
+  },
+  "execution_evidence": {
+    "artifacts": [],
+    "deterministic_summary": {
+      "error_checks": 0,
+      "failed_checks": 1,
+      "passed_checks": 0,
+      "total_checks": 1
+    },
+    "material_failures": [
+      {
+        "code": "runner_execution_failed",
+        "error_type": "ValueError",
+        "message": "Tool-enabled conversation exceeded max_turns=6 without a final answer.",
+        "retryable": false
+      }
+    ],
+    "process_trace": [
+      {
+        "arguments": {
+          "query": "official Python documentation current stable version"
+        },
+        "call_id": "call_559400bd890b40e296663089",
+        "kind": "tool_call",
+        "tool_name": "web_search"
+      },
+      {
+        "call_id": "call_559400bd890b40e296663089",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "search_results",
+          "keys": [
+            "query",
+            "results"
+          ],
+          "query": "official Python documentation current stable version",
+          "result_count": 5,
+          "top_sources": [
+            "duckduckgo.com"
+          ],
+          "top_titles": [
+            "Python 3.14.4 documentation",
+            "Download Python | Python.org",
+            "The Latest Version of Python | phoenixNAP KB",
+            "Python Versions — Python - from None to AI",
+            "Python Latest Version - Release History, LTS & EOL"
+          ],
+          "truncated": false
+        },
+        "status": "success",
+        "tool_name": "web_search"
+      },
+      {
+        "content": {
+          "char_count": 1128,
+          "content_type": "json",
+          "text_excerpt": "{\"status\": \"success\", \"output\": {\"query\": \"official Python documentation current stable version\", \"results\": [{\"title\": \"Python 3.14.4 documentation\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F&rut=11c6e9b754896883f7ce060b8c90bf5f4d36b3f54a0ba40deb43f14760a0d753\"}, {\"title\": \"Download Python | Python.org\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.python.org%2Fdownloads%2F&rut=8eeb7485d096017ada98c2f191d27b942be4853d7dd1c06ab527a92729746fe5\"}, {\"title\": \"The Latest Version of Python | phoenixNAP KB\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fphoenixnap.com%2Fkb%2Flatest%2Dpython%2Dversion&rut=78e27870118f1333fb8483842fd736ef24f7d91e654b4f6c443803d2ed61cc1e\"}, {\"title\": \"Python Versions — Python - from None to AI\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fpython3.info%2Fabout%2Fversions.html&rut=7367243ca8418b86e2e160bfc6a4a2bbe51d083e0b5392b6c596ca47f14482e6\"}, {\"title\": \"Python Latest Version - Release History, LTS & EOL\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fversionlog.com%2Fpython%2F&rut=55a91ca724f4d3744cc7323b5e67a43c8658623586fc7fcd850a6cd69d0fed50\"}]}}",
+          "truncated": false
+        },
+        "kind": "message",
+        "name": "web_search",
+        "role": "tool"
+      },
+      {
+        "arguments": {
+          "query": "current stable Python version docs.python.org"
+        },
+        "call_id": "call_47f528df87654a948b493363",
+        "kind": "tool_call",
+        "tool_name": "web_search"
+      },
+      {
+        "call_id": "call_47f528df87654a948b493363",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "search_results",
+          "keys": [
+            "query",
+            "results"
+          ],
+          "query": "current stable Python version docs.python.org",
+          "result_count": 5,
+          "top_sources": [
+            "duckduckgo.com"
+          ],
+          "top_titles": [
+            "Python 3.14.4 documentation",
+            "Status of Python versions",
+            "Python Versions — Python - from None to AI",
+            "The Latest Version of Python | phoenixNAP KB",
+            "Download Python | Python.org"
+          ],
+          "truncated": false
+        },
+        "status": "success",
+        "tool_name": "web_search"
+      },
+      {
+        "content": {
+          "char_count": 1103,
+          "content_type": "json",
+          "text_excerpt": "{\"status\": \"success\", \"output\": {\"query\": \"current stable Python version docs.python.org\", \"results\": [{\"title\": \"Python 3.14.4 documentation\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F&rut=11c6e9b754896883f7ce060b8c90bf5f4d36b3f54a0ba40deb43f14760a0d753\"}, {\"title\": \"Status of Python versions\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdevguide.python.org%2Fversions%2F&rut=8d3cdbd7682efebbe6cba4ddef2822d5fe4cd002ab47540cec1e05ec349c9695\"}, {\"title\": \"Python Versions — Python - from None to AI\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fpython3.info%2Fabout%2Fversions.html&rut=7367243ca8418b86e2e160bfc6a4a2bbe51d083e0b5392b6c596ca47f14482e6\"}, {\"title\": \"The Latest Version of Python | phoenixNAP KB\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fphoenixnap.com%2Fkb%2Flatest%2Dpython%2Dversion&rut=78e27870118f1333fb8483842fd736ef24f7d91e654b4f6c443803d2ed61cc1e\"}, {\"title\": \"Download Python | Python.org\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.python.org%2Fdownloads%2F&rut=8eeb7485d096017ada98c2f191d27b942be4853d7dd1c06ab527a92729746fe5\"}]}}",
+          "truncated": false
+        },
+        "kind": "message",
+        "name": "web_search",
+        "role": "tool"
+      },
+      {
+        "arguments": {
+          "query": "\"Python 3.14\""
+        },
+        "call_id": "call_b2de651ff0c64c17aa2b4aec",
+        "kind": "tool_call",
+        "tool_name": "web_search"
+      },
+      {
+        "call_id": "call_b2de651ff0c64c17aa2b4aec",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "search_results",
+          "keys": [
+            "query",
+            "results"
+          ],
+          "query": "\"Python 3.14\"",
+          "result_count": 5,
+          "top_sources": [
+            "duckduckgo.com"
+          ],
+          "top_titles": [
+            "Python Release Python 3.14.0 | Python.org",
+            "Python 3.14: Cool New Features for You to Try - Real Python",
+            "Python 3.14's best new features - Python Morsels",
+            "An Intro to Python 3.14's New Features - Mouse Vs Python",
+            "What's New in Python 3.14 | Better Stack Community"
+          ],
+          "truncated": false
+        },
+        "status": "success",
+        "tool_name": "web_search"
+      },
+      {
+        "content": {
+          "char_count": 1324,
+          "content_type": "json",
+          "text_excerpt": "{\"status\": \"success\", \"output\": {\"query\": \"\\\"Python 3.14\\\"\", \"results\": [{\"title\": \"Python Release Python 3.14.0 | Python.org\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.python.org%2Fdownloads%2Frelease%2Fpython%2D3140%2F&rut=854ab0cc0e06af9b165e28668e4bb4df3c74c8e0b3bdc22a3227edafd2f688b7\"}, {\"title\": \"Python 3.14: Cool New Features for You to Try - Real Python\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Frealpython.com%2Fpython314%2Dnew%2Dfeatures%2F&rut=fe058f3114b7e1f120c4206515753dbd01fd4140d62ec92f1e538d528488eec0\"}, {\"title\": \"Python 3.14's best new features - Python Morsels\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.pythonmorsels.com%2Fpython314%2F&rut=79935f72d76e4d528ada6968d9b36f7e6682853a688edd8dc702dc8b9c3f6149\"}, {\"title\": \"An Intro to Python 3.14's New Features - Mouse Vs Python\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fblog.pythonlibrary.org%2F2025%2F10%2F09%2Fan%2Dintro%2Dto%2Dpython%2D3%2D14s%2Dnew%2Dfeatures%2F&rut=d5bedf5622cfb99adada9ea6f202fbfd0909e952511305680343802bac6a1679\"}, {\"title\": \"What's New in Python 3.14 | Better Stack Community\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fbetterstack.com%2Fcommunity%2Fguides%2Fscal\n... [truncated]",
+          "truncated": true
+        },
+        "kind": "message",
+        "name": "web_search",
+        "role": "tool"
+      },
+      {
+        "arguments": {
+          "query": "site:docs.python.org Python 3.14 documentation"
+        },
+        "call_id": "call_9185d5bf578f4ccc89c123bc",
+        "kind": "tool_call",
+        "tool_name": "web_search"
+      },
+      {
+        "call_id": "call_9185d5bf578f4ccc89c123bc",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "search_results",
+          "keys": [
+            "query",
+            "results"
+          ],
+          "query": "site:docs.python.org Python 3.14 documentation",
+          "result_count": 5,
+          "top_sources": [
+            "duckduckgo.com"
+          ],
+          "top_titles": [
+            "▷ Curso de programación Python - Online - Escuela MUSK",
+            "manual de python en Amazon - manual de python a Precios Bajos",
+            "Python 3.14.4 documentation",
+            "What's new in Python 3.14 — Python 3.14.3 documentation",
+            "Built-in Functions — Python 3.14.3 documentation"
+          ],
+          "truncated": false
+        },
+        "status": "success",
+        "tool_name": "web_search"
+      },
+      {
+        "content": {
+          "char_count": 4309,
+          "content_type": "json",
+          "text_excerpt": "{\"status\": \"success\", \"output\": {\"query\": \"site:docs.python.org Python 3.14 documentation\", \"results\": [{\"title\": \"▷ Curso de programación Python - Online - Escuela MUSK\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fduckduckgo.com%2Fy.js%3Fad_domain%3Demagister.com%26ad_provider%3Dbingv7aa%26ad_type%3Dtxad%26click_metadata%3De4YOB5v05GMXW5IgQsZLWnPWssTlLFP3_h6tpnCKjxOHmNiDS28NOmUJasN%252DDHolHEBIZsdenQB9tTz627CTkUEyoNxQfdmMgdefrxBaQIAPi39KFLiMh1iZfYdW4fbGWmUAbVyo7FXPZuwNfQfoAaSd39FGiwYnAKkTq_jbBKM.1gFT9H6iVYeJBp25y5UWkw%26rut%3D0e6b1723c05d701cc223ee6e53680127839b7cc786530be664b595a4a0a6e526%26u3%3Dhttps%253A%252F%252Fwww.bing.com%252Faclick%253Fld%253De8CeuXZPJL46XnerMaIE6GnjVUCUy2JcHaMJe0pgCmzL3ev3IjufqBMyn87GL6fbtwWXtwKQLxDcGs5FxWXbvI8xjsBT15al2M9OPBTd_sjG7LhiNVecOWsPcj7lhnbZ9Av5Wj6rUA%252DG%252DKOVWyV%252Dy1uL_z2UqUmI0n18Oxp40fd4YDuQ2WFAytOAtuuoYBa78H_dPgQoCmoud7X4_KexGSNp6O80g%2526u%253DaHR0cHMlM2ElMmYlMmZ3d3cuZW1hZ2lzdGVyLmNvbSUyZmN1cnNvLXByb2dyYW1hY2lvbi1weXRob24tY3Vyc29zLTM3ODM5OTcuaHRtJTNmcGZpY2hhcyUzZDI1Mjg4JTI2T1ZSQVclM2RFbWFnaXN0ZXJfQmluZ0FkcyUyNmNhbXBhaWduaWQlM2QzNjc3MzU1NTYlMjZhZGdyb3VwaWQlM2QxMjEyNzYxNzcyNTg5NTI1JTI2bWF0Y2h0eXBlJTNkYiUyNm5ldHdvcmslM2RnJTI2ZGV2aWNl\n... [truncated]",
+          "truncated": true
+        },
+        "kind": "message",
+        "name": "web_search",
+        "role": "tool"
+      },
+      {
+        "arguments": {
+          "query": "\"Python 3.14.4\""
+        },
+        "call_id": "call_d8edeef72e3f458b95630b89",
+        "kind": "tool_call",
+        "tool_name": "web_search"
+      },
+      {
+        "call_id": "call_d8edeef72e3f458b95630b89",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "search_results",
+          "keys": [
+            "query",
+            "results"
+          ],
+          "query": "\"Python 3.14.4\"",
+          "result_count": 0,
+          "truncated": false
+        },
+        "status": "success",
+        "tool_name": "web_search"
+      },
+      {
+        "content": {
+          "char_count": 78,
+          "content_type": "json",
+          "text_excerpt": "{\"status\": \"success\", \"output\": {\"query\": \"\\\"Python 3.14.4\\\"\", \"results\": []}}",
+          "truncated": false
+        },
+        "kind": "message",
+        "name": "web_search",
+        "role": "tool"
+      },
+      {
+        "arguments": {
+          "query": "latest Python version stable release 2025"
+        },
+        "call_id": "call_4c6898e3c1a347edb83fe8a9",
+        "kind": "tool_call",
+        "tool_name": "web_search"
+      },
+      {
+        "call_id": "call_4c6898e3c1a347edb83fe8a9",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "search_results",
+          "keys": [
+            "query",
+            "results"
+          ],
+          "query": "latest Python version stable release 2025",
+          "result_count": 5,
+          "top_sources": [
+            "duckduckgo.com"
+          ],
+          "top_titles": [
+            "Status of Python versions",
+            "Python Latest Version - Release History, LTS & EOL",
+            "Latest Python Version (2025) - What's New in Python 3.14?",
+            "The Latest Version of Python | phoenixNAP KB",
+            "Python 3.14 Released and Other Python News for November 2025"
+          ],
+          "truncated": false
+        },
+        "status": "success",
+        "tool_name": "web_search"
+      },
+      {
+        "content": {
+          "char_count": 1218,
+          "content_type": "json",
+          "text_excerpt": "{\"status\": \"success\", \"output\": {\"query\": \"latest Python version stable release 2025\", \"results\": [{\"title\": \"Status of Python versions\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdevguide.python.org%2Fversions%2F&rut=8d3cdbd7682efebbe6cba4ddef2822d5fe4cd002ab47540cec1e05ec349c9695\"}, {\"title\": \"Python Latest Version - Release History, LTS & EOL\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fversionlog.com%2Fpython%2F&rut=55a91ca724f4d3744cc7323b5e67a43c8658623586fc7fcd850a6cd69d0fed50\"}, {\"title\": \"Latest Python Version (2025) - What's New in Python 3.14?\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.liquidweb.com%2Fblog%2Flatest%2Dpython%2Dversion%2F&rut=6b1fb4e5dcc6680d5ec244ed2c5d537836a248db4346f901a2175414be95707b\"}, {\"title\": \"The Latest Version of Python | phoenixNAP KB\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fphoenixnap.com%2Fkb%2Flatest%2Dpython%2Dversion&rut=78e27870118f1333fb8483842fd736ef24f7d91e654b4f6c443803d2ed61cc1e\"}, {\"title\": \"Python 3.14 Released and Other Python News for November 2025\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Frealpython.com%2Fpython%2Dnews%2Dnovember%2D2025%2F&rut=0afd8023dd06e312b53cc536948cc9136ee55bc161c7edf904d\n... [truncated]",
+          "truncated": true
+        },
+        "kind": "message",
+        "name": "web_search",
+        "role": "tool"
+      }
+    ]
+  },
+  "schema_version": 2,
+  "subject_response": {
+    "assistant_visible_messages": [],
+    "final_output": null,
+    "tool_activity_summary": {
+      "tool_call_count": 6,
+      "tools_used": [
+        "web_search"
+      ]
+    }
+  }
+}

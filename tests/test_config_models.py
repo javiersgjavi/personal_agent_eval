@@ -108,9 +108,7 @@ def test_load_evaluation_profile_from_fixture() -> None:
     assert config.anchors.enabled is True
     assert config.judge_runs[0].repetitions == 3
     assert config.aggregation.method == "median"
-    assert config.final_aggregation.default_policy == "judge_only"
-    assert config.final_aggregation.dimensions.task.policy == "weighted"
-    assert config.final_aggregation.final_score_weights.task == 0.3
+    assert config.security_policy.redact_secrets is True
 
 
 def test_evaluation_profile_rejects_inline_and_path_system_prompt_together(tmp_path: Path) -> None:
@@ -282,28 +280,6 @@ def test_test_loader_applies_empty_defaults(tmp_path: Path) -> None:
     assert config.deterministic_checks == []
     assert config.tags == []
     assert config.metadata == {}
-
-
-def test_evaluation_profile_rejects_incomplete_weighted_final_aggregation(tmp_path: Path) -> None:
-    path = tmp_path / "evaluation.yaml"
-    path.write_text(
-        "\n".join(
-            [
-                "schema_version: 1",
-                "evaluation_profile_id: weighted_missing",
-                "title: Weighted Missing",
-                "final_aggregation:",
-                "  dimensions:",
-                "    task:",
-                "      policy: weighted",
-                "      judge_weight: 0.7",
-            ]
-        ),
-        encoding="utf-8",
-    )
-
-    with pytest.raises(ConfigError, match="Weighted final aggregation requires"):
-        load_evaluation_profile(path)
 
 
 def test_test_loader_requires_message_content_or_source(tmp_path: Path) -> None:

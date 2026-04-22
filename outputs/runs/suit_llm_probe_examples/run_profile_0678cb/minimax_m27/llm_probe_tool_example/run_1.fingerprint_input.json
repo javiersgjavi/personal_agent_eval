@@ -1,0 +1,36 @@
+{
+  "fingerprint": "971060c0a0c50c2092c4cc6571399a74f54a71a4c397259546a8276792959773",
+  "fingerprint_version": 1,
+  "hash_algorithm": "sha256",
+  "kind": "run",
+  "payload": {
+    "attachments": [],
+    "case_metadata": {},
+    "input_context": {
+      "llm_probe": {
+        "tools": [
+          "exec_shell",
+          "write_file",
+          "read_file"
+        ]
+      }
+    },
+    "input_messages": [
+      {
+        "content": "Use real tools and follow these steps exactly:\n1. Run `printf 'llm-probe-tool-example\\n'` with `exec_shell`.\n2. Write `/tmp/pae_llm_probe_tool_example.txt` with that content using `write_file`.\n3. Read the file using `read_file`.\n4. Reply in 2–4 lines confirming what you did and the final file content.\n",
+        "metadata": {},
+        "name": null,
+        "role": "user"
+      }
+    ],
+    "requested_model": "minimax/minimax-m2.7",
+    "runner_config": {
+      "max_tokens": 768,
+      "max_turns": 6,
+      "retries": 0,
+      "temperature": 0,
+      "timeout_seconds": 90
+    },
+    "runner_type": "llm_probe"
+  }
+}

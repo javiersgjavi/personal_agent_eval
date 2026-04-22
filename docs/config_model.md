@@ -232,7 +232,7 @@ For OpenClaw, add the `openclaw:` block:
 schema_version: 1
 run_profile_id: openclaw_examples
 openclaw:
-  agent_id: support_agent
+  agent_id: basic_agent
   image: ghcr.io/openclaw/openclaw:2026.4.15
   timeout_seconds: 300
 execution_policy:
@@ -245,7 +245,7 @@ execution_policy:
 
 ### `evaluation_profile.yaml` — judge policy
 
-Defines one or more LLM judges and how their scores are aggregated.
+Defines one or more LLM judges, how repeated judge runs aggregate, and security controls.
 
 ```yaml
 schema_version: 1
@@ -260,27 +260,20 @@ judge_runs:
     repetitions: 1
 aggregation:
   method: median
-final_aggregation:
-  default_policy: judge_only
-  dimensions:
-    process:
-      policy: weighted
-      judge_weight: 0.9
-      deterministic_weight: 0.1
 security_policy:
   allow_local_python_hooks: false
   redact_secrets: true
 ```
 
 !!! note "final_score"
-    `final_score` is the judge's holistic `overall.score` (0–10). The per-dimension scores are for diagnosis. They do not determine the top-level score in V1.
+    `final_score` is the judge's holistic `overall.score` (0–10). Deterministic checks are preserved as supporting evidence for the judge and for debugging, but they do not compute the top-level score.
 
 ---
 
 ### `configs/agents/<agent_id>/` — reusable OpenClaw agent
 
 ```text
-configs/agents/support_agent/
+configs/agents/basic_agent/
   agent.yaml        ← agent identity, model defaults, sandbox settings
   workspace/
     AGENTS.md       ← workspace template (copied to every run)

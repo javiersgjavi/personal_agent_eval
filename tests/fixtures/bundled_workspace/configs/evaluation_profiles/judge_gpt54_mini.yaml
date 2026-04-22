@@ -12,20 +12,6 @@ judge_runs:
     repetitions: 1
 aggregation:
   method: median
-final_aggregation:
-  default_policy: judge_only
-  dimensions:
-    process:
-      policy: weighted
-      judge_weight: 0.9
-      deterministic_weight: 0.1
-  final_score_weights:
-    task: 0.3
-    process: 0.15
-    autonomy: 0.2
-    closeness: 0.1
-    efficiency: 0.15
-    spark: 0.1
 anchors:
   enabled: false
   references: []

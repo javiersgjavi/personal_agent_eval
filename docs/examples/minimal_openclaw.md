@@ -31,7 +31,8 @@ The framework does **not** use `~/.openclaw/openclaw.json`. It generates a per-r
 
 | File | Path |
 |---|---|
-| Reusable agent | `configs/agents/support_agent/` |
+| Reusable agent | `configs/agents/basic_agent/` |
+| Default-style bootstrap agent | `configs/agents/basic_agent/` |
 | Tool case | `configs/cases/openclaw_tool_example/test.yaml` |
 | Browser case | `configs/cases/openclaw_browser_example/test.yaml` |
 | Suite | `configs/suites/openclaw_examples.yaml` |
@@ -75,7 +76,7 @@ case_selection:
     - openclaw_browser_example
 metadata:
   owner: qa
-  agent: support_agent
+  agent: basic_agent
   run_profile: openclaw_examples
 ```
 
@@ -88,7 +89,7 @@ schema_version: 1
 run_profile_id: openclaw_examples
 title: OpenClaw runnable examples
 openclaw:
-  agent_id: support_agent                          # → configs/agents/support_agent/
+  agent_id: basic_agent                            # → configs/agents/basic_agent/
   image: ghcr.io/openclaw/openclaw:2026.4.15       # pinned image
   timeout_seconds: 300
 execution_policy:
@@ -101,21 +102,21 @@ The `openclaw.agent_id` field points to the agent directory. The `image` field p
 
 ---
 
-### Agent — `configs/agents/support_agent/agent.yaml`
+### Agent — `configs/agents/basic_agent/agent.yaml`
 
 ```yaml
 schema_version: 1
-agent_id: support_agent
-title: Support Agent (repository example)
-description: Minimal reusable OpenClaw agent for smoke runs and CI quality gates.
+agent_id: basic_agent
+title: Basic Agent
+description: Default-style OpenClaw agent workspace captured from `openclaw onboard` in ghcr.io/openclaw/openclaw:2026.4.15.
 openclaw:
   identity:
-    name: Support Agent
+    name: Basic Agent
   agents_defaults:
     sandbox: workspace-write
   agent:
-    id: support-agent
-    prompt: You are a benchmark example agent.
+    id: basic-agent
+    prompt: Follow the workspace files and behave like a default OpenClaw agent.
   model_defaults:
     aliases:
       default: benchmark-primary
@@ -124,10 +125,17 @@ openclaw:
 This is the fragment that gets embedded into the generated `openclaw.json`. The `workspace/` directory contains template files that are copied into every ephemeral run workspace.
 
 ```text
-configs/agents/support_agent/workspace/
-  AGENTS.md    ← workspace instructions for the agent
-  SOUL.md      ← agent identity/behavior instructions
+configs/agents/basic_agent/workspace/
+  AGENTS.md       ← default workspace guidance
+  BOOTSTRAP.md    ← first-run onboarding note
+  HEARTBEAT.md    ← heartbeat template
+  IDENTITY.md     ← initialized example identity
+  SOUL.md         ← default agent persona
+  TOOLS.md        ← local notes template
+  USER.md         ← initialized example user profile
 ```
+
+This example now uses `configs/agents/basic_agent/`, which mirrors the default workspace created by `openclaw onboard` in `ghcr.io/openclaw/openclaw:2026.4.15`, with fictional `IDENTITY.md` and `USER.md` values filled in so the docs show an initialized agent instead of blank templates.
 
 ---
 
@@ -256,6 +264,8 @@ The `contains: python.org` check verifies the workspace file references an actua
 ---
 
 ## What gets written to `outputs/`
+
+The repository commits regenerated artifacts for this example campaign under `outputs/` as reference output, so the OpenClaw artifact layout is visible in git.
 
 ```text
 outputs/

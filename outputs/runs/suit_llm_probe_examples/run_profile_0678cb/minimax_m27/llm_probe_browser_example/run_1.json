@@ -1,0 +1,595 @@
+{
+  "error": {
+    "code": "runner_execution_failed",
+    "error_type": "ValueError",
+    "message": "Tool-enabled conversation exceeded max_turns=6 without a final answer.",
+    "metadata": {},
+    "provider_code": null,
+    "retryable": false
+  },
+  "identity": {
+    "case_id": "llm_probe_browser_example",
+    "run_id": "run_fcaa8477ee494515bbfc71f573eeee13",
+    "run_profile_id": "llm_probe_examples",
+    "runner_type": "llm_probe",
+    "schema_version": 1,
+    "suite_id": "llm_probe_examples"
+  },
+  "output_artifacts": [],
+  "provider": {
+    "finish_reason": null,
+    "gateway": "openrouter",
+    "metadata": {},
+    "native_finish_reason": null,
+    "provider_model_id": null,
+    "provider_name": null,
+    "request_id": null,
+    "response_id": null
+  },
+  "request": {
+    "execution_parameters": {
+      "max_tokens": 768,
+      "max_turns": 6,
+      "retries": 0,
+      "seed": null,
+      "temperature": 0.0,
+      "timeout_seconds": 90.0,
+      "tool_choice": null,
+      "top_p": null
+    },
+    "gateway": "openrouter",
+    "metadata": {
+      "attachments": [],
+      "case_metadata": {},
+      "input_context": {
+        "llm_probe": {
+          "tools": [
+            "web_search"
+          ]
+        }
+      },
+      "model_selection": {
+        "label": "minimax/minimax-m2.7",
+        "model_id": "minimax_m27",
+        "requested_model": "minimax/minimax-m2.7"
+      },
+      "requested_runner_config": {
+        "type": "llm_probe"
+      },
+      "resolved_messages": [
+        {
+          "content": "Use `web_search` to find the official Python documentation page about the current stable version.\nThen give me a short answer with:\n- the title or page you found\n- the official URL you consulted\n- one sentence explaining why that source is reliable\n",
+          "name": null,
+          "role": "user"
+        }
+      ],
+      "resolved_tools": [
+        "web_search"
+      ]
+    },
+    "requested_model": "minimax/minimax-m2.7"
+  },
+  "runner_metadata": {
+    "attempt_count": 1,
+    "model_id": "minimax_m27",
+    "tool_capable": true,
+    "tool_names": [
+      "web_search"
+    ]
+  },
+  "status": "failed",
+  "timing": {
+    "completed_at": "2026-04-22T21:54:12.527496Z",
+    "duration_seconds": 28.4481,
+    "queued_at": "2026-04-22T21:53:44.079406Z",
+    "started_at": "2026-04-22T21:53:44.079410Z"
+  },
+  "trace": [
+    {
+      "content": "Use `web_search` to find the official Python documentation page about the current stable version.\nThen give me a short answer with:\n- the title or page you found\n- the official URL you consulted\n- one sentence explaining why that source is reliable\n",
+      "event_type": "message",
+      "metadata": {},
+      "name": null,
+      "role": "user",
+      "sequence": 0,
+      "timestamp": null
+    },
+    {
+      "detail": "Starting provider attempt 1.",
+      "event_type": "runner",
+      "metadata": {
+        "attempt": 1
+      },
+      "name": "provider_attempt",
+      "sequence": 1,
+      "timestamp": null
+    },
+    {
+      "content": null,
+      "event_type": "message",
+      "metadata": {
+        "reasoning": "The user is asking me to find the official Python documentation page about the current stable version. I should use the web_search tool to search for this information.\n\nLet me search for \"official Python documentation current stable version\" or similar.\n",
+        "reasoning_details": [
+          {
+            "format": "unknown",
+            "index": 0,
+            "text": "The user is asking me to find the official Python documentation page about the current stable version. I should use the web_search tool to search for this information.\n\nLet me search for \"official Python documentation current stable version\" or similar.\n",
+            "type": "reasoning.text"
+          }
+        ],
+        "refusal": null
+      },
+      "name": null,
+      "role": "assistant",
+      "sequence": 2,
+      "timestamp": null
+    },
+    {
+      "call_id": "call_559400bd890b40e296663089",
+      "event_type": "tool_call",
+      "metadata": {
+        "index": 0,
+        "type": "function"
+      },
+      "parsed_arguments": {
+        "query": "official Python documentation current stable version"
+      },
+      "raw_arguments": "{\"query\": \"official Python documentation current stable version\"}",
+      "sequence": 3,
+      "timestamp": null,
+      "tool_name": "web_search"
+    },
+    {
+      "call_id": "call_559400bd890b40e296663089",
+      "event_type": "tool_result",
+      "metadata": {},
+      "output": {
+        "query": "official Python documentation current stable version",
+        "results": [
+          {
+            "title": "Python 3.14.4 documentation",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F&rut=11c6e9b754896883f7ce060b8c90bf5f4d36b3f54a0ba40deb43f14760a0d753"
+          },
+          {
+            "title": "Download Python | Python.org",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.python.org%2Fdownloads%2F&rut=8eeb7485d096017ada98c2f191d27b942be4853d7dd1c06ab527a92729746fe5"
+          },
+          {
+            "title": "The Latest Version of Python | phoenixNAP KB",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fphoenixnap.com%2Fkb%2Flatest%2Dpython%2Dversion&rut=78e27870118f1333fb8483842fd736ef24f7d91e654b4f6c443803d2ed61cc1e"
+          },
+          {
+            "title": "Python Versions — Python - from None to AI",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fpython3.info%2Fabout%2Fversions.html&rut=7367243ca8418b86e2e160bfc6a4a2bbe51d083e0b5392b6c596ca47f14482e6"
+          },
+          {
+            "title": "Python Latest Version - Release History, LTS & EOL",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fversionlog.com%2Fpython%2F&rut=55a91ca724f4d3744cc7323b5e67a43c8658623586fc7fcd850a6cd69d0fed50"
+          }
+        ]
+      },
+      "sequence": 4,
+      "status": "success",
+      "timestamp": null
+    },
+    {
+      "content": "{\"status\": \"success\", \"output\": {\"query\": \"official Python documentation current stable version\", \"results\": [{\"title\": \"Python 3.14.4 documentation\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F&rut=11c6e9b754896883f7ce060b8c90bf5f4d36b3f54a0ba40deb43f14760a0d753\"}, {\"title\": \"Download Python | Python.org\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.python.org%2Fdownloads%2F&rut=8eeb7485d096017ada98c2f191d27b942be4853d7dd1c06ab527a92729746fe5\"}, {\"title\": \"The Latest Version of Python | phoenixNAP KB\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fphoenixnap.com%2Fkb%2Flatest%2Dpython%2Dversion&rut=78e27870118f1333fb8483842fd736ef24f7d91e654b4f6c443803d2ed61cc1e\"}, {\"title\": \"Python Versions — Python - from None to AI\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fpython3.info%2Fabout%2Fversions.html&rut=7367243ca8418b86e2e160bfc6a4a2bbe51d083e0b5392b6c596ca47f14482e6\"}, {\"title\": \"Python Latest Version - Release History, LTS & EOL\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fversionlog.com%2Fpython%2F&rut=55a91ca724f4d3744cc7323b5e67a43c8658623586fc7fcd850a6cd69d0fed50\"}]}}",
+      "event_type": "message",
+      "metadata": {
+        "tool_call_id": "call_559400bd890b40e296663089"
+      },
+      "name": "web_search",
+      "role": "tool",
+      "sequence": 5,
+      "timestamp": null
+    },
+    {
+      "content": null,
+      "event_type": "message",
+      "metadata": {
+        "reasoning": "The search returned a result titled \"Python 3.14.4 documentation\" with URL //duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F&rut=... which appears to be a redirect through DuckDuckGo. The actual link is likely https://docs.python.org/. However, we should find the specific page for current stable version. The official docs for the current stable Python version would be something like https://docs.python.org/3.12/ or maybe 3.14? Wait, the search shows \"Python 3.14.4 documentation\". Is that the actual current stable version? I think as of my knowledge cutoff in 2024-06, Python 3.12 was the latest stable version, but maybe by now (2025-09) it's 3.14? The user is presumably expecting a current version. But we cannot assume. We should find the correct version number and then provide the documentation page.\n\nBetter to search again with more specific query: \"Python 3.13 official documentation site:docs.python.org\" or something. But let's search \"current stable Python version official documentation\".\n",
+        "reasoning_details": [
+          {
+            "format": "unknown",
+            "index": 0,
+            "text": "The search returned a result titled \"Python 3.14.4 documentation\" with URL //duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F&rut=... which appears to be a redirect through DuckDuckGo. The actual link is likely https://docs.python.org/. However, we should find the specific page for current stable version. The official docs for the current stable Python version would be something like https://docs.python.org/3.12/ or maybe 3.14? Wait, the search shows \"Python 3.14.4 documentation\". Is that the actual current stable version? I think as of my knowledge cutoff in 2024-06, Python 3.12 was the latest stable version, but maybe by now (2025-09) it's 3.14? The user is presumably expecting a current version. But we cannot assume. We should find the correct version number and then provide the documentation page.\n\nBetter to search again with more specific query: \"Python 3.13 official documentation site:docs.python.org\" or something. But let's search \"current stable Python version official documentation\".\n",
+            "type": "reasoning.text"
+          }
+        ],
+        "refusal": null
+      },
+      "name": null,
+      "role": "assistant",
+      "sequence": 6,
+      "timestamp": null
+    },
+    {
+      "call_id": "call_47f528df87654a948b493363",
+      "event_type": "tool_call",
+      "metadata": {
+        "index": 0,
+        "type": "function"
+      },
+      "parsed_arguments": {
+        "query": "current stable Python version docs.python.org"
+      },
+      "raw_arguments": "{\"query\": \"current stable Python version docs.python.org\"}",
+      "sequence": 7,
+      "timestamp": null,
+      "tool_name": "web_search"
+    },
+    {
+      "call_id": "call_47f528df87654a948b493363",
+      "event_type": "tool_result",
+      "metadata": {},
+      "output": {
+        "query": "current stable Python version docs.python.org",
+        "results": [
+          {
+            "title": "Python 3.14.4 documentation",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F&rut=11c6e9b754896883f7ce060b8c90bf5f4d36b3f54a0ba40deb43f14760a0d753"
+          },
+          {
+            "title": "Status of Python versions",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fdevguide.python.org%2Fversions%2F&rut=8d3cdbd7682efebbe6cba4ddef2822d5fe4cd002ab47540cec1e05ec349c9695"
+          },
+          {
+            "title": "Python Versions — Python - from None to AI",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fpython3.info%2Fabout%2Fversions.html&rut=7367243ca8418b86e2e160bfc6a4a2bbe51d083e0b5392b6c596ca47f14482e6"
+          },
+          {
+            "title": "The Latest Version of Python | phoenixNAP KB",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fphoenixnap.com%2Fkb%2Flatest%2Dpython%2Dversion&rut=78e27870118f1333fb8483842fd736ef24f7d91e654b4f6c443803d2ed61cc1e"
+          },
+          {
+            "title": "Download Python | Python.org",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.python.org%2Fdownloads%2F&rut=8eeb7485d096017ada98c2f191d27b942be4853d7dd1c06ab527a92729746fe5"
+          }
+        ]
+      },
+      "sequence": 8,
+      "status": "success",
+      "timestamp": null
+    },
+    {
+      "content": "{\"status\": \"success\", \"output\": {\"query\": \"current stable Python version docs.python.org\", \"results\": [{\"title\": \"Python 3.14.4 documentation\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F&rut=11c6e9b754896883f7ce060b8c90bf5f4d36b3f54a0ba40deb43f14760a0d753\"}, {\"title\": \"Status of Python versions\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdevguide.python.org%2Fversions%2F&rut=8d3cdbd7682efebbe6cba4ddef2822d5fe4cd002ab47540cec1e05ec349c9695\"}, {\"title\": \"Python Versions — Python - from None to AI\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fpython3.info%2Fabout%2Fversions.html&rut=7367243ca8418b86e2e160bfc6a4a2bbe51d083e0b5392b6c596ca47f14482e6\"}, {\"title\": \"The Latest Version of Python | phoenixNAP KB\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fphoenixnap.com%2Fkb%2Flatest%2Dpython%2Dversion&rut=78e27870118f1333fb8483842fd736ef24f7d91e654b4f6c443803d2ed61cc1e\"}, {\"title\": \"Download Python | Python.org\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.python.org%2Fdownloads%2F&rut=8eeb7485d096017ada98c2f191d27b942be4853d7dd1c06ab527a92729746fe5\"}]}}",
+      "event_type": "message",
+      "metadata": {
+        "tool_call_id": "call_47f528df87654a948b493363"
+      },
+      "name": "web_search",
+      "role": "tool",
+      "sequence": 9,
+      "timestamp": null
+    },
+    {
+      "content": null,
+      "event_type": "message",
+      "metadata": {
+        "reasoning": "We can also try to open the URL directly. However, the tool only supports web_search and not open. However, we can try a more precise search query: \"site:docs.python.org current stable version\" or \"Python 3.x documentation official site\". Let's try again.\n",
+        "reasoning_details": [
+          {
+            "format": "unknown",
+            "index": 0,
+            "text": "We can also try to open the URL directly. However, the tool only supports web_search and not open. However, we can try a more precise search query: \"site:docs.python.org current stable version\" or \"Python 3.x documentation official site\". Let's try again.\n",
+            "type": "reasoning.text"
+          }
+        ],
+        "refusal": null
+      },
+      "name": null,
+      "role": "assistant",
+      "sequence": 10,
+      "timestamp": null
+    },
+    {
+      "call_id": "call_b2de651ff0c64c17aa2b4aec",
+      "event_type": "tool_call",
+      "metadata": {
+        "index": 0,
+        "type": "function"
+      },
+      "parsed_arguments": {
+        "query": "\"Python 3.14\""
+      },
+      "raw_arguments": "{\"query\": \"\\\"Python 3.14\\\"\"}",
+      "sequence": 11,
+      "timestamp": null,
+      "tool_name": "web_search"
+    },
+    {
+      "call_id": "call_b2de651ff0c64c17aa2b4aec",
+      "event_type": "tool_result",
+      "metadata": {},
+      "output": {
+        "query": "\"Python 3.14\"",
+        "results": [
+          {
+            "title": "Python Release Python 3.14.0 | Python.org",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.python.org%2Fdownloads%2Frelease%2Fpython%2D3140%2F&rut=854ab0cc0e06af9b165e28668e4bb4df3c74c8e0b3bdc22a3227edafd2f688b7"
+          },
+          {
+            "title": "Python 3.14: Cool New Features for You to Try - Real Python",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Frealpython.com%2Fpython314%2Dnew%2Dfeatures%2F&rut=fe058f3114b7e1f120c4206515753dbd01fd4140d62ec92f1e538d528488eec0"
+          },
+          {
+            "title": "Python 3.14's best new features - Python Morsels",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.pythonmorsels.com%2Fpython314%2F&rut=79935f72d76e4d528ada6968d9b36f7e6682853a688edd8dc702dc8b9c3f6149"
+          },
+          {
+            "title": "An Intro to Python 3.14's New Features - Mouse Vs Python",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fblog.pythonlibrary.org%2F2025%2F10%2F09%2Fan%2Dintro%2Dto%2Dpython%2D3%2D14s%2Dnew%2Dfeatures%2F&rut=d5bedf5622cfb99adada9ea6f202fbfd0909e952511305680343802bac6a1679"
+          },
+          {
+            "title": "What's New in Python 3.14 | Better Stack Community",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fbetterstack.com%2Fcommunity%2Fguides%2Fscaling%2Dpython%2Fpython%2D3%2D14%2Dnew%2Dfeatures%2F&rut=006575d6b5651ac896ca15b2b9d47074c8df9f5d607fdd026923dc281b572d3a"
+          }
+        ]
+      },
+      "sequence": 12,
+      "status": "success",
+      "timestamp": null
+    },
+    {
+      "content": "{\"status\": \"success\", \"output\": {\"query\": \"\\\"Python 3.14\\\"\", \"results\": [{\"title\": \"Python Release Python 3.14.0 | Python.org\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.python.org%2Fdownloads%2Frelease%2Fpython%2D3140%2F&rut=854ab0cc0e06af9b165e28668e4bb4df3c74c8e0b3bdc22a3227edafd2f688b7\"}, {\"title\": \"Python 3.14: Cool New Features for You to Try - Real Python\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Frealpython.com%2Fpython314%2Dnew%2Dfeatures%2F&rut=fe058f3114b7e1f120c4206515753dbd01fd4140d62ec92f1e538d528488eec0\"}, {\"title\": \"Python 3.14's best new features - Python Morsels\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.pythonmorsels.com%2Fpython314%2F&rut=79935f72d76e4d528ada6968d9b36f7e6682853a688edd8dc702dc8b9c3f6149\"}, {\"title\": \"An Intro to Python 3.14's New Features - Mouse Vs Python\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fblog.pythonlibrary.org%2F2025%2F10%2F09%2Fan%2Dintro%2Dto%2Dpython%2D3%2D14s%2Dnew%2Dfeatures%2F&rut=d5bedf5622cfb99adada9ea6f202fbfd0909e952511305680343802bac6a1679\"}, {\"title\": \"What's New in Python 3.14 | Better Stack Community\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fbetterstack.com%2Fcommunity%2Fguides%2Fscaling%2Dpython%2Fpython%2D3%2D14%2Dnew%2Dfeatures%2F&rut=006575d6b5651ac896ca15b2b9d47074c8df9f5d607fdd026923dc281b572d3a\"}]}}",
+      "event_type": "message",
+      "metadata": {
+        "tool_call_id": "call_b2de651ff0c64c17aa2b4aec"
+      },
+      "name": "web_search",
+      "role": "tool",
+      "sequence": 13,
+      "timestamp": null
+    },
+    {
+      "content": null,
+      "event_type": "message",
+      "metadata": {
+        "reasoning": "Based on the search results, I can see that Python 3.14.0 was released on October 7, 2025 (according to the Real Python article from 2025). This suggests that the current stable version is likely Python 3.14.x. The official documentation page would be on docs.python.org, likely at https://docs.python.org/ or specifically for Python 3.14.\n\nLet me search for the exact documentation page URL.\n",
+        "reasoning_details": [
+          {
+            "format": "unknown",
+            "index": 0,
+            "text": "Based on the search results, I can see that Python 3.14.0 was released on October 7, 2025 (according to the Real Python article from 2025). This suggests that the current stable version is likely Python 3.14.x. The official documentation page would be on docs.python.org, likely at https://docs.python.org/ or specifically for Python 3.14.\n\nLet me search for the exact documentation page URL.\n",
+            "type": "reasoning.text"
+          }
+        ],
+        "refusal": null
+      },
+      "name": null,
+      "role": "assistant",
+      "sequence": 14,
+      "timestamp": null
+    },
+    {
+      "call_id": "call_9185d5bf578f4ccc89c123bc",
+      "event_type": "tool_call",
+      "metadata": {
+        "index": 0,
+        "type": "function"
+      },
+      "parsed_arguments": {
+        "query": "site:docs.python.org Python 3.14 documentation"
+      },
+      "raw_arguments": "{\"query\": \"site:docs.python.org Python 3.14 documentation\"}",
+      "sequence": 15,
+      "timestamp": null,
+      "tool_name": "web_search"
+    },
+    {
+      "call_id": "call_9185d5bf578f4ccc89c123bc",
+      "event_type": "tool_result",
+      "metadata": {},
+      "output": {
+        "query": "site:docs.python.org Python 3.14 documentation",
+        "results": [
+          {
+            "title": "▷ Curso de programación Python - Online - Escuela MUSK",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fduckduckgo.com%2Fy.js%3Fad_domain%3Demagister.com%26ad_provider%3Dbingv7aa%26ad_type%3Dtxad%26click_metadata%3De4YOB5v05GMXW5IgQsZLWnPWssTlLFP3_h6tpnCKjxOHmNiDS28NOmUJasN%252DDHolHEBIZsdenQB9tTz627CTkUEyoNxQfdmMgdefrxBaQIAPi39KFLiMh1iZfYdW4fbGWmUAbVyo7FXPZuwNfQfoAaSd39FGiwYnAKkTq_jbBKM.1gFT9H6iVYeJBp25y5UWkw%26rut%3D0e6b1723c05d701cc223ee6e53680127839b7cc786530be664b595a4a0a6e526%26u3%3Dhttps%253A%252F%252Fwww.bing.com%252Faclick%253Fld%253De8CeuXZPJL46XnerMaIE6GnjVUCUy2JcHaMJe0pgCmzL3ev3IjufqBMyn87GL6fbtwWXtwKQLxDcGs5FxWXbvI8xjsBT15al2M9OPBTd_sjG7LhiNVecOWsPcj7lhnbZ9Av5Wj6rUA%252DG%252DKOVWyV%252Dy1uL_z2UqUmI0n18Oxp40fd4YDuQ2WFAytOAtuuoYBa78H_dPgQoCmoud7X4_KexGSNp6O80g%2526u%253DaHR0cHMlM2ElMmYlMmZ3d3cuZW1hZ2lzdGVyLmNvbSUyZmN1cnNvLXByb2dyYW1hY2lvbi1weXRob24tY3Vyc29zLTM3ODM5OTcuaHRtJTNmcGZpY2hhcyUzZDI1Mjg4JTI2T1ZSQVclM2RFbWFnaXN0ZXJfQmluZ0FkcyUyNmNhbXBhaWduaWQlM2QzNjc3MzU1NTYlMjZhZGdyb3VwaWQlM2QxMjEyNzYxNzcyNTg5NTI1JTI2bWF0Y2h0eXBlJTNkYiUyNm5ldHdvcmslM2RnJTI2ZGV2aWNlJTNkYyUyNmtleXdvcmQlM2RQeXRob24lMjUyMDMuMTQlMjUyMGRvY3VtZW50YXRpb24lMjZjcmVhdGl2ZSUzZDc1Nzk3NzIxNjQwNDMzJTI2bXNjbGtpZCUzZGMyOGY0NjdkMTQ0ZTEyN2Q0YmM2MmY5NDU3Mzc5MDFhJTI2dXRtX3NvdXJjZSUzZGJpbmclMjZ1dG1fbWVkaXVtJTNkY3BjJTI2dXRtX2NhbXBhaWduJTNkRVMlMjUyMC0lMjUyMFlIJTI1MjAtJTI1MjBTRSUyNTIwLSUyNTIwRFNBJTI1MjAtJTI1MjBzZXJ2aWNlcGFjayUyNTIwLSUyNTIwY3Vyc28lMjUyMC0lMjUyMDI1Mjg4JTI2dXRtX3Rlcm0lM2QyMzg0MyUyNnV0bV9jb250ZW50JTNkc2VydmljZXBhY2sxMjQlMjUyMC0lMjUyMGN1cnNv%2526rlid%253Dc28f467d144e127d4bc62f945737901a%26vqd%3D4%2D96795556749351605042567641202789038047%26iurl%3D%257B1%257DIG%253D1AE56CF7BF7B46C3BEDB4451864493B4%2526CID%253D3B263133B15F6206124A2670B02463AF%2526ID%253DDevEx%252C5045.1&rut=4bed1e7d6a46c5199cb19d7a7d6e85f7962b0dc67d5e45d63220c7f0b8bba5b8"
+          },
+          {
+            "title": "manual de python en Amazon - manual de python a Precios Bajos",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fduckduckgo.com%2Fy.js%3Fad_domain%3Damazon.es%26ad_provider%3Dbingv7aa%26ad_type%3Dtxad%26click_metadata%3D0fNPTu4lHs3zk7LL2iCCwGFt6DjMK73ZKjOzlkebbDgWDTzOwUU7cjZZYiMLdDZljT7bZqOQ%252DmCH5QjcakJYKnXY8qcjK9kl2_YqU1WQ7DRPb14h9eupu6paSyoHM3A2w%252DiiH0hIKydAAUBFnCm8JIkkor_duWYQhqK7cc0YNEs.61T27q2EocOk9P3F8GwkRg%26rut%3De43948ca813ddca91826e584970c338c5b0a6833fa8cdbf81b9e1f4aedec5f4c%26u3%3Dhttps%253A%252F%252Fwww.bing.com%252Faclick%253Fld%253De8LhGdCtYSuPYI9gSu89u0bzVUCUys74JmRWfaaFDQPju49r2CLr%252D_AeC%252DUS%252Dm8Tq2n99o3J_W%252DfqoF9VPvnmsmuTouQvGHBWqXykDFs2FEVZwfeOo2E3s_%252DT_pYxrpMpZGsW3IadUQ6b_zgm%252DsaWVRrfm5e3UdFY4NhH8kN0zdSpjxBuMC6qQlsTwx8jLJin1D5lydIknL0E7QS8b0IY0fqA_wmI%2526u%253DaHR0cHMlM2ElMmYlMmZ3d3cuYW1hem9uLmVzJTJmcyUyZiUzZmllJTNkVVRGOCUyNmtleXdvcmRzJTNkbWFudWFsJTJiZGUlMmJweXRob24lMjZpbmRleCUzZGFwcyUyNnRhZyUzZGJpbmdhbWF6b25lc3QtMjElMjZyZWYlM2RwZF9zbF82bm9ycGFlaDIzX3AlMjZhZGdycGlkJTNkMTMwMjkyMTcxMzk3ODgyMyUyNmh2YWRpZCUzZDgxNDMyNjk2MTU1MjM0JTI2aHZuZXR3JTNkcyUyNmh2cW10JTNkcCUyNmh2Ym10JTNkYnAlMjZodmRldiUzZGMlMjZodmxvY2ludCUzZCUyNmh2bG9jcGh5JTNkMzIyMiUyNmh2dGFyZ2lkJTNka3dkLTgxNDMyODQzOTA4NDg0JTNhbG9jLTE3MCUyNmh5ZGFkY3IlM2QyNjkzNV8xOTc5MDY4JTI2bWNpZCUzZDJiNDhkMGYzMGVlNTMzNjM4M2U3NWY5OWI1N2YzMzA3JTI2bXNjbGtpZCUzZDkxYjBjZjUzOTE2ZTE4NTEyOWVhYTZiYWQyMTdlNmI4%2526rlid%253D91b0cf53916e185129eaa6bad217e6b8%26vqd%3D4%2D275676549062189177811708965176040814085%26iurl%3D%257B1%257DIG%253D1AE56CF7BF7B46C3BEDB4451864493B4%2526CID%253D3B263133B15F6206124A2670B02463AF%2526ID%253DDevEx%252C5048.1&rut=b54676f74502b8bc82e5ce8b79aadf49c0a2aba997d43b987e75b0aadaaa9e04"
+          },
+          {
+            "title": "Python 3.14.4 documentation",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F&rut=11c6e9b754896883f7ce060b8c90bf5f4d36b3f54a0ba40deb43f14760a0d753"
+          },
+          {
+            "title": "What's new in Python 3.14 — Python 3.14.3 documentation",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F3%2Fwhatsnew%2F3.14.html&rut=8ee81ece2e15723b9993a12e9fbe69356822c9b05e1dc18b822086c53b9877d3"
+          },
+          {
+            "title": "Built-in Functions — Python 3.14.3 documentation",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F3%2Flibrary%2Ffunctions.html&rut=cee0470de0d3ac7c80b4e6340281a6c27c5ea031acbd98b6632f4a2f795b6ed4"
+          }
+        ]
+      },
+      "sequence": 16,
+      "status": "success",
+      "timestamp": null
+    },
+    {
+      "content": "{\"status\": \"success\", \"output\": {\"query\": \"site:docs.python.org Python 3.14 documentation\", \"results\": [{\"title\": \"▷ Curso de programación Python - Online - Escuela MUSK\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fduckduckgo.com%2Fy.js%3Fad_domain%3Demagister.com%26ad_provider%3Dbingv7aa%26ad_type%3Dtxad%26click_metadata%3De4YOB5v05GMXW5IgQsZLWnPWssTlLFP3_h6tpnCKjxOHmNiDS28NOmUJasN%252DDHolHEBIZsdenQB9tTz627CTkUEyoNxQfdmMgdefrxBaQIAPi39KFLiMh1iZfYdW4fbGWmUAbVyo7FXPZuwNfQfoAaSd39FGiwYnAKkTq_jbBKM.1gFT9H6iVYeJBp25y5UWkw%26rut%3D0e6b1723c05d701cc223ee6e53680127839b7cc786530be664b595a4a0a6e526%26u3%3Dhttps%253A%252F%252Fwww.bing.com%252Faclick%253Fld%253De8CeuXZPJL46XnerMaIE6GnjVUCUy2JcHaMJe0pgCmzL3ev3IjufqBMyn87GL6fbtwWXtwKQLxDcGs5FxWXbvI8xjsBT15al2M9OPBTd_sjG7LhiNVecOWsPcj7lhnbZ9Av5Wj6rUA%252DG%252DKOVWyV%252Dy1uL_z2UqUmI0n18Oxp40fd4YDuQ2WFAytOAtuuoYBa78H_dPgQoCmoud7X4_KexGSNp6O80g%2526u%253DaHR0cHMlM2ElMmYlMmZ3d3cuZW1hZ2lzdGVyLmNvbSUyZmN1cnNvLXByb2dyYW1hY2lvbi1weXRob24tY3Vyc29zLTM3ODM5OTcuaHRtJTNmcGZpY2hhcyUzZDI1Mjg4JTI2T1ZSQVclM2RFbWFnaXN0ZXJfQmluZ0FkcyUyNmNhbXBhaWduaWQlM2QzNjc3MzU1NTYlMjZhZGdyb3VwaWQlM2QxMjEyNzYxNzcyNTg5NTI1JTI2bWF0Y2h0eXBlJTNkYiUyNm5ldHdvcmslM2RnJTI2ZGV2aWNlJTNkYyUyNmtleXdvcmQlM2RQeXRob24lMjUyMDMuMTQlMjUyMGRvY3VtZW50YXRpb24lMjZjcmVhdGl2ZSUzZDc1Nzk3NzIxNjQwNDMzJTI2bXNjbGtpZCUzZGMyOGY0NjdkMTQ0ZTEyN2Q0YmM2MmY5NDU3Mzc5MDFhJTI2dXRtX3NvdXJjZSUzZGJpbmclMjZ1dG1fbWVkaXVtJTNkY3BjJTI2dXRtX2NhbXBhaWduJTNkRVMlMjUyMC0lMjUyMFlIJTI1MjAtJTI1MjBTRSUyNTIwLSUyNTIwRFNBJTI1MjAtJTI1MjBzZXJ2aWNlcGFjayUyNTIwLSUyNTIwY3Vyc28lMjUyMC0lMjUyMDI1Mjg4JTI2dXRtX3Rlcm0lM2QyMzg0MyUyNnV0bV9jb250ZW50JTNkc2VydmljZXBhY2sxMjQlMjUyMC0lMjUyMGN1cnNv%2526rlid%253Dc28f467d144e127d4bc62f945737901a%26vqd%3D4%2D96795556749351605042567641202789038047%26iurl%3D%257B1%257DIG%253D1AE56CF7BF7B46C3BEDB4451864493B4%2526CID%253D3B263133B15F6206124A2670B02463AF%2526ID%253DDevEx%252C5045.1&rut=4bed1e7d6a46c5199cb19d7a7d6e85f7962b0dc67d5e45d63220c7f0b8bba5b8\"}, {\"title\": \"manual de python en Amazon - manual de python a Precios Bajos\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fduckduckgo.com%2Fy.js%3Fad_domain%3Damazon.es%26ad_provider%3Dbingv7aa%26ad_type%3Dtxad%26click_metadata%3D0fNPTu4lHs3zk7LL2iCCwGFt6DjMK73ZKjOzlkebbDgWDTzOwUU7cjZZYiMLdDZljT7bZqOQ%252DmCH5QjcakJYKnXY8qcjK9kl2_YqU1WQ7DRPb14h9eupu6paSyoHM3A2w%252DiiH0hIKydAAUBFnCm8JIkkor_duWYQhqK7cc0YNEs.61T27q2EocOk9P3F8GwkRg%26rut%3De43948ca813ddca91826e584970c338c5b0a6833fa8cdbf81b9e1f4aedec5f4c%26u3%3Dhttps%253A%252F%252Fwww.bing.com%252Faclick%253Fld%253De8LhGdCtYSuPYI9gSu89u0bzVUCUys74JmRWfaaFDQPju49r2CLr%252D_AeC%252DUS%252Dm8Tq2n99o3J_W%252DfqoF9VPvnmsmuTouQvGHBWqXykDFs2FEVZwfeOo2E3s_%252DT_pYxrpMpZGsW3IadUQ6b_zgm%252DsaWVRrfm5e3UdFY4NhH8kN0zdSpjxBuMC6qQlsTwx8jLJin1D5lydIknL0E7QS8b0IY0fqA_wmI%2526u%253DaHR0cHMlM2ElMmYlMmZ3d3cuYW1hem9uLmVzJTJmcyUyZiUzZmllJTNkVVRGOCUyNmtleXdvcmRzJTNkbWFudWFsJTJiZGUlMmJweXRob24lMjZpbmRleCUzZGFwcyUyNnRhZyUzZGJpbmdhbWF6b25lc3QtMjElMjZyZWYlM2RwZF9zbF82bm9ycGFlaDIzX3AlMjZhZGdycGlkJTNkMTMwMjkyMTcxMzk3ODgyMyUyNmh2YWRpZCUzZDgxNDMyNjk2MTU1MjM0JTI2aHZuZXR3JTNkcyUyNmh2cW10JTNkcCUyNmh2Ym10JTNkYnAlMjZodmRldiUzZGMlMjZodmxvY2ludCUzZCUyNmh2bG9jcGh5JTNkMzIyMiUyNmh2dGFyZ2lkJTNka3dkLTgxNDMyODQzOTA4NDg0JTNhbG9jLTE3MCUyNmh5ZGFkY3IlM2QyNjkzNV8xOTc5MDY4JTI2bWNpZCUzZDJiNDhkMGYzMGVlNTMzNjM4M2U3NWY5OWI1N2YzMzA3JTI2bXNjbGtpZCUzZDkxYjBjZjUzOTE2ZTE4NTEyOWVhYTZiYWQyMTdlNmI4%2526rlid%253D91b0cf53916e185129eaa6bad217e6b8%26vqd%3D4%2D275676549062189177811708965176040814085%26iurl%3D%257B1%257DIG%253D1AE56CF7BF7B46C3BEDB4451864493B4%2526CID%253D3B263133B15F6206124A2670B02463AF%2526ID%253DDevEx%252C5048.1&rut=b54676f74502b8bc82e5ce8b79aadf49c0a2aba997d43b987e75b0aadaaa9e04\"}, {\"title\": \"Python 3.14.4 documentation\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F&rut=11c6e9b754896883f7ce060b8c90bf5f4d36b3f54a0ba40deb43f14760a0d753\"}, {\"title\": \"What's new in Python 3.14 — Python 3.14.3 documentation\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F3%2Fwhatsnew%2F3.14.html&rut=8ee81ece2e15723b9993a12e9fbe69356822c9b05e1dc18b822086c53b9877d3\"}, {\"title\": \"Built-in Functions — Python 3.14.3 documentation\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdocs.python.org%2F3%2Flibrary%2Ffunctions.html&rut=cee0470de0d3ac7c80b4e6340281a6c27c5ea031acbd98b6632f4a2f795b6ed4\"}]}}",
+      "event_type": "message",
+      "metadata": {
+        "tool_call_id": "call_9185d5bf578f4ccc89c123bc"
+      },
+      "name": "web_search",
+      "role": "tool",
+      "sequence": 17,
+      "timestamp": null
+    },
+    {
+      "content": null,
+      "event_type": "message",
+      "metadata": {
+        "reasoning": "The search results include a direct link to \"What's new in Python 3.14 — Python 3.14.3 documentation\" which indicates version 3.14.3 is currently documented (the .0 is 3.14.0 release, but patches like 3.14.3 exist). The page \"Python 3.14.4 documentation\" at docs.python.org seems to be the latest. The URL \"https://docs.python.org/\" appears as the top page.\n\nWe should provide an answer that includes:\n- Title: It might be \"Python 3.14.4 documentation\" (as per result) or \"Python Documentation\" with version number.\n- Official URL: We should give the exact URL. Could be https://docs.python.org/3/. Actually the page might automatically redirect to the latest stable version. Usually docs.python.org has versioned directories like /3.14/. We should perhaps give https://docs.python.org/3.14/. But the search results show \"Python 3.14.4 documentation\" with the base URL //docs.python.org/ but not specifying version. We should verify correct version. Let's open the result to confirm.\n\nWe cannot open arbitrary URL in the tool but we can use web_search with exact URL. Perhaps we can search with query \"Python 3.14.4 documentation site:docs.python.org\" to confirm. Already we have that. But we might need to open the page to see actual content.\n\nBetter to do a search like \"docs.python.org 3.14.4\" and maybe open via browsing? There's no open function, only web_search. We can get snippet. Possibly we can refine the search.\n\nSearch for \"Python 3.14.4 docs.python.org release notes\".\n",
+        "reasoning_details": [
+          {
+            "format": "unknown",
+            "index": 0,
+            "text": "The search results include a direct link to \"What's new in Python 3.14 — Python 3.14.3 documentation\" which indicates version 3.14.3 is currently documented (the .0 is 3.14.0 release, but patches like 3.14.3 exist). The page \"Python 3.14.4 documentation\" at docs.python.org seems to be the latest. The URL \"https://docs.python.org/\" appears as the top page.\n\nWe should provide an answer that includes:\n- Title: It might be \"Python 3.14.4 documentation\" (as per result) or \"Python Documentation\" with version number.\n- Official URL: We should give the exact URL. Could be https://docs.python.org/3/. Actually the page might automatically redirect to the latest stable version. Usually docs.python.org has versioned directories like /3.14/. We should perhaps give https://docs.python.org/3.14/. But the search results show \"Python 3.14.4 documentation\" with the base URL //docs.python.org/ but not specifying version. We should verify correct version. Let's open the result to confirm.\n\nWe cannot open arbitrary URL in the tool but we can use web_search with exact URL. Perhaps we can search with query \"Python 3.14.4 documentation site:docs.python.org\" to confirm. Already we have that. But we might need to open the page to see actual content.\n\nBetter to do a search like \"docs.python.org 3.14.4\" and maybe open via browsing? There's no open function, only web_search. We can get snippet. Possibly we can refine the search.\n\nSearch for \"Python 3.14.4 docs.python.org release notes\".\n",
+            "type": "reasoning.text"
+          }
+        ],
+        "refusal": null
+      },
+      "name": null,
+      "role": "assistant",
+      "sequence": 18,
+      "timestamp": null
+    },
+    {
+      "call_id": "call_d8edeef72e3f458b95630b89",
+      "event_type": "tool_call",
+      "metadata": {
+        "index": 0,
+        "type": "function"
+      },
+      "parsed_arguments": {
+        "query": "\"Python 3.14.4\""
+      },
+      "raw_arguments": "{\"query\": \"\\\"Python 3.14.4\\\"\"}",
+      "sequence": 19,
+      "timestamp": null,
+      "tool_name": "web_search"
+    },
+    {
+      "call_id": "call_d8edeef72e3f458b95630b89",
+      "event_type": "tool_result",
+      "metadata": {},
+      "output": {
+        "query": "\"Python 3.14.4\"",
+        "results": []
+      },
+      "sequence": 20,
+      "status": "success",
+      "timestamp": null
+    },
+    {
+      "content": "{\"status\": \"success\", \"output\": {\"query\": \"\\\"Python 3.14.4\\\"\", \"results\": []}}",
+      "event_type": "message",
+      "metadata": {
+        "tool_call_id": "call_d8edeef72e3f458b95630b89"
+      },
+      "name": "web_search",
+      "role": "tool",
+      "sequence": 21,
+      "timestamp": null
+    },
+    {
+      "content": null,
+      "event_type": "message",
+      "metadata": {
+        "reasoning": "The web search for \"Python 3.14.4\" returned no results. That doesn't necessarily mean it's not the latest stable version, but let's try another search.\n",
+        "reasoning_details": [
+          {
+            "format": "unknown",
+            "index": 0,
+            "text": "The web search for \"Python 3.14.4\" returned no results. That doesn't necessarily mean it's not the latest stable version, but let's try another search.\n",
+            "type": "reasoning.text"
+          }
+        ],
+        "refusal": null
+      },
+      "name": null,
+      "role": "assistant",
+      "sequence": 22,
+      "timestamp": null
+    },
+    {
+      "call_id": "call_4c6898e3c1a347edb83fe8a9",
+      "event_type": "tool_call",
+      "metadata": {
+        "index": 0,
+        "type": "function"
+      },
+      "parsed_arguments": {
+        "query": "latest Python version stable release 2025"
+      },
+      "raw_arguments": "{\"query\": \"latest Python version stable release 2025\"}",
+      "sequence": 23,
+      "timestamp": null,
+      "tool_name": "web_search"
+    },
+    {
+      "call_id": "call_4c6898e3c1a347edb83fe8a9",
+      "event_type": "tool_result",
+      "metadata": {},
+      "output": {
+        "query": "latest Python version stable release 2025",
+        "results": [
+          {
+            "title": "Status of Python versions",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fdevguide.python.org%2Fversions%2F&rut=8d3cdbd7682efebbe6cba4ddef2822d5fe4cd002ab47540cec1e05ec349c9695"
+          },
+          {
+            "title": "Python Latest Version - Release History, LTS & EOL",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fversionlog.com%2Fpython%2F&rut=55a91ca724f4d3744cc7323b5e67a43c8658623586fc7fcd850a6cd69d0fed50"
+          },
+          {
+            "title": "Latest Python Version (2025) - What's New in Python 3.14?",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.liquidweb.com%2Fblog%2Flatest%2Dpython%2Dversion%2F&rut=6b1fb4e5dcc6680d5ec244ed2c5d537836a248db4346f901a2175414be95707b"
+          },
+          {
+            "title": "The Latest Version of Python | phoenixNAP KB",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fphoenixnap.com%2Fkb%2Flatest%2Dpython%2Dversion&rut=78e27870118f1333fb8483842fd736ef24f7d91e654b4f6c443803d2ed61cc1e"
+          },
+          {
+            "title": "Python 3.14 Released and Other Python News for November 2025",
+            "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Frealpython.com%2Fpython%2Dnews%2Dnovember%2D2025%2F&rut=0afd8023dd06e312b53cc536948cc9136ee55bc161c7edf904d334a17ab4cb8c"
+          }
+        ]
+      },
+      "sequence": 24,
+      "status": "success",
+      "timestamp": null
+    },
+    {
+      "content": "{\"status\": \"success\", \"output\": {\"query\": \"latest Python version stable release 2025\", \"results\": [{\"title\": \"Status of Python versions\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fdevguide.python.org%2Fversions%2F&rut=8d3cdbd7682efebbe6cba4ddef2822d5fe4cd002ab47540cec1e05ec349c9695\"}, {\"title\": \"Python Latest Version - Release History, LTS & EOL\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fversionlog.com%2Fpython%2F&rut=55a91ca724f4d3744cc7323b5e67a43c8658623586fc7fcd850a6cd69d0fed50\"}, {\"title\": \"Latest Python Version (2025) - What's New in Python 3.14?\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.liquidweb.com%2Fblog%2Flatest%2Dpython%2Dversion%2F&rut=6b1fb4e5dcc6680d5ec244ed2c5d537836a248db4346f901a2175414be95707b\"}, {\"title\": \"The Latest Version of Python | phoenixNAP KB\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Fphoenixnap.com%2Fkb%2Flatest%2Dpython%2Dversion&rut=78e27870118f1333fb8483842fd736ef24f7d91e654b4f6c443803d2ed61cc1e\"}, {\"title\": \"Python 3.14 Released and Other Python News for November 2025\", \"url\": \"//duckduckgo.com/l/?uddg=https%3A%2F%2Frealpython.com%2Fpython%2Dnews%2Dnovember%2D2025%2F&rut=0afd8023dd06e312b53cc536948cc9136ee55bc161c7edf904d334a17ab4cb8c\"}]}}",
+      "event_type": "message",
+      "metadata": {
+        "tool_call_id": "call_4c6898e3c1a347edb83fe8a9"
+      },
+      "name": "web_search",
+      "role": "tool",
+      "sequence": 25,
+      "timestamp": null
+    }
+  ],
+  "usage": {
+    "cost_usd": 0.003119,
+    "normalized": {
+      "cache_write_tokens": 0,
+      "cached_input_tokens": 8320,
+      "input_tokens": 12951,
+      "output_tokens": 1032,
+      "reasoning_tokens": 907,
+      "total_tokens": 13983
+    },
+    "raw_provider_usage": {
+      "completion_tokens": 67,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 39
+      },
+      "cost": 0.000363,
+      "cost_details": {
+        "upstream_inference_completions_cost": 8e-05,
+        "upstream_inference_cost": 0.000363,
+        "upstream_inference_prompt_cost": 0.000283
+      },
+      "is_byok": false,
+      "prompt_tokens": 4439,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 4352,
+        "video_tokens": 0
+      },
+      "total_tokens": 4506
+    }
+  }
+}

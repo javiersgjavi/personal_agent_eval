@@ -88,9 +88,6 @@ def test_hybrid_aggregation_keeps_sources_separate_and_computes_final_score() ->
     assert result.judge_overall is not None
     assert result.judge_overall.score == 6.8
     assert result.final_score == pytest.approx(6.8)
-    assert result.dimension_resolutions.task.policy == "judge_only"
-    assert result.dimension_resolutions.task.source_used == "judge"
-    assert result.dimension_resolutions.autonomy.policy == "judge_only"
     assert result.security.verdict == "not_evaluated"
     assert result.warnings == []
 
@@ -145,77 +142,7 @@ def test_hybrid_aggregation_falls_back_to_judge_when_deterministic_signal_is_mis
 
     assert result.deterministic_dimensions.task is None
     assert result.final_dimensions.task == 7.0
-    assert result.dimension_resolutions.task.source_used == "judge"
     assert "Excluded non-successful repetitions from aggregation: 2." in result.warnings
-
-
-def test_hybrid_aggregation_respects_deterministic_only_policy_with_judge_fallback() -> None:
-    test_config = load_test_config(
-        FIXTURES_ROOT / "configs" / "cases" / "example_case" / "test.yaml"
-    )
-    base_profile = load_evaluation_profile(
-        FIXTURES_ROOT / "configs" / "evaluation_profiles" / "default.yaml"
-    )
-    evaluation_profile = base_profile.model_copy(
-        update={
-            "final_aggregation": base_profile.final_aggregation.model_copy(
-                update={
-                    "dimensions": base_profile.final_aggregation.dimensions.model_copy(
-                        update={
-                            "efficiency": (
-                                base_profile.final_aggregation.dimensions.efficiency.model_copy(
-                                    update={"policy": "deterministic_only"}
-                                )
-                            ),
-                        }
-                    )
-                }
-            )
-        }
-    )
-
-    deterministic_result = DeterministicEvaluationResult(
-        case_id="example_case",
-        run_id="run_003",
-        passed=True,
-        summary=DeterministicEvaluationSummary(
-            total_checks=1,
-            passed_checks=1,
-            failed_checks=0,
-            error_checks=0,
-        ),
-        checks=[
-            DeterministicCheckResult(
-                check_id="final-response-present",
-                kind="final_response_present",
-                source="declarative",
-                outcome=DeterministicCheckOutcome.PASSED,
-                passed=True,
-            )
-        ],
-    )
-    judge_result = _build_judge_result(
-        dimensions=JudgeDimensions(
-            task=8.0,
-            process=6.0,
-            autonomy=7.5,
-            closeness=6.5,
-            efficiency=4.0,
-            spark=6.0,
-        ),
-        overall_score=6.0,
-    )
-
-    result = HybridAggregator().aggregate(
-        test_config=test_config,
-        evaluation_profile=evaluation_profile,
-        deterministic_result=deterministic_result,
-        judge_result=judge_result,
-    )
-
-    assert result.final_dimensions.efficiency == 4.0
-    assert result.dimension_resolutions.efficiency.policy == "judge_only"
-    assert result.dimension_resolutions.efficiency.source_used == "judge"
 
 
 def _build_judge_result(

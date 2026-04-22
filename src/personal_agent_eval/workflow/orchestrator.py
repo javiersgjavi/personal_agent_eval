@@ -940,7 +940,6 @@ class WorkflowOrchestrator:
                     evaluation_fingerprint=evaluation_fingerprint,
                     evaluation_profile_id=evaluation_profile.evaluation_profile_id,
                     aggregation_method=evaluation_profile.aggregation.method,
-                    default_dimension_policy=evaluation_profile.final_aggregation.default_policy,
                     judge_system_prompt_source=judge_system_prompt["source"],
                     judge_system_prompt=judge_system_prompt["text"],
                 )

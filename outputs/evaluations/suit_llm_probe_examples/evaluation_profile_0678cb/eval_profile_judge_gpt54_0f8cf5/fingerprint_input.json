@@ -1,0 +1,40 @@
+{
+  "fingerprint": "0f8cf56022d1dcf2b43d3b918a7281ab9eb5a95655199078d7354d520284d32f",
+  "fingerprint_version": 1,
+  "hash_algorithm": "sha256",
+  "kind": "evaluation",
+  "payload": {
+    "anchors": {
+      "enabled": false,
+      "references": []
+    },
+    "judge_aggregation": {
+      "method": "median"
+    },
+    "judge_runs": [
+      {
+        "judge_id": "gpt54_judge",
+        "repetitions": 1,
+        "sample_size": null
+      }
+    ],
+    "judge_system_prompt": {
+      "sha256": "9e01b145c477f6326a243c90c1478dd62dea6bae9c698f6690e8f73c9a155bb2",
+      "source": "path:prompts/judge_system_default.md"
+    },
+    "judges": [
+      {
+        "judge_id": "gpt54_judge",
+        "settings": {
+          "model": "openai/gpt-5.4-mini"
+        },
+        "type": "llm_probe"
+      }
+    ],
+    "security_policy": {
+      "allow_local_python_hooks": false,
+      "network_access": "deny",
+      "redact_secrets": true
+    }
+  }
+}

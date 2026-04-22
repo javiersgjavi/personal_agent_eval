@@ -1,0 +1,50 @@
+{
+  "case_id": "openclaw_tool_example",
+  "deterministic_dimensions": {
+    "autonomy": null,
+    "closeness": null,
+    "efficiency": null,
+    "process": 10.0,
+    "spark": null,
+    "task": 10.0
+  },
+  "final_dimensions": {
+    "autonomy": 10.0,
+    "closeness": 10.0,
+    "efficiency": 10.0,
+    "process": 10.0,
+    "spark": 8.0,
+    "task": 10.0
+  },
+  "final_score": 10.0,
+  "judge_dimensions": {
+    "autonomy": 10.0,
+    "closeness": 10.0,
+    "efficiency": 10.0,
+    "process": 10.0,
+    "spark": 8.0,
+    "task": 10.0
+  },
+  "judge_overall": {
+    "evidence": [
+      "report.md present in workspace",
+      "Required marker included in artifact",
+      "Final response briefly confirms creation"
+    ],
+    "score": 10.0
+  },
+  "run_id": "run_ca3c8915b11e4dfe85cc3dfd8808a5e8",
+  "schema_version": 1,
+  "security": {
+    "verdict": "not_evaluated",
+    "warnings": []
+  },
+  "summary": {
+    "deterministic_error_checks": 0,
+    "deterministic_failed_checks": 0,
+    "deterministic_passed_checks": 2,
+    "judge_failed_iterations": 0,
+    "judge_successful_iterations": 1
+  },
+  "warnings": []
+}

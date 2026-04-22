@@ -1,4 +1,4 @@
-"""Hybrid aggregation over deterministic and judge outputs."""
+"""Aggregation over deterministic signals and judge outputs."""
 
 from __future__ import annotations
 
@@ -7,8 +7,6 @@ from collections.abc import Iterable
 from typing import Literal
 
 from personal_agent_eval.aggregation.models import (
-    DimensionResolution,
-    DimensionResolutions,
     DimensionScores,
     FinalEvaluationResult,
     HybridAggregationSummary,
@@ -70,23 +68,8 @@ class HybridAggregator:
         judge_dimensions = _build_judge_dimensions(judge_result)
         judge_overall = _build_judge_overall(judge_result)
 
-        final_dimension_values: dict[DimensionName, float | None] = {}
-        resolution_payload: dict[DimensionName, DimensionResolution] = {}
         warnings = [*judge_result.warnings, *deterministic_warnings]
-
-        for dimension in DIMENSION_NAMES:
-            deterministic_score = getattr(deterministic_dimensions, dimension)
-            judge_score = getattr(judge_dimensions, dimension)
-            final_dimension_values[dimension] = judge_score
-            resolution_payload[dimension] = DimensionResolution(
-                policy="judge_only",
-                source_used="judge" if judge_score is not None else "missing",
-                judge_score=judge_score,
-                deterministic_score=deterministic_score,
-                final_score=judge_score,
-            )
-
-        final_dimensions = DimensionScores(**final_dimension_values)
+        final_dimensions = judge_dimensions.model_copy(deep=True)
         if judge_overall is None:
             raise ValueError(
                 "Final score cannot be computed because the judge did not provide an overall score."
@@ -99,7 +82,6 @@ class HybridAggregator:
             deterministic_dimensions=deterministic_dimensions,
             judge_dimensions=judge_dimensions,
             final_dimensions=final_dimensions,
-            dimension_resolutions=DimensionResolutions(**resolution_payload),
             judge_overall=judge_overall,
             final_score=final_score,
             summary=HybridAggregationSummary(

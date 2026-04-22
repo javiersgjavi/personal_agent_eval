@@ -1,0 +1,54 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "openrouter/minimax/minimax-m2.7"
+      },
+      "models": {
+        "openrouter/minimax/minimax-m2.7": {
+          "alias": "benchmark-primary"
+        }
+      },
+      "sandbox": {
+        "mode": "off"
+      },
+      "workspace": "/work/workspace"
+    },
+    "list": [
+      {
+        "id": "basic-agent",
+        "model": "openrouter/minimax/minimax-m2.7",
+        "systemPromptOverride": "Follow the workspace files and behave like a default OpenClaw agent."
+      }
+    ]
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "openrouter": {
+        "api": "openai-completions",
+        "apiKey": "OPENROUTER_API_KEY",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "models": [
+          {
+            "contextWindow": 200000,
+            "cost": {
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "input": 0,
+              "output": 0
+            },
+            "id": "minimax/minimax-m2.7",
+            "input": [
+              "text",
+              "image"
+            ],
+            "maxTokens": 16384,
+            "name": "minimax/minimax-m2.7",
+            "reasoning": true
+          }
+        ]
+      }
+    }
+  }
+}

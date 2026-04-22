@@ -1,0 +1,17 @@
+{
+  "case_id": "llm_probe_browser_example",
+  "evaluation_fingerprint": "0f8cf56022d1dcf2b43d3b918a7281ab9eb5a95655199078d7354d520284d32f",
+  "evaluation_profile_id": "judge_gpt54",
+  "iterations": [
+    {
+      "evaluation_fingerprint": "0f8cf56022d1dcf2b43d3b918a7281ab9eb5a95655199078d7354d520284d32f",
+      "repetition_index": 0,
+      "run_fingerprint": "315e898b9aa742f598bb6a00bd759fcb691e0f280984725ed5921669ea4fbd60"
+    }
+  ],
+  "model_id": "minimax_m27",
+  "run_profile_fingerprint": "0678cb2ad1ed7f2b1799f95b6881689330804fc6a1dfadea20423e098523e329",
+  "run_profile_id": "llm_probe_examples",
+  "schema_version": 1,
+  "suite_id": "llm_probe_examples"
+}

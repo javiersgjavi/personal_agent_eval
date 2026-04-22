@@ -1,0 +1,16 @@
+{
+  "case_id": "llm_probe_tool_example",
+  "iterations": [
+    {
+      "repetition_index": 0,
+      "run_fingerprint": "971060c0a0c50c2092c4cc6571399a74f54a71a4c397259546a8276792959773"
+    }
+  ],
+  "model_id": "minimax_m27",
+  "openclaw_agent_id": null,
+  "run_profile_fingerprint": "0678cb2ad1ed7f2b1799f95b6881689330804fc6a1dfadea20423e098523e329",
+  "run_profile_id": "llm_probe_examples",
+  "runner_type": "llm_probe",
+  "schema_version": 1,
+  "suite_id": "llm_probe_examples"
+}

@@ -1,8 +1,8 @@
 # Deterministic Checks
 
-Deterministic checks run directly against the stored `RunArtifact` — no LLM is involved. They are fast, stable, and free, and they produce hard pass/fail signals that the hybrid aggregator can use to ground the judge scores.
+Deterministic checks run directly against the stored `RunArtifact` — no LLM is involved. They are fast, stable, and free, and they produce hard pass/fail signals that the judge can use as grounded evidence.
 
-Each check declares one or more `dimensions`, telling the aggregator which scoring dimensions its result should influence.
+Each check declares one or more `dimensions`, telling the system which parts of the evaluation the signal is relevant to.
 
 ---
 
@@ -187,14 +187,14 @@ deterministic_checks:
 
 ---
 
-## How dimensions feed aggregation
+## How dimensions feed evaluation
 
-The `dimensions` list on each check tells the aggregator which dimension scores can be informed by that check outcome. For example:
+The `dimensions` list on each check tells the judge-facing evaluation context which dimension scores can be informed by that check outcome. For example:
 
-- `final_response_present` mapped to `task` — a missing response caps the task score
-- `tool_call_count` mapped to `process` and `efficiency` — wrong tool usage penalizes both
-- `openclaw_workspace_file_present` mapped to `task` — a missing artifact is a task failure
+- `final_response_present` mapped to `task` — a missing response is strong evidence of task failure
+- `tool_call_count` mapped to `process` and `efficiency` — wrong tool usage is relevant process/efficiency evidence
+- `openclaw_workspace_file_present` mapped to `task` — a missing artifact is strong evidence that the task was not completed
 
-The aggregator applies the configured policy for each dimension (`judge_only`, `deterministic_only`, or `weighted`) to combine deterministic and judge signals into the final dimension score.
+The final dimension scores still come from the judge. Deterministic outcomes are surfaced alongside the run evidence so the judge and the human reviewer can see them clearly.
 
 → [Hybrid evaluation](hybrid_evaluation.md)
