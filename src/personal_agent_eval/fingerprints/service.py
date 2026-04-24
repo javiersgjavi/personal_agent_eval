@@ -58,6 +58,7 @@ def build_run_fingerprint_input(
             )
         ),
         input_messages=_resolve_messages_for_fingerprint(test_config.input.messages),
+        input_turns=_resolve_messages_for_fingerprint(test_config.input.turns),
         input_context=_normalize_for_hash(dict(test_config.input.context)),
         attachments=[
             _attachment_fingerprint(path)

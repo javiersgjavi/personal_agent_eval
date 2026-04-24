@@ -9,6 +9,7 @@ case_selection:
   include_case_ids:
     - openclaw_tool_example
     - openclaw_browser_example
+    - openclaw_multiturn_example
 metadata:
   owner: qa
   agent: basic_agent

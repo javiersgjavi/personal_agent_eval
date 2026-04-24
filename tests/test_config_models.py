@@ -234,6 +234,40 @@ def test_test_loader_accepts_openclaw_runner_context(tmp_path: Path) -> None:
     assert config.input.context == {"openclaw": {"expected_artifact": "report.md"}}
 
 
+def test_test_loader_accepts_openclaw_turns(tmp_path: Path) -> None:
+    path = tmp_path / "test.yaml"
+    path.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "case_id: openclaw_multiturn_case",
+                "title: OpenClaw multiturn case",
+                "runner:",
+                "  type: openclaw",
+                "input:",
+                "  messages:",
+                "    - role: system",
+                "      content: Keep context across turns.",
+                "  turns:",
+                "    - role: user",
+                "      content: Create draft.md.",
+                "    - role: user",
+                "      content: Revise draft.md and create report.md.",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    config = load_test_config(path)
+
+    assert config.input.messages[0].content == "Keep context across turns."
+    assert [turn.content for turn in config.input.turns] == [
+        "Create draft.md.",
+        "Revise draft.md and create report.md.",
+    ]
+
+
 def test_test_loader_rejects_unknown_top_level_field(tmp_path: Path) -> None:
     path = tmp_path / "test.yaml"
     path.write_text(

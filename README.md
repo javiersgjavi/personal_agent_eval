@@ -72,6 +72,25 @@ deterministic_checks:
       contains: import
 ```
 
+OpenClaw cases can also model follow-up user messages. Use `input.turns` when the benchmark should run multiple user turns in the same OpenClaw session; the harness keeps the same workspace, state directory, and `--session-id` across turns:
+
+```yaml
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: system
+      content: Keep context across user turns.
+  turns:
+    - role: user
+      content: Create draft.md with a first version.
+    - role: user
+      content: Now revise draft.md and save the final answer as report.md.
+  context:
+    openclaw:
+      expected_artifact: report.md
+```
+
 ```bash
 uv run pae run-eval \
   --suite openclaw_examples \

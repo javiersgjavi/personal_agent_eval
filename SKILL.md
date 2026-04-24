@@ -69,198 +69,26 @@ Run either command a second time — the `RUN` and `EVAL` columns show `reuse`. 
 
 ---
 
-## Config authoring — minimal examples
+## Config authoring
 
-### `test.yaml` — llm_probe
+Use the real examples in `configs/` as templates, and use the references for complete YAML shapes:
 
-```yaml
-schema_version: 1
-case_id: my_tool_case
-title: My tool case
-runner:
-  type: llm_probe
-input:
-  messages:
-    - role: user
-      content: |
-        Use real tools and follow these steps exactly:
-        1. Run `printf 'hello-world\n'` with `exec_shell`.
-        2. Write `/tmp/hello.txt` with that content using `write_file`.
-        3. Read the file using `read_file`.
-        4. Reply in 2–4 lines confirming what you did.
-  context:
-    llm_probe:
-      tools: [exec_shell, write_file, read_file]
-expectations:
-  hard_expectations:
-    - text: Uses tools to obtain the content instead of inventing it.
-    - text: Creates /tmp/hello.txt and confirms the saved text.
-  soft_expectations:
-    - text: Response is brief and clearly confirms the final file content.
-rubric:
-  version: 1
-  scale:
-    min: 0
-    max: 10
-    anchors:
-      "10": Executes all required tool steps; file contains the exact marker; answer confirms content briefly.
-      "7": Mostly correct with minor clarity issues.
-      "4": Partial completion; missing a required step or confirmation.
-      "0": No attempt / irrelevant / empty output.
-  criteria:
-    - name: Tool-grounded correctness
-      what_good_looks_like: Uses exec_shell/write_file/read_file and reports the observed file contents.
-      what_bad_looks_like: Invents results or skips required tool steps.
-    - name: Concise confirmation
-      what_good_looks_like: Confirms actions and final content in 2–4 lines.
-      what_bad_looks_like: Overly verbose or unclear confirmation.
-  scoring_instructions: >
-    Use this rubric to set overall.score. If a hard expectation or
-    deterministic check fails, cap overall.score (typically <= 4).
-deterministic_checks:
-  - check_id: response-present
-    dimensions: [task]
-    declarative:
-      kind: final_response_present
-  - check_id: file-written
-    dimensions: [process]
-    declarative:
-      kind: file_contains
-      path: /tmp/hello.txt
-      text: hello-world
-tags: [smoke]
-```
+| Goal | Start from | Reference |
+|---|---|---|
+| Raw LLM/tool test | `configs/cases/llm_probe_tool_example/test.yaml` | `skill/references/config-fields.md` |
+| OpenClaw single-turn test | `configs/cases/openclaw_tool_example/test.yaml` | `skill/references/config-fields.md` |
+| OpenClaw multiturn test | `configs/cases/openclaw_multiturn_example/test.yaml` | `skill/references/openclaw-agents.md` |
+| Suite/run/eval profiles | `configs/suites/*`, `configs/run_profiles/*`, `configs/evaluation_profiles/*` | `skill/references/config-fields.md` |
 
-Available tools for `llm_probe`: `exec_shell`, `write_file`, `read_file`, `web_search`.
+Authoring rules:
 
-Both `expectations` and `rubric` are shown to the judge. `expectations` state what must happen; the `rubric` gives the judge a calibrated scoring scale and explicit criteria. All shipped cases include both.
+- `runner.type: llm_probe` sends messages directly to OpenRouter and can expose tools via `input.context.llm_probe.tools`.
+- `runner.type: openclaw` runs an autonomous agent in Docker. Put expected workspace outputs under `input.context.openclaw.expected_artifact`.
+- For OpenClaw follow-up messages, use `input.turns`. The harness invokes `openclaw agent` once per turn with the same workspace, state directory, and `--session-id`; `input.messages` is initial context for the first turn.
+- Include `expectations` and `rubric` whenever possible. They make judge output more stable and easier to debug.
+- Add deterministic checks for hard evidence: `final_response_present`, file checks for `llm_probe`, and `openclaw_workspace_file_present` for OpenClaw workspace outputs.
 
-### `test.yaml` — openclaw
-
-```yaml
-schema_version: 1
-case_id: my_openclaw_case
-title: My OpenClaw case
-runner:
-  type: openclaw
-input:
-  messages:
-    - role: user
-      content: |
-        Create a file `report.md` in the workspace.
-        The file must contain a title `# Report` and the literal line `hello-world`.
-        Briefly confirm creation when done.
-  context:
-    openclaw:
-      expected_artifact: report.md
-expectations:
-  hard_expectations:
-    - text: Produces report.md in the workspace.
-    - text: Includes the literal marker hello-world in report.md.
-  soft_expectations:
-    - text: Final response briefly confirms the artifact creation.
-rubric:
-  version: 1
-  scale:
-    min: 0
-    max: 10
-    anchors:
-      "10": report.md exists with required content and marker; response briefly confirms creation.
-      "7": Mostly complete; minor formatting or clarity issues.
-      "4": Missing required content or unclear confirmation.
-      "0": No attempt / irrelevant / empty output.
-  criteria:
-    - name: Required artifact content
-      what_good_looks_like: report.md contains the title and the literal marker line.
-      what_bad_looks_like: report.md missing or missing required lines.
-    - name: Brief confirmation
-      what_good_looks_like: Final response confirms creation briefly.
-      what_bad_looks_like: No confirmation or overly verbose response.
-  scoring_instructions: >
-    Use this rubric to set overall.score. If a hard expectation or
-    deterministic check fails, cap overall.score (typically <= 4).
-deterministic_checks:
-  - check_id: response-present
-    dimensions: [task]
-    declarative:
-      kind: final_response_present
-  - check_id: report-file
-    dimensions: [process]
-    declarative:
-      kind: openclaw_workspace_file_present
-      relative_path: report.md
-      contains: hello-world
-tags: [smoke]
-```
-
-`expectations` and `rubric` are optional — the judge can evaluate a run without them. They are recommended because they give the judge explicit context about what success looks like, which produces more consistent and reliable scores. `deterministic_checks` are also optional and independent of both.
-
-### `suite.yaml`
-
-```yaml
-schema_version: 1
-suite_id: my_suite
-title: My benchmark suite
-models:
-  - model_id: gpt4o_mini
-    requested_model: openai/gpt-4o-mini
-    label: GPT-4o mini
-  - model_id: minimax_m27
-    requested_model: minimax/minimax-m2.7
-case_selection:
-  include_case_ids: [my_tool_case]
-  # alternatives:
-  # include_tags: [smoke]
-  # exclude_tags: [slow]
-```
-
-### `run_profile.yaml`
-
-```yaml
-schema_version: 1
-run_profile_id: my_run
-title: My run profile
-runner_defaults:
-  temperature: 0
-  max_tokens: 1024
-  timeout_seconds: 60
-  max_turns: 8
-  retries: 2
-execution_policy:
-  max_concurrency: 1
-  run_repetitions: 1
-  fail_fast: false
-  stop_on_runner_error: true
-# openclaw only — add this block for openclaw runs:
-# openclaw:
-#   agent_id: support_agent
-#   image: ghcr.io/openclaw/openclaw:2026.4.15
-#   timeout_seconds: 300
-```
-
-### `evaluation_profile.yaml`
-
-```yaml
-schema_version: 1
-evaluation_profile_id: my_eval
-title: My eval profile
-judge_system_prompt_path: prompts/judge_system_default.md
-judges:
-  - judge_id: my_judge
-    type: llm_probe
-    model: openai/gpt-5.4-mini
-judge_runs:
-  - judge_run_id: single_run
-    judge_id: my_judge
-    repetitions: 1
-aggregation:
-  method: median
-security_policy:
-  allow_local_python_hooks: false
-  redact_secrets: true
-```
-
-The shipped profile `configs/evaluation_profiles/judge_gpt54_mini.yaml` uses `openai/gpt-5.4-mini` and is ready to use.
+Do not duplicate full YAML examples in this file. If a field is unclear, open `skill/references/config-fields.md`; if an OpenClaw workspace/agent detail is unclear, open `skill/references/openclaw-agents.md`.
 
 ---
 
@@ -322,9 +150,9 @@ ID resolution: `--suite my_suite` resolves to `configs/suites/my_suite.yaml` aut
 
 ## Fingerprints and reuse
 
-Before executing any `(model, case, repetition)`, the framework computes a SHA-256 of all execution inputs: model, messages, config parameters, tool list, and workspace content (for OpenClaw). If a matching artifact exists in `outputs/`, it is reused — no tokens spent.
+Before executing any `(model, case, repetition)`, the framework computes a SHA-256 of all execution inputs: model, messages, turns, config parameters, tool list, and workspace content (for OpenClaw). If a matching artifact exists in `outputs/`, it is reused — no tokens spent.
 
-**What changes the run fingerprint** (triggers re-run): temperature, max_tokens, max_turns, retries, seed, model ID, case input messages, attachment content, OpenClaw workspace files.
+**What changes the run fingerprint** (triggers re-run): temperature, max_tokens, max_turns, retries, seed, model ID, case input messages, case input turns, attachment content, OpenClaw workspace files.
 
 **What does NOT change the run fingerprint**: adding a new case to the suite, changing the suite title, increasing `run_repetitions` (new repetitions run; existing ones reuse).
 
@@ -361,7 +189,7 @@ outputs/
 │           ├── openclaw_workspace_diff--*.diff     ← what the agent changed
 │           ├── openclaw_key_output_1--<file>       ← extracted expected artifact
 │           ├── openclaw_logs--openclaw.log         ← command log
-│           ├── openclaw_raw_trace--*.json          ← container stdout/stderr
+│           ├── openclaw_raw_trace--*.json          ← container stdout/stderr; all turn payloads for multiturn cases
 │           └── openclaw_workspace_snapshot--*.tar.gz
 └── evaluations/suit_<suite_id>/
     └── evaluation_profile_<fp6>/eval_profile_<eval_id>_<fp6>/

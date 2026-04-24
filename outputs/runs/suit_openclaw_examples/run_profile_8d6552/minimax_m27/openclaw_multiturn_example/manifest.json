@@ -1,0 +1,16 @@
+{
+  "case_id": "openclaw_multiturn_example",
+  "iterations": [
+    {
+      "repetition_index": 0,
+      "run_fingerprint": "478dfb204e0d2d71baeb802e2036aad4e4eff76370871b760a1791d1e4c416b9"
+    }
+  ],
+  "model_id": "minimax_m27",
+  "openclaw_agent_id": "basic_agent",
+  "run_profile_fingerprint": "8d6552dcfa64209ddefc724f86e3d24cbd7d7a08098c7d93b22bfb990d321762",
+  "run_profile_id": "openclaw_examples",
+  "runner_type": "openclaw",
+  "schema_version": 1,
+  "suite_id": "openclaw_examples"
+}

@@ -180,7 +180,7 @@ For every openclaw case, the run directory contains a `run_1.artifacts/` folder 
 | `openclaw_workspace_diff--workspace.diff` | Unified diff of what the agent changed vs. the template |
 | `openclaw_key_output_1--<filename>` | The extracted expected artifact (from `context.openclaw.expected_artifact`) |
 | `openclaw_logs--openclaw.log` | Append-only log of all openclaw CLI commands and their exit codes |
-| `openclaw_raw_trace--raw_session_trace.json` | Full stdout/stderr from the container, as parsed JSON |
+| `openclaw_raw_trace--raw_session_trace.json` | Full stdout/stderr from the container, or all turn payloads for multiturn cases |
 | `openclaw_workspace_snapshot--workspace_snapshot.tar.gz` | Complete workspace state after the run |
 
 **The most useful file for debugging an openclaw run** is `openclaw_workspace_diff--workspace.diff`. It shows exactly what the agent produced relative to the template:
@@ -195,3 +195,41 @@ For every openclaw case, the run directory contains a `run_1.artifacts/` folder 
 ```
 
 If the expected artifact is missing from the diff, the agent did not produce it — regardless of what it said in the final response.
+
+---
+
+## Multiturn OpenClaw cases
+
+Use `input.turns` when a benchmark should simulate follow-up user messages in one OpenClaw session. The harness invokes `openclaw agent` once per turn with the same generated config, workspace, state directory, and explicit `--session-id`.
+
+```yaml
+schema_version: 1
+case_id: openclaw_multiturn_case
+title: OpenClaw multiturn case
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: system
+      content: Keep context across user turns.
+  turns:
+    - role: user
+      content: Create draft.md with a first version.
+    - role: user
+      content: Revise draft.md and save the final version as report.md.
+  context:
+    openclaw:
+      expected_artifact: report.md
+expectations:
+  hard_expectations:
+    - text: Uses the second turn to revise prior work rather than starting over.
+    - text: Produces report.md in the workspace.
+deterministic_checks:
+  - check_id: report-file
+    dimensions: [process]
+    declarative:
+      kind: openclaw_workspace_file_present
+      relative_path: report.md
+```
+
+When `turns` is present, `messages` is initial context and is included with the first turn only. Workspace diffs, key output extraction, and deterministic checks run after the last successful turn.

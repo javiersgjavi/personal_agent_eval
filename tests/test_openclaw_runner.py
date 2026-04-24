@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -203,6 +204,66 @@ def test_run_openclaw_case_persists_observable_summary_metadata(
     assert observable_summary["tool_summary"]["tools"] == ["web_search", "write"]
 
 
+def test_run_openclaw_case_runs_turns_in_one_session(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[list[str]] = []
+
+    def fake_run(argv: list[str], **kwargs: object) -> SimpleNamespace:
+        _ = kwargs
+        calls.append(list(argv))
+        if "validate" in argv:
+            return SimpleNamespace(returncode=0, stdout='{"ok":true}\n', stderr="")
+        turn_number = len([call for call in calls if "agent" in call and "--message" in call])
+        if turn_number == 2:
+            host_root = _host_root_from_argv(argv)
+            report = host_root / "workspace" / "report.md"
+            report.parent.mkdir(parents=True, exist_ok=True)
+            report.write_text("# Report\n\nrevised\n", encoding="utf-8")
+        return SimpleNamespace(
+            returncode=0,
+            stdout=f'{{"content": "turn {turn_number} complete"}}',
+            stderr="",
+        )
+
+    monkeypatch.setattr("personal_agent_eval.domains.openclaw.runner.subprocess.run", fake_run)
+
+    case_config = _write_openclaw_multiturn_case(tmp_path)
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "openclaw.yaml")
+    agent_config = load_openclaw_agent(FIXTURES_ROOT / "configs" / "agents" / "support_agent")
+    artifact = run_openclaw_case(
+        run_id="run_openclaw_multiturn",
+        suite_id="example_suite",
+        case_config=case_config,
+        run_profile=run_profile,
+        model_selection=ModelConfig.model_validate(
+            {"model_id": "baseline_model", "requested_model": "openai/gpt-4o-mini"}
+        ),
+        agent_config=agent_config,
+        runtime_root=tmp_path / "runtime-multiturn",
+    )
+
+    evidence = parse_openclaw_run_evidence(artifact.runner_metadata)
+    assert artifact.status.value == "success"
+    agent_calls = [call for call in calls if "agent" in call and "--message" in call]
+    assert len(agent_calls) == 2
+    session_ids = [call[call.index("--session-id") + 1] for call in agent_calls]
+    assert session_ids[0] == session_ids[1]
+    assert "Create draft.md." in agent_calls[0][agent_calls[0].index("--message") + 1]
+    assert "Revise draft.md" in agent_calls[1][agent_calls[1].index("--message") + 1]
+    assert "Keep context across turns." in agent_calls[0][agent_calls[0].index("--message") + 1]
+    assert "Keep context across turns." not in agent_calls[1][agent_calls[1].index("--message") + 1]
+    assert evidence is not None
+    assert evidence.raw_session_trace is not None
+    raw_trace_path = Path(evidence.raw_session_trace.uri.removeprefix("file://"))
+    raw_trace = json.loads(raw_trace_path.read_text(encoding="utf-8"))
+    assert [turn["turn_index"] for turn in raw_trace["turns"]] == [1, 2]
+    final_outputs = [
+        event.content for event in artifact.trace if isinstance(event, FinalOutputTraceEvent)
+    ]
+    assert final_outputs == ["turn 1 complete", "turn 2 complete"]
+
+
 def _write_openclaw_case(tmp_path: Path) -> CaseConfig:
     case_path = tmp_path / "test.yaml"
     case_path.write_text(
@@ -228,3 +289,38 @@ def _write_openclaw_case(tmp_path: Path) -> CaseConfig:
         encoding="utf-8",
     )
     return load_test_config(case_path)
+
+
+def _write_openclaw_multiturn_case(tmp_path: Path) -> CaseConfig:
+    case_path = tmp_path / "test-multiturn.yaml"
+    case_path.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "case_id: openclaw_multiturn_case",
+                "title: OpenClaw multiturn case",
+                "runner:",
+                "  type: openclaw",
+                "input:",
+                "  messages:",
+                "    - role: system",
+                "      content: Keep context across turns.",
+                "  turns:",
+                "    - role: user",
+                "      content: Create draft.md.",
+                "    - role: user",
+                "      content: Revise draft.md and create report.md.",
+                "  context:",
+                "    openclaw:",
+                "      expected_artifact: report.md",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return load_test_config(case_path)
+
+
+def _host_root_from_argv(argv: list[str]) -> Path:
+    volume_spec = argv[argv.index("-v") + 1]
+    return Path(volume_spec.split(":", 2)[0])

@@ -2,7 +2,7 @@
 
 This repository ships two small example campaigns that are designed to be run as-is and used as starting points for your own benchmarks.
 
-Both are intentionally minimal: one model, two cases, one judge call per case.
+Both are intentionally minimal: one model, a small set of cases, one judge call per case.
 
 For documentation purposes, the repository also commits regenerated artifacts for these two campaigns under `outputs/`. Treat them as example outputs that show the expected layout and reporting format for a real run.
 
@@ -50,6 +50,7 @@ Tests a full autonomous agent running in Docker.
 | Reusable agent | `configs/agents/basic_agent/` |
 | Tool case | `configs/cases/openclaw_tool_example/test.yaml` |
 | Browser case | `configs/cases/openclaw_browser_example/test.yaml` |
+| Multiturn case | `configs/cases/openclaw_multiturn_example/test.yaml` |
 | Suite | `configs/suites/openclaw_examples.yaml` |
 | Run profile | `configs/run_profiles/openclaw_examples.yaml` |
 | Evaluation profile | `configs/evaluation_profiles/judge_gpt54_mini.yaml` |

@@ -6,14 +6,15 @@ This page walks through the shipped OpenClaw example campaign. For **installing 
 
 ## What this example tests
 
-Two cases running a full autonomous agent inside Docker:
+Three cases running a full autonomous agent inside Docker:
 
 | Case | What it tests |
 |---|---|
 | `openclaw_tool_example` | Agent uses tools to create `report.md` with specific content |
 | `openclaw_browser_example` | Agent uses browser/web search to find an official URL and writes `report.md` |
+| `openclaw_multiturn_example` | Agent handles two user turns in one OpenClaw session and carries workspace state forward |
 
-Both cases use `minimax/minimax-m2.7` as the agent model and `openai/gpt-5.4-mini` as the judge.
+All three cases use `minimax/minimax-m2.7` as the agent model and `openai/gpt-5.4-mini` as the judge.
 
 ---
 
@@ -35,6 +36,7 @@ The framework does **not** use `~/.openclaw/openclaw.json`. It generates a per-r
 | Default-style bootstrap agent | `configs/agents/basic_agent/` |
 | Tool case | `configs/cases/openclaw_tool_example/test.yaml` |
 | Browser case | `configs/cases/openclaw_browser_example/test.yaml` |
+| Multiturn case | `configs/cases/openclaw_multiturn_example/test.yaml` |
 | Suite | `configs/suites/openclaw_examples.yaml` |
 | Run profile | `configs/run_profiles/openclaw_examples.yaml` |
 | Evaluation profile | `configs/evaluation_profiles/judge_gpt54_mini.yaml` |
@@ -74,6 +76,7 @@ case_selection:
   include_case_ids:
     - openclaw_tool_example
     - openclaw_browser_example
+    - openclaw_multiturn_example
 metadata:
   owner: qa
   agent: basic_agent
@@ -251,12 +254,50 @@ The `contains: python.org` check verifies the workspace file references an actua
 
 ---
 
+## Multiturn OpenClaw Cases
+
+Use `input.turns` when a case should simulate follow-up user messages. The harness runs one OpenClaw invocation per turn with the same generated config, workspace, state directory, and explicit `--session-id`, so the agent can continue the conversation and modify files incrementally.
+
+```yaml
+schema_version: 1
+case_id: openclaw_multiturn_example
+title: OpenClaw multiturn example
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: system
+      content: Keep context across user turns.
+  turns:
+    - role: user
+      content: Create draft.md with a first version of the report.
+    - role: user
+      content: Revise draft.md and save the final version as report.md.
+  context:
+    openclaw:
+      expected_artifact: report.md
+expectations:
+  hard_expectations:
+    - text: Uses the second turn to revise prior work rather than starting over.
+    - text: Produces report.md in the workspace.
+deterministic_checks:
+  - check_id: multiturn-report
+    dimensions: [process]
+    declarative:
+      kind: openclaw_workspace_file_present
+      relative_path: report.md
+```
+
+When `turns` is present, `messages` is initial context and is included with the first turn only. The final workspace diff and key output checks are evaluated after the last successful turn; `openclaw_raw_trace--raw_session_trace.json` stores all turn payloads.
+
+---
+
 ## How the harness works
 
 1. **Fingerprint check** — computes the run fingerprint (case + profile + agent + workspace content). If a matching artifact exists, reuses it.
 2. **Workspace materialization** — copies the `workspace/` template into a fresh temp dir. Adds model configuration as `OPENROUTER_API_KEY`-aware aliases.
 3. **Config generation** — writes `openclaw.json` in the workspace with the merged agent config and model routing.
-4. **Docker execution** — runs `docker run --rm -v <workspace>:/work <image> openclaw agent run ...` with env vars forwarded.
+4. **Docker execution** — runs `docker run --rm -v <workspace>:/work <image> openclaw agent ...` with env vars forwarded; multiturn cases repeat this step with the same `--session-id`.
 5. **Evidence capture** — collects the workspace diff, logs, key output files, and raw session trace.
 6. **RunArtifact** — all evidence is referenced from `runner_metadata.openclaw`. Large files are stored in `run_1.artifacts/` and referenced by `file://` URI.
 7. **Evaluation** — the judge sees the final response, tool activity summary, and workspace artifacts. It does not see Docker internals or raw logs.

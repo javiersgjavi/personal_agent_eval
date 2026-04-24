@@ -97,6 +97,7 @@ class ResolvedOpenClawConfig(ArtifactModel):
     state_dir: Path
     case_id: str
     case_messages: list[ResolvedOpenClawMessage] = Field(default_factory=list)
+    case_turns: list[ResolvedOpenClawMessage] = Field(default_factory=list)
     case_attachments: list[Path] = Field(default_factory=list)
     case_openclaw_hints: dict[str, Any] = Field(default_factory=dict)
     identity_fragment: dict[str, Any] = Field(default_factory=dict)
@@ -151,6 +152,7 @@ def resolve_openclaw_config(
         state_dir=state_dir.expanduser().resolve(),
         case_id=case_config.case_id,
         case_messages=_resolve_case_messages(case_config),
+        case_turns=_resolve_case_turns(case_config),
         case_attachments=list(case_config.input.attachments),
         case_openclaw_hints=_resolve_case_openclaw_hints(case_config),
         identity_fragment=dict(agent_config.openclaw.identity or {}),
@@ -403,8 +405,16 @@ def _resolve_case_openclaw_hints(case_config: TestConfig) -> dict[str, Any]:
 
 
 def _resolve_case_messages(case_config: TestConfig) -> list[ResolvedOpenClawMessage]:
+    return _resolve_input_messages(case_config.input.messages)
+
+
+def _resolve_case_turns(case_config: TestConfig) -> list[ResolvedOpenClawMessage]:
+    return _resolve_input_messages(case_config.input.turns)
+
+
+def _resolve_input_messages(messages: list[Any]) -> list[ResolvedOpenClawMessage]:
     resolved: list[ResolvedOpenClawMessage] = []
-    for message in case_config.input.messages:
+    for message in messages:
         if message.source is None:
             resolved.append(
                 ResolvedOpenClawMessage(

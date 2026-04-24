@@ -1,0 +1,141 @@
+{
+  "evaluation_target": {
+    "context": {
+      "openclaw": {
+        "expected_artifact": "report.md"
+      }
+    },
+    "deterministic_checks": [
+      {
+        "check_id": "openclaw-multiturn-final",
+        "dimensions": [
+          "task"
+        ],
+        "kind": "final_response_present"
+      },
+      {
+        "check_id": "openclaw-multiturn-report",
+        "dimensions": [
+          "process"
+        ],
+        "kind": "openclaw_workspace_file_present"
+      }
+    ],
+    "dimensions": [
+      "task",
+      "process",
+      "autonomy",
+      "closeness",
+      "efficiency",
+      "spark"
+    ],
+    "expectations": {
+      "hard": [
+        "Creates draft.md in the first turn.",
+        "Creates report.md in the second turn.",
+        "Uses the existing draft.md rather than treating the second turn as unrelated."
+      ],
+      "soft": [
+        "Final response briefly confirms report.md creation."
+      ]
+    },
+    "rubric": {
+      "criteria": [
+        {
+          "name": "Cross-turn continuity",
+          "what_bad_looks_like": "The second turn ignores the first turn or starts from scratch.",
+          "what_good_looks_like": "The second turn reads or uses draft.md before creating report.md."
+        },
+        {
+          "name": "Required artifact content",
+          "what_bad_looks_like": "report.md missing or missing required lines.",
+          "what_good_looks_like": "report.md contains the title, second-turn marker, and a sentence based on draft.md."
+        }
+      ],
+      "scale": {
+        "anchors": {
+          "0": "No attempt / irrelevant / empty output.",
+          "10": "draft.md and report.md exist; report.md contains the required marker and references draft.md; final response is concise.",
+          "4": "Missing one artifact or weak evidence of cross-turn continuity.",
+          "7": "Mostly complete; minor wording or confirmation issues."
+        },
+        "max": 10.0,
+        "min": 0.0
+      },
+      "scoring_instructions": null,
+      "version": 1
+    },
+    "task_messages": [
+      {
+        "content": "This is a benchmark example. Keep context and workspace state across user turns.\n",
+        "role": "system"
+      }
+    ]
+  },
+  "execution_evidence": {
+    "artifacts": [
+      {
+        "artifact_type": "openclaw_key_output",
+        "basename": "report.md",
+        "excerpt": "# Report\nsecond-turn-marker\nThis report was based on draft.md.\n"
+      }
+    ],
+    "deterministic_summary": {
+      "error_checks": 0,
+      "failed_checks": 0,
+      "passed_checks": 2,
+      "total_checks": 2
+    },
+    "material_failures": [],
+    "process_trace": [
+      {
+        "call_id": "openclaw_tool_1",
+        "kind": "tool_call",
+        "tool_name": "read"
+      },
+      {
+        "call_id": "openclaw_tool_1",
+        "kind": "tool_result",
+        "output_summary": {
+          "content_type": "openclaw_tool_summary"
+        },
+        "status": "success",
+        "tool_name": "read"
+      },
+      {
+        "call_id": "openclaw_tool_2",
+        "kind": "tool_call",
+        "tool_name": "write"
+      },
+      {
+        "call_id": "openclaw_tool_2",
+        "kind": "tool_result",
+        "output_summary": {
+          "artifact_basenames": [
+            "report.md"
+          ],
+          "content_type": "openclaw_tool_summary"
+        },
+        "status": "success",
+        "tool_name": "write"
+      }
+    ]
+  },
+  "schema_version": 2,
+  "subject_response": {
+    "assistant_visible_messages": [],
+    "final_output": {
+      "char_count": 172,
+      "content_type": "text",
+      "text": "Done! I read `draft.md` and created `report.md` containing a title `# Report`, the literal line `second-turn-marker`, and a sentence noting that it was based on `draft.md`.",
+      "truncated": false
+    },
+    "tool_activity_summary": {
+      "tool_call_count": 2,
+      "tools_used": [
+        "read",
+        "write"
+      ]
+    }
+  }
+}

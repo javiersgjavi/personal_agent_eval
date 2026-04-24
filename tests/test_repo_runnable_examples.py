@@ -22,6 +22,7 @@ def test_repo_openclaw_examples_suite_expands() -> None:
 
     assert {item.case_id for item in expanded} == {
         "openclaw_browser_example",
+        "openclaw_multiturn_example",
         "openclaw_tool_example",
     }
 
@@ -53,3 +54,4 @@ def test_repo_discovers_public_example_cases() -> None:
     assert cases["llm_probe_browser_example"].config.runner.type == "llm_probe"
     assert cases["openclaw_tool_example"].config.runner.type == "openclaw"
     assert cases["openclaw_browser_example"].config.runner.type == "openclaw"
+    assert cases["openclaw_multiturn_example"].config.runner.type == "openclaw"

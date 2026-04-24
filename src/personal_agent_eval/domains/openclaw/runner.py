@@ -9,6 +9,7 @@ import os
 import subprocess
 import tarfile
 import tempfile
+import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -139,28 +140,36 @@ class DockerOpenClawExecutor:
         *,
         agent_id: str,
         message: str,
+        session_id: str | None = None,
         config_path: Path,
         env: Mapping[str, str],
         timeout_seconds: int,
     ) -> OpenClawCommandResult:
+        inner_command = [
+            "openclaw",
+            "agent",
+            "--local",
+            "--json",
+            "--agent",
+            agent_id,
+        ]
+        if session_id is not None:
+            inner_command.extend(["--session-id", session_id])
+        inner_command.extend(
+            [
+                "--message",
+                message,
+                "--timeout",
+                str(timeout_seconds),
+            ]
+        )
         argv = _docker_openclaw_argv(
             docker_cli=self._docker_cli,
             image=self._image,
             workdir=self._workdir,
             config_path=config_path,
             env=env,
-            inner_command=[
-                "openclaw",
-                "agent",
-                "--local",
-                "--json",
-                "--agent",
-                agent_id,
-                "--message",
-                message,
-                "--timeout",
-                str(timeout_seconds),
-            ],
+            inner_command=inner_command,
         )
         return _run_subprocess(argv, env=os.environ, timeout_seconds=timeout_seconds)
 
@@ -259,7 +268,18 @@ def run_openclaw_case(
             role=message.role,
             content=message.content,
             name=message.name,
-            metadata=message.metadata,
+            metadata={**message.metadata, "openclaw_input_kind": "initial_message"},
+        )
+    for index, turn in enumerate(resolved_config.case_turns, start=1):
+        trace_builder.add_message(
+            role=turn.role,
+            content=turn.content,
+            name=turn.name,
+            metadata={
+                **turn.metadata,
+                "openclaw_input_kind": "turn",
+                "turn_index": index,
+            },
         )
 
     generated_config_path.write_text(render_openclaw_json_text(resolved_config), encoding="utf-8")
@@ -330,30 +350,53 @@ def run_openclaw_case(
             key_output_paths=[],
         )
 
-    task_message = _render_task_message(resolved_config)
+    agent_turns = _render_agent_turn_messages(resolved_config)
+    session_id = _openclaw_session_id(
+        run_id=run_id,
+        suite_id=suite_id,
+        case_id=case_config.case_id,
+        agent_id=agent_config.agent_id,
+    )
     cli_agent_id = _openclaw_cli_agent_id(agent_config)
-    trace_builder.add_runner_event(
-        name="agent_invoked",
-        detail="Running OpenClaw local agent turn.",
-        metadata={
-            "agent_id": cli_agent_id,
-            "agent_directory_id": agent_config.agent_id,
-        },
-    )
-    run_result = executor.run_agent(
-        agent_id=cli_agent_id,
-        message=task_message,
-        config_path=generated_config_path,
-        env=env,
-        timeout_seconds=run_profile.openclaw.timeout_seconds,
-    )
-    _append_command_log(command_log_path, command_name="run_agent", result=run_result)
-    run_payload_text = run_result.stdout or run_result.stderr
-    _write_text_payload(raw_trace_path, run_payload_text)
+    turn_results: list[tuple[int, OpenClawCommandResult, str]] = []
+    for turn_index, task_message in enumerate(agent_turns, start=1):
+        trace_builder.add_runner_event(
+            name="agent_invoked",
+            detail="Running OpenClaw local agent turn.",
+            metadata={
+                "agent_id": cli_agent_id,
+                "agent_directory_id": agent_config.agent_id,
+                "session_id": session_id,
+                "turn_index": turn_index,
+                "turn_count": len(agent_turns),
+            },
+        )
+        run_result = executor.run_agent(
+            agent_id=cli_agent_id,
+            message=task_message,
+            session_id=session_id,
+            config_path=generated_config_path,
+            env=env,
+            timeout_seconds=run_profile.openclaw.timeout_seconds,
+        )
+        _append_command_log(
+            command_log_path,
+            command_name=f"run_agent_turn_{turn_index}",
+            result=run_result,
+        )
+        run_payload_text = run_result.stdout or run_result.stderr
+        turn_results.append((turn_index, run_result, run_payload_text))
 
-    final_output = _extract_final_output(run_payload_text)
-    if final_output is not None:
-        trace_builder.add_final_output(final_output)
+        final_output = _extract_final_output(run_payload_text)
+        if final_output is not None:
+            trace_builder.add_final_output(final_output)
+
+        if run_result.timed_out or run_result.returncode != 0:
+            break
+
+    run_result = turn_results[-1][1]
+    run_payload_text = turn_results[-1][2]
+    _write_openclaw_raw_trace(raw_trace_path, turn_results)
 
     _write_workspace_artifacts(
         template_dir=agent_config.workspace_dir,
@@ -366,22 +409,36 @@ def run_openclaw_case(
         openclaw_hints=resolved_config.case_openclaw_hints,
     )
 
-    if run_result.timed_out:
+    failed_turn = next(
+        (
+            (turn_index, result)
+            for turn_index, result, _payload_text in turn_results
+            if result.timed_out or result.returncode != 0
+        ),
+        None,
+    )
+
+    if failed_turn is not None and failed_turn[1].timed_out:
         status = RunStatus.TIMED_OUT
         error = RunError(
             code="openclaw_timeout",
             message="OpenClaw agent execution exceeded the configured timeout.",
             error_type="TimeoutExpired",
             retryable=False,
+            metadata={"turn_index": failed_turn[0]},
         )
-    elif run_result.returncode != 0:
+    elif failed_turn is not None:
         status = RunStatus.FAILED
         error = RunError(
             code="openclaw_execution_failed",
             message="OpenClaw agent execution returned a non-zero exit code.",
             error_type="OpenClawExecutionError",
             retryable=False,
-            metadata={"returncode": run_result.returncode, "stderr": run_result.stderr},
+            metadata={
+                "turn_index": failed_turn[0],
+                "returncode": failed_turn[1].returncode,
+                "stderr": failed_turn[1].stderr,
+            },
         )
     else:
         status = RunStatus.SUCCESS
@@ -505,9 +562,33 @@ def _build_request_model(
                 "container_image": run_profile.openclaw.image if run_profile.openclaw else None,
                 "docker_cli": run_profile.openclaw.docker_cli if run_profile.openclaw else None,
                 "execution": "docker",
+                "turn_count": len(resolved_config.case_turns) or 1,
+                "multiturn": bool(resolved_config.case_turns),
             },
         },
     )
+
+
+def _openclaw_session_id(*, run_id: str, suite_id: str, case_id: str, agent_id: str) -> str:
+    seed = f"personal_agent_eval:{suite_id}:{case_id}:{run_id}:{agent_id}"
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, seed))
+
+
+def _render_agent_turn_messages(resolved_config: ResolvedOpenClawConfig) -> list[str]:
+    if not resolved_config.case_turns:
+        return [_render_task_message(resolved_config)]
+
+    rendered: list[str] = []
+    for index, turn in enumerate(resolved_config.case_turns, start=1):
+        include_initial_context = index == 1
+        rendered.append(
+            _render_turn_message(
+                resolved_config=resolved_config,
+                turn=turn,
+                include_initial_context=include_initial_context,
+            )
+        )
+    return rendered
 
 
 def _render_task_message(resolved_config: ResolvedOpenClawConfig) -> str:
@@ -538,6 +619,81 @@ def _render_task_message(resolved_config: ResolvedOpenClawConfig) -> str:
             ]
         )
     return "\n".join(sections).strip()
+
+
+def _render_turn_message(
+    *,
+    resolved_config: ResolvedOpenClawConfig,
+    turn: Any,
+    include_initial_context: bool,
+) -> str:
+    sections: list[str] = []
+    if include_initial_context and resolved_config.case_messages:
+        sections.append("[initial_context]")
+        for index, message in enumerate(resolved_config.case_messages, start=1):
+            content = message.content or ""
+            header = f"[{index}] {message.role}"
+            if message.name:
+                header += f" ({message.name})"
+            sections.extend([header, content, ""])
+
+    header = f"[user_turn] {turn.role}"
+    if turn.name:
+        header += f" ({turn.name})"
+    sections.extend([header, turn.content or "", ""])
+
+    if include_initial_context:
+        sections.extend(_render_attachment_sections(resolved_config))
+        sections.extend(_render_openclaw_hint_sections(resolved_config))
+
+    return "\n".join(sections).strip()
+
+
+def _render_attachment_sections(resolved_config: ResolvedOpenClawConfig) -> list[str]:
+    sections: list[str] = []
+    for attachment in resolved_config.case_attachments:
+        raw_bytes = attachment.read_bytes()
+        sections.extend(
+            [
+                f"[attachment] {attachment.name}",
+                raw_bytes.decode("utf-8", errors="replace"),
+                "",
+            ]
+        )
+    return sections
+
+
+def _render_openclaw_hint_sections(resolved_config: ResolvedOpenClawConfig) -> list[str]:
+    if not resolved_config.case_openclaw_hints:
+        return []
+    return [
+        "[openclaw_hints]",
+        json.dumps(resolved_config.case_openclaw_hints, indent=2, sort_keys=True),
+        "",
+    ]
+
+
+def _write_openclaw_raw_trace(
+    path: Path,
+    turn_results: list[tuple[int, OpenClawCommandResult, str]],
+) -> None:
+    if len(turn_results) == 1:
+        _write_text_payload(path, turn_results[0][2])
+        return
+    payload = {
+        "turns": [
+            {
+                "turn_index": turn_index,
+                "returncode": result.returncode,
+                "timed_out": result.timed_out,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "payload": payload_text,
+            }
+            for turn_index, result, payload_text in turn_results
+        ]
+    }
+    _write_text_payload(path, json.dumps(payload, indent=2, sort_keys=True))
 
 
 def _extract_final_output(stdout: str) -> str | None:

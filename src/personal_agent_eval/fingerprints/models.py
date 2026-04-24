@@ -81,9 +81,16 @@ class RunFingerprintPayload(FingerprintHashPayloadModel):
     requested_model: str
     runner_config: dict[str, Any] = Field(default_factory=dict)
     input_messages: list[ResolvedMessageFingerprint] = Field(default_factory=list)
+    input_turns: list[ResolvedMessageFingerprint] = Field(default_factory=list)
     input_context: dict[str, Any] = Field(default_factory=dict)
     attachments: list[AttachmentFingerprint] = Field(default_factory=list)
     case_metadata: dict[str, Any] = Field(default_factory=dict)
+
+    def to_json_dict(self, *, round_floats: bool = False) -> dict[str, Any]:
+        payload = super().to_json_dict(round_floats=round_floats)
+        if not self.input_turns:
+            payload.pop("input_turns", None)
+        return payload
 
 
 class RunFingerprintInput(FingerprintInputBase):

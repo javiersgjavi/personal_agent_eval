@@ -50,7 +50,7 @@ When a case uses `runner.type: openclaw`, two extra config surfaces come into pl
 
 ```mermaid
 flowchart TD
-    TC["<b>test.yaml</b><br/>runner.type: openclaw<br/>input · expectations · checks"]
+    TC["<b>test.yaml</b><br/>runner.type: openclaw<br/>input.messages or input.turns<br/>expectations · checks"]
     RP["<b>run_profile.yaml</b><br/>openclaw.agent_id<br/>openclaw.image · timeout"]
     AC["<b>configs/agents/&lt;agent_id&gt;/</b><br/>agent.yaml<br/>workspace/ template"]
     FP["<b>Fingerprint check</b><br/>SHA-256 of all inputs<br/>+ agent + workspace"]
@@ -81,6 +81,8 @@ flowchart TD
     class FP,WS,DC exec
     class RA,DE,JU,FE art
 ```
+
+For single-turn OpenClaw cases, `input.messages` is rendered into one `openclaw agent --message` call. For multiturn cases, define `input.turns`; the runner invokes OpenClaw once per turn while reusing the same generated `openclaw.json`, workspace, `OPENCLAW_STATE_DIR`, and explicit `--session-id`.
 
 ---
 
@@ -174,6 +176,22 @@ deterministic_checks:
 tags:
   - example
   - llm_probe
+```
+
+OpenClaw follow-up scenarios use `turns`:
+
+```yaml
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: system
+      content: Keep context across turns.
+  turns:
+    - role: user
+      content: Create draft.md.
+    - role: user
+      content: Revise it and save report.md.
 ```
 
 ---

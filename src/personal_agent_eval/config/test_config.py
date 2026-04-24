@@ -73,6 +73,7 @@ class TestInput(ConfigModel):
     """Canonical test input block."""
 
     messages: list[Message] = Field(default_factory=list)
+    turns: list[Message] = Field(default_factory=list)
     attachments: list[Path] = Field(default_factory=list)
     context: dict[str, Any] = Field(default_factory=dict)
 

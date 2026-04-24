@@ -1,0 +1,68 @@
+schema_version: 1
+case_id: openclaw_multiturn_example
+title: OpenClaw multiturn example
+runner:
+  type: openclaw
+input:
+  messages:
+    - role: system
+      content: |
+        This is a benchmark example. Keep context and workspace state across user turns.
+  turns:
+    - role: user
+      content: |
+        Use real tools to create a file `draft.md` in the workspace.
+        The file must contain:
+        - a title `# Draft`
+        - a literal line `first-turn-marker`
+        At the end, briefly confirm that you created draft.md.
+    - role: user
+      content: |
+        Read the existing `draft.md`, then create a file `report.md` in the workspace.
+        The file must contain:
+        - a title `# Report`
+        - a literal line `second-turn-marker`
+        - a short sentence saying it was based on draft.md
+        At the end, briefly confirm that you created report.md.
+  context:
+    openclaw:
+      expected_artifact: report.md
+expectations:
+  hard_expectations:
+    - text: Creates draft.md in the first turn.
+    - text: Creates report.md in the second turn.
+    - text: Uses the existing draft.md rather than treating the second turn as unrelated.
+  soft_expectations:
+    - text: Final response briefly confirms report.md creation.
+rubric:
+  version: 1
+  scale:
+    min: 0
+    max: 10
+    anchors:
+      "10": draft.md and report.md exist; report.md contains the required marker and references draft.md; final response is concise.
+      "7": Mostly complete; minor wording or confirmation issues.
+      "4": Missing one artifact or weak evidence of cross-turn continuity.
+      "0": No attempt / irrelevant / empty output.
+  criteria:
+    - name: Cross-turn continuity
+      what_good_looks_like: The second turn reads or uses draft.md before creating report.md.
+      what_bad_looks_like: The second turn ignores the first turn or starts from scratch.
+    - name: Required artifact content
+      what_good_looks_like: report.md contains the title, second-turn marker, and a sentence based on draft.md.
+      what_bad_looks_like: report.md missing or missing required lines.
+deterministic_checks:
+  - check_id: openclaw-multiturn-final
+    dimensions: [task]
+    declarative:
+      kind: final_response_present
+  - check_id: openclaw-multiturn-report
+    dimensions: [process]
+    declarative:
+      kind: openclaw_workspace_file_present
+      relative_path: report.md
+      contains: second-turn-marker
+tags:
+  - example
+  - openclaw
+  - multiturn

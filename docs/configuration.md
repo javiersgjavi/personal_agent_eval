@@ -53,7 +53,8 @@ Any extra fields (e.g. `temperature: 0`) are treated as case-level runner overri
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `messages` | list of `Message` | `[]` | Ordered message sequence sent to the model |
+| `messages` | list of `Message` | `[]` | Ordered message sequence sent to the model; for OpenClaw multiturn cases, optional initial context |
+| `turns` | list of `Message` | `[]` | OpenClaw-only user turns executed as separate agent invocations in one session |
 | `attachments` | list of paths | `[]` | Local files injected as extra user messages |
 | `context` | mapping | `{}` | Runner-specific context: tools, openclaw hints, etc. |
 
@@ -79,6 +80,27 @@ source:
 ```
 
 The referenced file may resolve to a single message object or a list of messages.
+
+#### OpenClaw multiturn input
+
+For `runner.type: openclaw`, `input.messages` preserves the existing single-turn behavior: the messages are rendered into one OpenClaw `--message` invocation. To test follow-up user messages, use `input.turns`. Each turn is sent through `openclaw agent --session-id <run-session>` using the same ephemeral workspace and `OPENCLAW_STATE_DIR`.
+
+```yaml
+input:
+  messages:
+    - role: system
+      content: Keep context across user turns.
+  turns:
+    - role: user
+      content: Create draft.md.
+    - role: user
+      content: Revise draft.md and create report.md.
+  context:
+    openclaw:
+      expected_artifact: report.md
+```
+
+When `turns` is present, `messages` is treated as initial context and included with the first turn only. Final workspace checks run after the last successful turn, and the raw session trace records all turn payloads.
 
 #### Attachments
 

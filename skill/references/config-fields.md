@@ -8,6 +8,19 @@ Full field-by-field documentation for all `personal_agent_eval` YAML config file
 
 Defines one atomic evaluation scenario. The same case can appear in multiple suites and run against multiple models.
 
+### Canonical examples
+
+Use the committed examples as templates instead of copying long snippets from this reference:
+
+| Pattern | Example file | Notes |
+|---|---|---|
+| `llm_probe` with tools | `configs/cases/llm_probe_tool_example/test.yaml` | Shows `input.context.llm_probe.tools`, expectations, rubric, and file checks |
+| `llm_probe` with web search | `configs/cases/llm_probe_browser_example/test.yaml` | Shows browser/search-style prompting and deterministic output checks |
+| OpenClaw single-turn workspace output | `configs/cases/openclaw_tool_example/test.yaml` | Shows `input.context.openclaw.expected_artifact` and `openclaw_workspace_file_present` |
+| OpenClaw browser/web task | `configs/cases/openclaw_browser_example/test.yaml` | Shows OpenClaw web use and workspace artifact validation |
+| OpenClaw multiturn | `configs/cases/openclaw_multiturn_example/test.yaml` | Shows `input.turns` and same-session workspace continuity |
+| Runnable suites/profiles | `configs/suites/*_examples.yaml`, `configs/run_profiles/*_examples.yaml`, `configs/evaluation_profiles/judge_gpt54_mini.yaml` | Shows complete campaign wiring |
+
 ### Top-level fields
 
 | Field | Type | Required | Description |
@@ -35,7 +48,8 @@ Any extra fields (e.g. `temperature: 0`) are case-level runner overrides — the
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `messages` | list of `Message` | `[]` | Ordered message sequence sent to the model |
+| `messages` | list of `Message` | `[]` | Ordered message sequence sent to the model; for OpenClaw multiturn cases, optional initial context |
+| `turns` | list of `Message` | `[]` | OpenClaw-only user turns executed as separate agent invocations in one session |
 | `attachments` | list of paths | `[]` | Local files injected as extra user messages before the first user message |
 | `context` | mapping | `{}` | Runner-specific context: tools, openclaw hints, etc. |
 
@@ -60,6 +74,27 @@ source:
 ```
 
 The referenced file may resolve to a single message object or a list of messages.
+
+#### OpenClaw multiturn input
+
+For `runner.type: openclaw`, `input.messages` preserves the existing single-turn behavior: the messages are rendered into one OpenClaw `--message` invocation. To test follow-up user messages, use `input.turns`. Each turn is sent through `openclaw agent --session-id <run-session>` using the same ephemeral workspace and `OPENCLAW_STATE_DIR`.
+
+```yaml
+input:
+  messages:
+    - role: system
+      content: Keep context across user turns.
+  turns:
+    - role: user
+      content: Create draft.md.
+    - role: user
+      content: Revise draft.md and create report.md.
+  context:
+    openclaw:
+      expected_artifact: report.md
+```
+
+When `turns` is present, `messages` is treated as initial context and included with the first turn only. Final workspace checks run after the last successful turn, and the raw session trace records all turn payloads.
 
 #### `input.context.llm_probe`
 
