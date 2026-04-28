@@ -8,7 +8,7 @@ All YAML files must declare `schema_version: 1` at the top. The loader raises an
 
 | Config type | Default path | ID field |
 |---|---|---|
-| Test case | `configs/cases/<case_id>/test.yaml` | `case_id` |
+| Test case | `configs/cases/<case_id>/test.yaml` or grouped as `configs/cases/<group>/<case_id>/test.yaml` | `case_id` |
 | Suite | `configs/suites/<suite_id>.yaml` | `suite_id` |
 | Run profile | `configs/run_profiles/<profile_id>.yaml` | `run_profile_id` |
 | Evaluation profile | `configs/evaluation_profiles/<profile_id>.yaml` | `evaluation_profile_id` |
@@ -258,6 +258,7 @@ Groups models with a case selection policy to form a benchmark campaign.
 | `title` | string | yes | Human-readable label |
 | `models` | list of `ModelConfig` | no | Models to run against the selected cases |
 | `case_selection` | `CaseSelection` | no | Filters determining which cases are included |
+| `openclaw` | `SuiteOpenClawConfig` | no | Optional per-case OpenClaw agent assignments |
 | `metadata` | mapping | no | Arbitrary annotation bag |
 
 ### `models` — ModelConfig
@@ -281,6 +282,25 @@ Any extra fields are passed through to the runner. The `llm_probe` runner resolv
 
 Precedence: `include_case_ids` > tag filters > `exclude_case_ids`. Unknown case IDs in `include_case_ids` are a hard error.
 
+### `openclaw.agent_assignments`
+
+Use this when one suite should run different OpenClaw cases with different reusable agents. Each assignment selects cases by ID and/or tag and points them at `configs/agents/<agent_id>/`. Cases that match no assignment use `run_profile.openclaw.agent_id` as the default. A case that matches more than one assignment is rejected before execution.
+
+```yaml
+openclaw:
+  agent_assignments:
+    - agent_id: agent_1
+      case_selection:
+        include_case_ids: [case_a, case_b, case_c, case_d]
+    - agent_id: agent_2
+      case_selection:
+        include_case_ids: [case_e, case_f]
+    - agent_id: agent_3
+      case_selection:
+        include_tags: [long_context]
+        exclude_case_ids: [case_f]
+```
+
 ### Example
 
 ```yaml
@@ -296,6 +316,11 @@ models:
 case_selection:
   include_tags: [smoke]
   exclude_case_ids: [known_flaky_case]
+openclaw:
+  agent_assignments:
+    - agent_id: support_agent
+      case_selection:
+        include_tags: [support_agent]
 ```
 
 ---

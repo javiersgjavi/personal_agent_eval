@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import ConfigDict, Field, ValidationError
+from pydantic import ConfigDict, Field, ValidationError, model_validator
 
 from personal_agent_eval.config._base import (
     ID_PATTERN,
@@ -36,6 +36,27 @@ class CaseSelection(ConfigModel):
     exclude_tags: list[str] = Field(default_factory=list)
 
 
+class OpenClawAgentAssignment(ConfigModel):
+    """Assign one OpenClaw agent to a subset of suite cases."""
+
+    agent_id: str = Field(pattern=ID_PATTERN)
+    case_selection: CaseSelection
+
+    @model_validator(mode="after")
+    def _validate_has_include_filter(self) -> OpenClawAgentAssignment:
+        if not self.case_selection.include_case_ids and not self.case_selection.include_tags:
+            raise ValueError(
+                "openclaw.agent_assignments entries must define include_case_ids or include_tags."
+            )
+        return self
+
+
+class SuiteOpenClawConfig(ConfigModel):
+    """Suite-level OpenClaw overrides."""
+
+    agent_assignments: list[OpenClawAgentAssignment] = Field(default_factory=list)
+
+
 class SuiteConfig(ConfigModel):
     """Canonical suite config."""
 
@@ -44,6 +65,7 @@ class SuiteConfig(ConfigModel):
     title: str
     models: list[ModelConfig] = Field(default_factory=list)
     case_selection: CaseSelection = Field(default_factory=CaseSelection)
+    openclaw: SuiteOpenClawConfig = Field(default_factory=SuiteOpenClawConfig)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

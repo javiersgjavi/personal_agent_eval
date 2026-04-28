@@ -59,6 +59,57 @@ def test_load_suite_config_from_fixture() -> None:
     assert config.models[0].model_id == "baseline_model"
 
 
+def test_load_suite_config_supports_openclaw_agent_assignments(tmp_path: Path) -> None:
+    path = tmp_path / "suite.yaml"
+    path.write_text(
+        """schema_version: 1
+suite_id: multi_agent_suite
+title: Multi-agent suite
+models: []
+openclaw:
+  agent_assignments:
+    - agent_id: support_agent
+      case_selection:
+        include_case_ids:
+          - case_a
+    - agent_id: tapas
+      case_selection:
+        include_tags:
+          - tapas
+        exclude_case_ids:
+          - case_b
+""",
+        encoding="utf-8",
+    )
+
+    config = load_suite_config(path)
+
+    assert config.openclaw.agent_assignments[0].agent_id == "support_agent"
+    assert config.openclaw.agent_assignments[0].case_selection.include_case_ids == ["case_a"]
+    assert config.openclaw.agent_assignments[1].agent_id == "tapas"
+    assert config.openclaw.agent_assignments[1].case_selection.include_tags == ["tapas"]
+    assert config.openclaw.agent_assignments[1].case_selection.exclude_case_ids == ["case_b"]
+
+
+def test_load_suite_config_rejects_empty_openclaw_agent_assignment(tmp_path: Path) -> None:
+    path = tmp_path / "suite.yaml"
+    path.write_text(
+        """schema_version: 1
+suite_id: broken_suite
+title: Broken suite
+models: []
+openclaw:
+  agent_assignments:
+    - agent_id: support_agent
+      case_selection: {}
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="include_case_ids or include_tags"):
+        load_suite_config(path)
+
+
 def test_load_run_profile_from_fixture() -> None:
     config = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "default.yaml")
 

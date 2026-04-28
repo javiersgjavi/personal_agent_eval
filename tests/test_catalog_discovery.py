@@ -31,6 +31,37 @@ def test_discover_cases_loads_manifests_from_workspace_root(tmp_path: Path) -> N
     assert cases["alpha_case"].config.tags == ["regression"]
 
 
+def test_discover_cases_loads_grouped_case_manifests(tmp_path: Path) -> None:
+    _write_case(tmp_path, "tool_case", directory="llm/tool_case", tags=["smoke"])
+    _write_case(tmp_path, "browser_case", directory="openclaw/browser_case", tags=["web"])
+
+    cases = discover_cases(tmp_path)
+
+    assert list(cases) == ["browser_case", "tool_case"]
+    assert (
+        cases["tool_case"].case_path
+        == (tmp_path / "configs" / "cases" / "llm" / "tool_case").resolve()
+    )
+    assert (
+        cases["tool_case"].test_path
+        == (tmp_path / "configs" / "cases" / "llm" / "tool_case" / "test.yaml").resolve()
+    )
+    assert cases["browser_case"].config.tags == ["web"]
+
+
+def test_discover_cases_ignores_deeper_nested_test_yaml_files(tmp_path: Path) -> None:
+    _write_case(tmp_path, "alpha_case")
+    deep_fixture = (
+        tmp_path / "configs" / "cases" / "alpha_case" / "fixtures" / "nested" / "test.yaml"
+    )
+    deep_fixture.parent.mkdir(parents=True)
+    deep_fixture.write_text("not: a case config\n", encoding="utf-8")
+
+    cases = discover_cases(tmp_path)
+
+    assert list(cases) == ["alpha_case"]
+
+
 def test_discover_suites_loads_manifests_from_workspace_root(tmp_path: Path) -> None:
     _write_suite(tmp_path, "smoke_suite", include_case_ids=["alpha_case"])
 
@@ -64,6 +95,19 @@ def test_expand_suite_applies_selection_exclusion_and_explicit_priority(
     assert [manifest.case_id for manifest in manifests] == ["gamma_case"]
 
 
+def test_expand_suite_includes_grouped_cases_by_id(tmp_path: Path) -> None:
+    _write_case(tmp_path, "alpha_case", directory="reasoning/alpha_case")
+    _write_suite(tmp_path, "grouped_suite", include_case_ids=["alpha_case"])
+
+    manifests = expand_suite(tmp_path, "grouped_suite")
+
+    assert [manifest.case_id for manifest in manifests] == ["alpha_case"]
+    assert (
+        manifests[0].test_path
+        == (tmp_path / "configs" / "cases" / "reasoning" / "alpha_case" / "test.yaml").resolve()
+    )
+
+
 def test_expand_suite_excludes_cases_when_no_include_filters_are_set(tmp_path: Path) -> None:
     _write_case(tmp_path, "alpha_case", tags=["smoke"])
     _write_case(tmp_path, "beta_case", tags=["regression"])
@@ -91,8 +135,29 @@ def test_discover_cases_rejects_duplicate_case_ids(tmp_path: Path) -> None:
 @pytest.mark.parametrize("field_name", ["include_case_ids", "exclude_case_ids"])
 def test_expand_suite_rejects_missing_case_references(tmp_path: Path, field_name: str) -> None:
     _write_case(tmp_path, "present_case")
-    kwargs = {field_name: ["missing_case"]}
-    _write_suite(tmp_path, "broken_suite", **kwargs)
+    if field_name == "include_case_ids":
+        _write_suite(tmp_path, "broken_suite", include_case_ids=["missing_case"])
+    else:
+        _write_suite(tmp_path, "broken_suite", exclude_case_ids=["missing_case"])
+
+    with pytest.raises(CatalogError, match="references unknown case_id values: missing_case"):
+        expand_suite(tmp_path, "broken_suite")
+
+
+def test_expand_suite_rejects_missing_openclaw_agent_assignment_case_reference(
+    tmp_path: Path,
+) -> None:
+    _write_case(tmp_path, "present_case")
+    _write_suite(
+        tmp_path,
+        "broken_suite",
+        openclaw_agent_assignments=[
+            {
+                "agent_id": "support_agent",
+                "case_selection": {"include_case_ids": ["missing_case"]},
+            }
+        ],
+    )
 
     with pytest.raises(CatalogError, match="references unknown case_id values: missing_case"):
         expand_suite(tmp_path, "broken_suite")
@@ -117,7 +182,7 @@ def _write_case(
     root_path: Path,
     case_id: str,
     *,
-    directory: str | None = None,
+    directory: str | Path | None = None,
     tags: list[str] | None = None,
 ) -> None:
     case_directory = root_path / "configs" / "cases" / (directory or case_id)
@@ -147,6 +212,7 @@ def _write_suite(
     exclude_case_ids: list[str] | None = None,
     include_tags: list[str] | None = None,
     exclude_tags: list[str] | None = None,
+    openclaw_agent_assignments: list[dict[str, object]] | None = None,
 ) -> None:
     suites_directory = root_path / "configs" / "suites"
     suites_directory.mkdir(parents=True, exist_ok=True)
@@ -166,6 +232,18 @@ def _write_suite(
     if selection_lines:
         lines.append("case_selection:")
         lines.extend(selection_lines)
+    if openclaw_agent_assignments:
+        lines.append("openclaw:")
+        lines.append("  agent_assignments:")
+        for assignment in openclaw_agent_assignments:
+            lines.append(f"    - agent_id: {assignment['agent_id']}")
+            lines.append("      case_selection:")
+            case_selection = assignment["case_selection"]
+            assert isinstance(case_selection, dict)
+            for field_name, values in case_selection.items():
+                assert isinstance(values, list)
+                lines.append(f"        {field_name}:")
+                lines.extend(f"          - {value}" for value in values)
 
     (suites_directory / f"{suite_id}.yaml").write_text("\n".join(lines) + "\n", encoding="utf-8")
 

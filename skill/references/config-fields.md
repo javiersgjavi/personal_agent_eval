@@ -4,7 +4,7 @@ Full field-by-field documentation for all `personal_agent_eval` YAML config file
 
 ---
 
-## Test case (`configs/cases/<case_id>/test.yaml`)
+## Test case (`configs/cases/<case_id>/test.yaml` or `configs/cases/<group>/<case_id>/test.yaml`)
 
 Defines one atomic evaluation scenario. The same case can appear in multiple suites and run against multiple models.
 
@@ -200,6 +200,7 @@ Groups models with a case selection policy.
 | `title` | string | yes | Human-readable label |
 | `models` | list of `ModelConfig` | no | Models to run against selected cases |
 | `case_selection` | `CaseSelection` | no | Filters determining which cases are included |
+| `openclaw` | `SuiteOpenClawConfig` | no | Optional per-case OpenClaw agent assignments |
 | `metadata` | mapping | no | Arbitrary annotation bag |
 
 ### `models` — ModelConfig
@@ -220,6 +221,24 @@ Groups models with a case selection policy.
 | `exclude_tags` | list of strings | Exclude cases that have at least one of these tags |
 
 Precedence: `include_case_ids` > tag filters > `exclude_case_ids`. Unknown IDs in `include_case_ids` are a hard error.
+
+### `openclaw.agent_assignments`
+
+Assign different OpenClaw agents to different cases within the same suite. Unmatched OpenClaw cases use `run_profile.openclaw.agent_id`; overlapping assignments are rejected.
+
+```yaml
+openclaw:
+  agent_assignments:
+    - agent_id: agent_1
+      case_selection:
+        include_case_ids: [case_a, case_b, case_c, case_d]
+    - agent_id: agent_2
+      case_selection:
+        include_case_ids: [case_e, case_f]
+    - agent_id: agent_3
+      case_selection:
+        include_tags: [agent_3_cases]
+```
 
 ---
 

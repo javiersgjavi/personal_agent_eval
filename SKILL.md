@@ -26,7 +26,7 @@ Both modes share the same config schema, evaluation pipeline, and output format.
 
 | Config type | Path | Answers |
 |---|---|---|
-| Test case | `configs/cases/<case_id>/test.yaml` | What to test |
+| Test case | `configs/cases/<case_id>/test.yaml` or grouped as `configs/cases/<group>/<case_id>/test.yaml` | What to test |
 | Suite | `configs/suites/<suite_id>.yaml` | Which cases and which models |
 | Run profile | `configs/run_profiles/<id>.yaml` | How to execute (temperature, tokens, retries…) |
 | Evaluation profile | `configs/evaluation_profiles/<id>.yaml` | How to judge and aggregate repeated judge runs |
@@ -60,7 +60,7 @@ Run either command a second time — the `RUN` and `EVAL` columns show `reuse`. 
 
 ## Creating a campaign from scratch
 
-1. **Write a test case** — `configs/cases/<case_id>/test.yaml`
+1. **Write a test case** — `configs/cases/<case_id>/test.yaml` or grouped as `configs/cases/<group>/<case_id>/test.yaml`
 2. **Create or update a suite** — `configs/suites/<suite_id>.yaml` (list your case IDs and models)
 3. **Create or reuse a run profile** — `configs/run_profiles/<id>.yaml` (temperature, retries, etc.)
 4. **Create or reuse an evaluation profile** — `configs/evaluation_profiles/<id>.yaml` (judge model, aggregation)
@@ -84,6 +84,7 @@ Authoring rules:
 
 - `runner.type: llm_probe` sends messages directly to OpenRouter and can expose tools via `input.context.llm_probe.tools`.
 - `runner.type: openclaw` runs an autonomous agent in Docker. Put expected workspace outputs under `input.context.openclaw.expected_artifact`.
+- For OpenClaw suites, `run_profile.openclaw.agent_id` is the default agent. Use `suite.openclaw.agent_assignments` to route different cases or tags to different agents in the same suite.
 - For OpenClaw follow-up messages, use `input.turns`. The harness invokes `openclaw agent` once per turn with the same workspace, state directory, and `--session-id`; `input.messages` is initial context for the first turn.
 - Include `expectations` and `rubric` whenever possible. They make judge output more stable and easier to debug.
 - Add deterministic checks for hard evidence: `final_response_present`, file checks for `llm_probe`, and `openclaw_workspace_file_present` for OpenClaw workspace outputs.
@@ -254,7 +255,7 @@ Add to `models:` in the suite YAML and re-run. Only the new model's cases execut
 
 ### Add a new test case
 
-Create `configs/cases/<new_case_id>/test.yaml`, add the ID to `case_selection.include_case_ids`, re-run.
+Create `configs/cases/<new_case_id>/test.yaml` or `configs/cases/<group>/<new_case_id>/test.yaml`, add the ID to `case_selection.include_case_ids`, re-run.
 
 ### Change the judge without re-running
 
@@ -285,6 +286,7 @@ case_selection:
 ```
 configs/
   cases/<case_id>/test.yaml
+  cases/<group>/<case_id>/test.yaml
   suites/<suite_id>.yaml
   run_profiles/<id>.yaml
   evaluation_profiles/<id>.yaml

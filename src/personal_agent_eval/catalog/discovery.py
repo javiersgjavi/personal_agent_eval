@@ -43,7 +43,15 @@ def discover_cases(root_path: str | Path) -> dict[str, CaseManifest]:
     resolved_root = Path(root_path).expanduser().resolve()
     manifests_by_id: dict[str, CaseManifest] = {}
 
-    for test_path in sorted((resolved_root / "configs" / "cases").glob("*/test.yaml")):
+    cases_root = resolved_root / "configs" / "cases"
+    test_paths = sorted(
+        {
+            *cases_root.glob("*/test.yaml"),
+            *cases_root.glob("*/*/test.yaml"),
+        }
+    )
+
+    for test_path in test_paths:
         config = load_test_config(test_path)
         manifest = CaseManifest(
             root_path=resolved_root,
@@ -132,6 +140,9 @@ def _validate_case_references(*, cases: dict[str, CaseManifest], suite: SuiteMan
     referenced_case_ids = set(suite.config.case_selection.include_case_ids) | set(
         suite.config.case_selection.exclude_case_ids
     )
+    for assignment in suite.config.openclaw.agent_assignments:
+        referenced_case_ids.update(assignment.case_selection.include_case_ids)
+        referenced_case_ids.update(assignment.case_selection.exclude_case_ids)
     missing_case_ids = sorted(case_id for case_id in referenced_case_ids if case_id not in cases)
     if missing_case_ids:
         missing = ", ".join(missing_case_ids)

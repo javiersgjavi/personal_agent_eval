@@ -17,13 +17,12 @@ from personal_agent_eval.config import (
     EvaluationProfileConfig,
     RunProfileConfig,
     SuiteConfig,
-    TestConfig,
     load_evaluation_profile,
     load_openclaw_agent,
     load_run_profile,
     load_suite_config,
 )
-from personal_agent_eval.config.suite_config import ModelConfig
+from personal_agent_eval.config.suite_config import CaseSelection, ModelConfig
 from personal_agent_eval.deterministic import DeterministicEvaluator
 from personal_agent_eval.deterministic.models import DeterministicEvaluationResult
 from personal_agent_eval.domains.llm_probe import OpenRouterClient, run_llm_probe_case
@@ -191,7 +190,7 @@ class WorkflowOrchestrator:
                     self._report_model_case(
                         model=model,
                         case_manifest=case_manifest,
-                        suite_id=suite_config.suite_id,
+                        suite_config=suite_config,
                         run_profile=run_profile,
                         evaluation_profile_id=evaluation_profile.evaluation_profile_id,
                         run_profile_fingerprint=run_profile_fingerprint,
@@ -322,7 +321,8 @@ class WorkflowOrchestrator:
     ) -> WorkflowCaseResult:
         run_input = _build_run_fingerprint_input_for_workflow(
             workspace_root=workspace_root,
-            test_config=case_manifest.config,
+            suite_config=suite_config,
+            case_manifest=case_manifest,
             run_profile=run_profile,
             model_selection=model,
             repetition_index=(None if repetition_count == 1 else repetition_index),
@@ -373,6 +373,7 @@ class WorkflowOrchestrator:
             run_artifact = self._execute_run(
                 workspace_root=workspace_root,
                 suite_id=suite_config.suite_id,
+                suite_config=suite_config,
                 case_manifest=case_manifest,
                 run_profile=run_profile,
                 model=model,
@@ -712,7 +713,7 @@ class WorkflowOrchestrator:
     def _report_model_case(
         self,
         *,
-        suite_id: str,
+        suite_config: SuiteConfig,
         model: ModelConfig,
         case_manifest: CaseManifest,
         run_profile: RunProfileConfig,
@@ -726,14 +727,15 @@ class WorkflowOrchestrator:
         for repetition_index in repetition_indexes:
             run_input = _build_run_fingerprint_input_for_workflow(
                 workspace_root=workspace_root,
-                test_config=case_manifest.config,
+                suite_config=suite_config,
+                case_manifest=case_manifest,
                 run_profile=run_profile,
                 model_selection=model,
                 repetition_index=(None if len(repetition_indexes) == 1 else repetition_index),
             )
             case_results.append(
                 self._report_model_case_repetition(
-                    suite_id=suite_id,
+                    suite_id=suite_config.suite_id,
                     model=model,
                     case_manifest=case_manifest,
                     evaluation_profile_id=evaluation_profile_id,
@@ -956,6 +958,7 @@ class WorkflowOrchestrator:
         *,
         workspace_root: Path,
         suite_id: str,
+        suite_config: SuiteConfig,
         case_manifest: CaseManifest,
         run_profile: RunProfileConfig,
         model: ModelConfig,
@@ -974,7 +977,12 @@ class WorkflowOrchestrator:
         if case_manifest.config.runner.type == "openclaw":
             if run_profile.openclaw is None:
                 raise ValueError("OpenClaw cases require run_profile.openclaw to be configured.")
-            agent_dir = workspace_root / "configs" / "agents" / run_profile.openclaw.agent_id
+            agent_id = _resolve_openclaw_agent_id_for_case(
+                suite_config=suite_config,
+                case_manifest=case_manifest,
+                run_profile=run_profile,
+            )
+            agent_dir = workspace_root / "configs" / "agents" / agent_id
             agent_config = load_openclaw_agent(agent_dir)
             return run_openclaw_case(
                 run_id=run_id,
@@ -1063,20 +1071,67 @@ class WorkflowOrchestrator:
         )
 
 
+def _resolve_openclaw_agent_id_for_case(
+    *,
+    suite_config: SuiteConfig,
+    case_manifest: CaseManifest,
+    run_profile: RunProfileConfig,
+) -> str:
+    if run_profile.openclaw is None:
+        raise ValueError("OpenClaw cases require run_profile.openclaw to be configured.")
+
+    matches = [
+        assignment.agent_id
+        for assignment in suite_config.openclaw.agent_assignments
+        if _openclaw_agent_assignment_matches_case(assignment.case_selection, case_manifest)
+    ]
+    if len(matches) > 1:
+        agents = ", ".join(matches)
+        raise ValueError(
+            f"OpenClaw case '{case_manifest.case_id}' matches multiple "
+            f"suite.openclaw.agent_assignments: {agents}."
+        )
+    if matches:
+        return matches[0]
+    return run_profile.openclaw.agent_id
+
+
+def _openclaw_agent_assignment_matches_case(
+    selection: CaseSelection,
+    case_manifest: CaseManifest,
+) -> bool:
+    case_id = case_manifest.case_id
+    case_tags = set(case_manifest.config.tags)
+
+    if case_id in selection.exclude_case_ids:
+        return False
+    if case_tags & set(selection.exclude_tags):
+        return False
+
+    return case_id in selection.include_case_ids or bool(case_tags & set(selection.include_tags))
+
+
 def _build_run_fingerprint_input_for_workflow(
     *,
     workspace_root: Path,
-    test_config: TestConfig,
+    suite_config: SuiteConfig,
+    case_manifest: CaseManifest,
     run_profile: RunProfileConfig,
     model_selection: ModelConfig,
     repetition_index: int | None,
 ) -> RunFingerprintInput:
     """Match :func:`build_run_fingerprint_input` while resolving OpenClaw agent identity."""
     openclaw_agent_fingerprint: str | None = None
+    test_config = case_manifest.config
     if test_config.runner.type == "openclaw":
         if run_profile.openclaw is None:
             raise ValueError("OpenClaw cases require run_profile.openclaw to be configured.")
-        agent_dir = workspace_root / "configs" / "agents" / run_profile.openclaw.agent_id
+        agent_id = _resolve_openclaw_agent_id_for_case(
+            suite_config=suite_config,
+            case_manifest=case_manifest,
+            run_profile=run_profile,
+        )
+        agent_dir = workspace_root / "configs" / "agents" / agent_id
         agent_config = load_openclaw_agent(agent_dir)
         if agent_config.workspace_dir is None:
             raise ValueError("OpenClaw agent config must include a workspace directory.")

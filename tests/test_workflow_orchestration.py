@@ -307,6 +307,69 @@ def test_openclaw_workflow_run_executes_then_reuses(
     assert second.results[0].run_action is RunAction.REUSED
 
 
+def test_openclaw_workflow_uses_suite_agent_assignments(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    patch_openclaw_docker_run(monkeypatch)
+    workspace_root = _build_openclaw_workspace(tmp_path)
+    _clone_openclaw_agent(workspace_root, source_agent_id="support_agent", agent_id="alt_agent")
+
+    original_case_path = workspace_root / "configs" / "cases" / "openclaw_smoke" / "test.yaml"
+    second_case_dir = workspace_root / "configs" / "cases" / "openclaw_other"
+    second_case_dir.mkdir(parents=True)
+    second_case = yaml.safe_load(original_case_path.read_text(encoding="utf-8"))
+    second_case["case_id"] = "openclaw_other"
+    second_case["title"] = "Other OpenClaw smoke workflow"
+    (second_case_dir / "test.yaml").write_text(
+        yaml.safe_dump(second_case, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    suite_path = workspace_root / "configs" / "suites" / "openclaw_suite.yaml"
+    suite_payload = yaml.safe_load(suite_path.read_text(encoding="utf-8"))
+    suite_payload["case_selection"] = {"include_case_ids": ["openclaw_smoke", "openclaw_other"]}
+    suite_payload["openclaw"] = {
+        "agent_assignments": [
+            {
+                "agent_id": "alt_agent",
+                "case_selection": {"include_case_ids": ["openclaw_smoke"]},
+            }
+        ]
+    }
+    suite_path.write_text(yaml.safe_dump(suite_payload, sort_keys=False), encoding="utf-8")
+
+    workflow = WorkflowOrchestrator(storage_root=workspace_root)
+    result = workflow.run(
+        suite_path=suite_path,
+        run_profile_path=workspace_root / "configs" / "run_profiles" / "openclaw.yaml",
+    )
+
+    assert result.summary.model_case_pairs == 2
+    run_profile_fingerprint = build_run_profile_fingerprint(
+        run_profile=load_run_profile(workspace_root / "configs" / "run_profiles" / "openclaw.yaml")
+    )
+    storage = FilesystemStorage(workspace_root)
+    smoke_artifact = storage.read_case_run(
+        suite_id="openclaw_suite",
+        run_profile_fingerprint=run_profile_fingerprint,
+        model_id="baseline_model",
+        case_id="openclaw_smoke",
+        repetition_index=0,
+    )
+    other_artifact = storage.read_case_run(
+        suite_id="openclaw_suite",
+        run_profile_fingerprint=run_profile_fingerprint,
+        model_id="baseline_model",
+        case_id="openclaw_other",
+        repetition_index=0,
+    )
+
+    assert smoke_artifact.request.metadata["openclaw"]["agent_id"] == "alt_agent"
+    assert other_artifact.request.metadata["openclaw"]["agent_id"] == "support_agent"
+    fingerprints_by_case = {item.case_id: item.run_fingerprint for item in result.results}
+    assert fingerprints_by_case["openclaw_smoke"] != fingerprints_by_case["openclaw_other"]
+
+
 def test_openclaw_workflow_report_finds_stored_run(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -445,6 +508,22 @@ def _build_openclaw_workspace(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     return workspace_root
+
+
+def _clone_openclaw_agent(
+    workspace_root: Path,
+    *,
+    source_agent_id: str,
+    agent_id: str,
+) -> None:
+    source_dir = workspace_root / "configs" / "agents" / source_agent_id
+    target_dir = workspace_root / "configs" / "agents" / agent_id
+    shutil.copytree(source_dir, target_dir)
+    agent_path = target_dir / "agent.yaml"
+    agent_payload = yaml.safe_load(agent_path.read_text(encoding="utf-8"))
+    agent_payload["agent_id"] = agent_id
+    agent_payload["title"] = agent_id.replace("_", " ").title()
+    agent_path.write_text(yaml.safe_dump(agent_payload, sort_keys=False), encoding="utf-8")
 
 
 def _build_workspace(tmp_path: Path) -> Path:

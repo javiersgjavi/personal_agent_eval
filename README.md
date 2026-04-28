@@ -102,7 +102,7 @@ Both runner modes share the same config schema, the same scoring pipeline, and t
 
 ### Bringing your own agent
 
-The shipped examples use `basic_agent`, a default-style OpenClaw workspace. To benchmark your own agent, create a directory under `configs/agents/<agent_id>/` with an `agent.yaml` and a `workspace/` folder containing the files that define the agent's identity, memory contract, working context (`AGENTS.md`, `SOUL.md`, `USER.md`, etc.), and skills. Point your run profile at it with `openclaw.agent_id: my_agent` and run normally.
+The shipped examples use `basic_agent`, a default-style OpenClaw workspace. To benchmark your own agent, create a directory under `configs/agents/<agent_id>/` with an `agent.yaml` and a `workspace/` folder containing the files that define the agent's identity, memory contract, working context (`AGENTS.md`, `SOUL.md`, `USER.md`, etc.), and skills. Point your run profile at it with `openclaw.agent_id: my_agent` and run normally. A suite can route selected OpenClaw cases to different agents with `openclaw.agent_assignments`.
 
 The workspace is copied into an ephemeral container directory before each run — the agent sees it as home. Changing any workspace file invalidates the fingerprint and triggers a fresh run, so your evaluation always reflects the current agent definition. See [docs/examples/minimal_openclaw.md](docs/examples/minimal_openclaw.md) for a full example.
 
@@ -188,6 +188,7 @@ Everything is YAML. No code required to add test cases, models, or campaigns.
 ```
 configs/
   cases/<case_id>/test.yaml          ← what to test
+  cases/<group>/<case_id>/test.yaml  ← optional grouping for larger catalogs
   suites/<suite_id>.yaml             ← which cases × which models
   run_profiles/<id>.yaml             ← temperature, retries, timeouts
   evaluation_profiles/<id>.yaml      ← judge model, aggregation policy

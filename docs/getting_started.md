@@ -160,7 +160,7 @@ Four YAML files define a complete benchmark campaign:
 
 | File | Answers |
 |---|---|
-| `configs/cases/<id>/test.yaml` | What to test |
+| `configs/cases/<id>/test.yaml` or `configs/cases/<group>/<id>/test.yaml` | What to test |
 | `configs/suites/<id>.yaml` | Which cases and which models |
 | `configs/run_profiles/<id>.yaml` | How to execute (temperature, retries, repetitions…) |
 | `configs/evaluation_profiles/<id>.yaml` | How to judge and aggregate scores |

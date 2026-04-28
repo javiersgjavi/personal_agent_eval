@@ -4,7 +4,7 @@
 
 | Config type | File path | Answers |
 |---|---|---|
-| Test case | `configs/cases/<case_id>/test.yaml` | _What_ to test |
+| Test case | `configs/cases/<case_id>/test.yaml` or grouped as `configs/cases/<group>/<case_id>/test.yaml` | _What_ to test |
 | Suite | `configs/suites/<suite_id>.yaml` | _Which_ cases and models |
 | Run profile | `configs/run_profiles/<profile_id>.yaml` | _How_ to execute |
 | Evaluation profile | `configs/evaluation_profiles/<profile_id>.yaml` | _How_ to judge |
@@ -46,12 +46,13 @@ flowchart TD
 
 ## OpenClaw execution flow
 
-When a case uses `runner.type: openclaw`, two extra config surfaces come into play: the agent definition and the `openclaw:` block in the run profile.
+When a case uses `runner.type: openclaw`, the agent definition and the `openclaw:` block in the run profile come into play. A suite can also override the default agent per case with `openclaw.agent_assignments`.
 
 ```mermaid
 flowchart TD
     TC["<b>test.yaml</b><br/>runner.type: openclaw<br/>input.messages or input.turns<br/>expectations · checks"]
-    RP["<b>run_profile.yaml</b><br/>openclaw.agent_id<br/>openclaw.image · timeout"]
+    RP["<b>run_profile.yaml</b><br/>default openclaw.agent_id<br/>openclaw.image · timeout"]
+    SA["<b>suite.yaml</b><br/>optional openclaw.agent_assignments"]
     AC["<b>configs/agents/&lt;agent_id&gt;/</b><br/>agent.yaml<br/>workspace/ template"]
     FP["<b>Fingerprint check</b><br/>SHA-256 of all inputs<br/>+ agent + workspace"]
     WS["<b>Ephemeral workspace</b><br/>temp dir · workspace copied<br/>openclaw.json generated"]
@@ -63,6 +64,7 @@ flowchart TD
 
     TC --> FP
     RP --> FP
+    SA --> AC
     AC --> FP
     FP -->|"cache miss → execute"| WS
     WS -->|"docker run"| DC
@@ -257,6 +259,22 @@ execution_policy:
   max_concurrency: 1
   run_repetitions: 1
   fail_fast: true
+```
+
+`openclaw.agent_id` is the default agent for OpenClaw cases. To use multiple agents in one suite, add suite-level assignments:
+
+```yaml
+openclaw:
+  agent_assignments:
+    - agent_id: agent_1
+      case_selection:
+        include_case_ids: [case_a, case_b, case_c, case_d]
+    - agent_id: agent_2
+      case_selection:
+        include_case_ids: [case_e, case_f]
+    - agent_id: agent_3
+      case_selection:
+        include_case_ids: [case_g, case_h, case_i, case_j, case_k]
 ```
 
 ---

@@ -123,10 +123,6 @@ def resolve_openclaw_config(
         raise ValueError(
             "resolve_openclaw_config() requires run_profile.openclaw to be configured."
         )
-    if run_profile.openclaw.agent_id != agent_config.agent_id:
-        raise ValueError(
-            "run_profile.openclaw.agent_id must match the loaded OpenClaw agent definition."
-        )
     if agent_config.workspace_dir is None:
         raise ValueError("OpenClaw agent config must include a resolved workspace_dir.")
 

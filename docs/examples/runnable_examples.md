@@ -155,7 +155,7 @@ The terminal output now shows `reuse` in both the `RUN` and `EVAL` columns. No t
 
 ### Add a new case
 
-1. Create `configs/cases/my_case/test.yaml`
+1. Create `configs/cases/my_case/test.yaml` or `configs/cases/<group>/my_case/test.yaml`
 2. Add `my_case` to `case_selection.include_case_ids` in the suite
 
 The next run computes only the new case. Existing results are reused.
