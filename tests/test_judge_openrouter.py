@@ -124,6 +124,57 @@ def test_openrouter_judge_client_builds_raw_success_result() -> None:
     assert raw_result.parsed_response["summary"] == "Strong result."
 
 
+def test_openrouter_judge_client_forwards_request_options() -> None:
+    backend = FakeOpenRouterBackend(
+        responses=[
+            OpenRouterChatResponse(
+                assistant_message=OpenRouterAssistantMessage(
+                    role="assistant",
+                    content=json.dumps(
+                        {
+                            "summary": "Fast judgment.",
+                            "dimensions": {
+                                "task": {"evidence": ["OK"], "score": 5.0},
+                                "process": {"evidence": ["OK"], "score": 5.0},
+                                "autonomy": {"evidence": ["OK"], "score": 5.0},
+                                "closeness": {"evidence": ["OK"], "score": 5.0},
+                                "efficiency": {"evidence": ["OK"], "score": 5.0},
+                                "spark": {"evidence": ["OK"], "score": 5.0},
+                            },
+                            "overall": {"evidence": "OK", "score": 5.0},
+                        }
+                    ),
+                ),
+            )
+        ]
+    )
+    client = OpenRouterJudgeClient(backend)
+
+    client.run_once(
+        JudgeInvocation(
+            judge_name="fast_judge",
+            judge_model="openai/gpt-5.4",
+            repetition_index=0,
+            attempt_index=0,
+            messages=({"role": "user", "content": "Judge this."},),
+            request_options={
+                "temperature": 0.0,
+                "reasoning": {"effort": "none"},
+                "verbosity": "low",
+            },
+        )
+    )
+
+    assert backend.requests is not None
+    request = backend.requests[0]
+    assert request.temperature == 0.0
+    assert request.extra_body == {
+        "reasoning": {"effort": "none"},
+        "verbosity": "low",
+    }
+    assert request.to_payload()["reasoning"] == {"effort": "none"}
+
+
 def test_openrouter_judge_client_maps_provider_failures() -> None:
     client = OpenRouterJudgeClient(
         FakeOpenRouterBackend(

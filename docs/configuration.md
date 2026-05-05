@@ -271,6 +271,17 @@ Groups models with a case selection policy to form a benchmark campaign.
 
 Any extra fields are passed through to the runner. The `llm_probe` runner resolves the model in this priority order: `requested_model` → `openrouter_model` → `provider` + `model_name` → `model_id`.
 
+For OpenClaw campaigns, extra model fields can also carry OpenRouter model parameters. The current benchmark uses `primary_params.reasoning.effort` to control GPT-5 reasoning on the primary model, for example:
+
+```yaml
+models:
+  - model_id: gpt55
+    requested_model: openai/gpt-5.5
+    primary_params:
+      reasoning:
+        effort: medium
+```
+
 ### `case_selection`
 
 | Field | Type | Description |
@@ -431,6 +442,19 @@ Defines the judges, their repetition plans, aggregation policies, and security c
 | `judge_id` | slug | yes | Logical name referenced by `judge_runs` |
 | `type` | string | yes | Judge backend (`"llm_probe"`) |
 | `model` | string | no | Model to call (e.g. `"openai/gpt-5.4-mini"`) |
+
+Any extra judge fields are passed through as OpenRouter `request_options`. Use this for request-level controls such as `temperature` or `reasoning.effort`:
+
+```yaml
+judges:
+  - judge_id: gpt54_fast_judge
+    type: llm_probe
+    model: openai/gpt-5.4
+    request_options:
+      temperature: 0.0
+      reasoning:
+        effort: none
+```
 
 ### `judge_runs` — JudgeRunConfig
 

@@ -129,6 +129,38 @@ def test_render_openclaw_json_is_deterministic_and_uses_requested_model(tmp_path
     assert rendered_text == render_openclaw_json_text(resolved)
 
 
+def test_render_openclaw_json_merges_model_selection_primary_params(
+    tmp_path: Path,
+) -> None:
+    case_config = _write_openclaw_case(tmp_path, source_messages=False)
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "openclaw.yaml")
+    agent_config = load_openclaw_agent(FIXTURES_ROOT / "configs" / "agents" / "support_agent")
+    resolved = resolve_openclaw_config(
+        case_config=case_config,
+        run_profile=run_profile,
+        model_selection=ModelConfig.model_validate(
+            {
+                "model_id": "gpt55",
+                "requested_model": "openai/gpt-5.5",
+                "primary_params": {"reasoning": {"effort": "medium"}},
+            }
+        ),
+        agent_config=agent_config,
+        workspace_dir=tmp_path / "workspace",
+        state_dir=tmp_path / "state",
+    )
+
+    generated = render_openclaw_json(resolved)
+    primary = "openrouter/openai/gpt-5.5"
+
+    assert generated.agents.defaults["model"]["primary"] == primary
+    assert generated.agents.defaults["models"][primary]["params"]["reasoning"] == {
+        "effort": "medium"
+    }
+    assert generated.models["providers"]["openrouter"]["models"][0]["id"] == "openai/gpt-5.5"
+    assert generated.models["providers"]["openrouter"]["models"][0]["reasoning"] is True
+
+
 def test_render_openclaw_json_does_not_merge_case_hints_into_generated_payload(
     tmp_path: Path,
 ) -> None:

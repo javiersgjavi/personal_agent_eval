@@ -733,6 +733,32 @@ def _resolve_key_output_paths(
     return []
 
 
+_WORKSPACE_SNAPSHOT_SKIP_DIRS: frozenset[str] = frozenset(
+    {
+        ".git",
+        "__pycache__",
+        "node_modules",
+        "tts",
+        "downloads",
+        "tmp",
+    }
+)
+
+
+def _workspace_snapshot_filter(tarinfo: tarfile.TarInfo) -> tarfile.TarInfo | None:
+    for part in Path(tarinfo.name).parts:
+        if part in _WORKSPACE_SNAPSHOT_SKIP_DIRS or part.startswith(".venv"):
+            return None
+    return tarinfo
+
+
+def _is_excluded_workspace_path(path: Path, root: Path) -> bool:
+    return any(
+        p in _WORKSPACE_SNAPSHOT_SKIP_DIRS or p.startswith(".venv")
+        for p in path.relative_to(root).parts
+    )
+
+
 def _write_workspace_artifacts(
     *,
     template_dir: Path,
@@ -742,7 +768,7 @@ def _write_workspace_artifacts(
 ) -> None:
     snapshot_path.parent.mkdir(parents=True, exist_ok=True)
     with tarfile.open(snapshot_path, "w:gz") as archive:
-        archive.add(workspace_dir, arcname="workspace")
+        archive.add(workspace_dir, arcname="workspace", filter=_workspace_snapshot_filter)
     diff_path.write_text(
         _build_workspace_diff(template_dir=template_dir, workspace_dir=workspace_dir),
         encoding="utf-8",
@@ -774,7 +800,11 @@ def _build_workspace_diff(*, template_dir: Path, workspace_dir: Path) -> str:
 def _read_text_file_map(root: Path) -> dict[str, str]:
     mapping: dict[str, str] = {}
     files = sorted(
-        (item for item in root.rglob("*") if item.is_file()),
+        (
+            item
+            for item in root.rglob("*")
+            if item.is_file() and not _is_excluded_workspace_path(item, root)
+        ),
         key=lambda item: item.as_posix(),
     )
     for path in files:

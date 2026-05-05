@@ -336,7 +336,7 @@ class WorkflowOrchestrator:
             runner_type=case_manifest.config.runner.type,
         )
 
-        if self._storage.has_case_run(
+        if self._storage.has_reusable_case_run(
             suite_id=suite_config.suite_id,
             run_profile_fingerprint=run_profile_fingerprint,
             model_id=model.model_id,
@@ -1045,6 +1045,7 @@ class WorkflowOrchestrator:
                     deterministic_summary=deterministic_result.summary.model_dump(mode="json"),
                     max_retries=5,
                     system_prompt=judge_system_prompt,
+                    request_options=_resolve_judge_request_options(judge_config),
                 )
             )
 
@@ -1199,6 +1200,14 @@ def _resolve_judge_model(judge_config: Any) -> str:
         if isinstance(value, str) and value:
             return value
     return judge_config.judge_id
+
+
+def _resolve_judge_request_options(judge_config: Any) -> dict[str, Any]:
+    payload = judge_config.model_dump(mode="json")
+    options = payload.get("request_options")
+    if isinstance(options, dict):
+        return dict(options)
+    return {}
 
 
 def _combine_aggregated_judges(judge_results: list[AggregatedJudgeResult]) -> AggregatedJudgeResult:

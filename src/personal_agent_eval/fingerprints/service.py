@@ -262,11 +262,13 @@ def _resolve_openclaw_runner_settings_for_fingerprint(
     if not openclaw_agent_fingerprint:
         raise ValueError("OpenClaw run fingerprinting requires an OpenClaw agent fingerprint.")
     raw_model = _resolve_requested_model(model_selection)
+    model_selection_fragment = _resolve_model_selection_fragment(model_selection)
     resolved: dict[str, Any] = {
         "agent_fingerprint": openclaw_agent_fingerprint,
         "image": run_profile.openclaw.image,
         "docker_cli": run_profile.openclaw.docker_cli,
         "openclaw_primary_model_ref": openrouter_primary_model_ref(raw_model),
+        "model_selection_fragment": model_selection_fragment,
     }
     if repetition_index is not None:
         resolved["run_repetition_index"] = repetition_index
@@ -303,6 +305,13 @@ def _resolve_requested_model(model_selection: ModelConfig) -> str:
         return model_name
 
     return model_selection.model_id
+
+
+def _resolve_model_selection_fragment(model_selection: ModelConfig) -> dict[str, Any]:
+    payload = model_selection.model_dump(mode="json")
+    for key in ("model_id", "label", "requested_model", "provider", "model_name"):
+        payload.pop(key, None)
+    return _normalize_for_hash(payload)
 
 
 def _resolve_messages_for_fingerprint(

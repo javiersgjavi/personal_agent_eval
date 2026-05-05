@@ -13,6 +13,19 @@ from urllib import error, request
 
 DEFAULT_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_SMOKE_MODEL = "minimax/minimax-m2.7"
+_OPENROUTER_CHAT_REQUEST_RESERVED_KEYS = frozenset(
+    {
+        "max_tokens",
+        "messages",
+        "metadata",
+        "model",
+        "seed",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_p",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,6 +63,7 @@ class OpenRouterChatRequest:
     tool_choice: str | dict[str, Any] | None = None
     tools: tuple[dict[str, Any], ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
+    extra_body: dict[str, Any] = field(default_factory=dict)
 
     def to_payload(self) -> dict[str, Any]:
         """Render the request as an OpenRouter JSON payload."""
@@ -71,6 +85,15 @@ class OpenRouterChatRequest:
             payload["tools"] = [dict(tool) for tool in self.tools]
         if self.metadata:
             payload["metadata"] = dict(self.metadata)
+        if self.extra_body:
+            extra_body = dict(self.extra_body)
+            reserved_keys = sorted(
+                key for key in extra_body if key in _OPENROUTER_CHAT_REQUEST_RESERVED_KEYS
+            )
+            if reserved_keys:
+                joined = ", ".join(reserved_keys)
+                raise ValueError(f"OpenRouter extra_body cannot override reserved keys: {joined}.")
+            payload.update(extra_body)
         return payload
 
 

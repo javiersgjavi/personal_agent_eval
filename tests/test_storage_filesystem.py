@@ -12,6 +12,7 @@ from personal_agent_eval.aggregation.models import (
 from personal_agent_eval.artifacts.run_artifact import (
     RunArtifact,
     RunArtifactIdentity,
+    RunError,
     RunRequestMetadata,
     RunStatus,
 )
@@ -186,6 +187,17 @@ def test_storage_round_trips_run_space_files(tmp_path: Path) -> None:
         )
         is True
     )
+    assert (
+        storage.has_reusable_case_run(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model_name,
+            case_id="example_case",
+            repetition_index=0,
+            run_fingerprint=run_fingerprint,
+        )
+        is True
+    )
     assert storage.read_run_manifest(suite_id, run_profile_fingerprint) == manifest
     assert (
         storage.read_case_run(
@@ -196,6 +208,46 @@ def test_storage_round_trips_run_space_files(tmp_path: Path) -> None:
             repetition_index=0,
         )
         == run_artifact
+    )
+
+    failed_artifact = run_artifact.model_copy(
+        update={
+            "identity": run_artifact.identity.model_copy(update={"case_id": "failed_case"}),
+            "error": RunError(code="failed", message="Run failed."),
+            "status": RunStatus.FAILED,
+        }
+    )
+    storage.write_case_run(
+        suite_id=suite_id,
+        run_profile_id=run_profile_id,
+        run_profile_fingerprint=run_profile_fingerprint,
+        model_id=model_name,
+        repetition_index=0,
+        run_fingerprint=run_fingerprint,
+        artifact=failed_artifact,
+        fingerprint_input=fingerprint_input,
+    )
+    assert (
+        storage.has_case_run(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model_name,
+            case_id="failed_case",
+            repetition_index=0,
+            run_fingerprint=run_fingerprint,
+        )
+        is True
+    )
+    assert (
+        storage.has_reusable_case_run(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model_name,
+            case_id="failed_case",
+            repetition_index=0,
+            run_fingerprint=run_fingerprint,
+        )
+        is False
     )
 
 

@@ -104,6 +104,7 @@ class ResolvedOpenClawConfig(ArtifactModel):
     agents_defaults_fragment: dict[str, Any] = Field(default_factory=dict)
     agent_fragment: dict[str, Any] = Field(default_factory=dict)
     model_defaults_fragment: dict[str, Any] = Field(default_factory=dict)
+    model_selection_fragment: dict[str, Any] = Field(default_factory=dict)
 
 
 def resolve_openclaw_config(
@@ -135,6 +136,12 @@ def resolve_openclaw_config(
 
     raw_requested = _resolve_requested_model(model_selection)
     primary_ref = openrouter_primary_model_ref(raw_requested)
+    model_selection_fragment = _resolve_model_selection_fragment(model_selection)
+    model_defaults_fragment = _resolve_model_defaults_fragment(agent_config)
+    _merge_model_selection_into_defaults(
+        model_defaults_fragment=model_defaults_fragment,
+        model_selection_fragment=model_selection_fragment,
+    )
 
     return ResolvedOpenClawConfig(
         agent_id=agent_config.agent_id,
@@ -154,7 +161,8 @@ def resolve_openclaw_config(
         identity_fragment=dict(agent_config.openclaw.identity or {}),
         agents_defaults_fragment=dict(agent_config.openclaw.agents_defaults or {}),
         agent_fragment=dict(agent_config.openclaw.agent or {}),
-        model_defaults_fragment=_resolve_model_defaults_fragment(agent_config),
+        model_defaults_fragment=model_defaults_fragment,
+        model_selection_fragment=model_selection_fragment,
     )
 
 
@@ -278,6 +286,9 @@ def _build_openrouter_provider_overrides(
             max_tokens_override=primary_params.get("max_tokens")
             if ref == primary and isinstance(primary_params, Mapping)
             else None,
+            reasoning_override=primary_params.get("reasoning")
+            if ref == primary and isinstance(primary_params, Mapping)
+            else None,
         )
         if model_entry is not None:
             models.append(model_entry)
@@ -300,6 +311,7 @@ def _build_openrouter_provider_model_entry(
     model_ref: str,
     *,
     max_tokens_override: Any = None,
+    reasoning_override: Any = None,
 ) -> dict[str, Any] | None:
     """Build one minimal ``models.providers.openrouter.models[]`` entry."""
     if not isinstance(model_ref, str):
@@ -318,7 +330,10 @@ def _build_openrouter_provider_model_entry(
     return {
         "id": provider_model_id,
         "name": provider_model_id,
-        "reasoning": _model_ref_likely_uses_reasoning(provider_model_id),
+        "reasoning": _resolve_reasoning_flag(
+            provider_model_id=provider_model_id,
+            reasoning_override=reasoning_override,
+        ),
         "input": ["text", "image"],
         "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
         "contextWindow": _OPENROUTER_DEFAULT_CONTEXT_WINDOW,
@@ -329,6 +344,14 @@ def _build_openrouter_provider_model_entry(
 def _model_ref_likely_uses_reasoning(provider_model_id: str) -> bool:
     lowered = provider_model_id.lower()
     return any(token in lowered for token in ("reason", "thinking", "minimax"))
+
+
+def _resolve_reasoning_flag(*, provider_model_id: str, reasoning_override: Any) -> bool:
+    if isinstance(reasoning_override, bool):
+        return reasoning_override
+    if isinstance(reasoning_override, Mapping):
+        return True
+    return _model_ref_likely_uses_reasoning(provider_model_id)
 
 
 def render_openclaw_json_text(resolved_config: ResolvedOpenClawConfig) -> str:
@@ -505,6 +528,26 @@ def _resolve_model_defaults_fragment(agent_config: OpenClawAgentConfig) -> dict[
     payload = model_defaults.model_dump(mode="json")
     extras = model_defaults.model_extra or {}
     return {**payload, **extras}
+
+
+def _resolve_model_selection_fragment(model_selection: ModelConfig) -> dict[str, Any]:
+    payload = model_selection.model_dump(mode="json")
+    for key in ("model_id", "label", "requested_model", "provider", "model_name"):
+        payload.pop(key, None)
+    return payload
+
+
+def _merge_model_selection_into_defaults(
+    *,
+    model_defaults_fragment: dict[str, Any],
+    model_selection_fragment: dict[str, Any],
+) -> None:
+    primary_params = model_selection_fragment.get("primary_params")
+    if not isinstance(primary_params, Mapping) or not primary_params:
+        return
+    merged = dict(model_defaults_fragment.get("primary_params", {}))
+    merged.update(primary_params)
+    model_defaults_fragment["primary_params"] = merged
 
 
 def _coerce_generated_payload(payload: Mapping[str, Any]) -> GeneratedOpenClawConfig:

@@ -62,6 +62,7 @@ class JudgeOrchestrator:
         deterministic_summary: Mapping[str, Any] | None = None,
         max_retries: int = 0,
         timeout_seconds: float | None = None,
+        request_options: Mapping[str, Any] | None = None,
     ) -> AggregatedJudgeResult:
         """Run the judge repeatedly and aggregate successful iterations."""
         if repetitions < 1:
@@ -91,6 +92,7 @@ class JudgeOrchestrator:
                 max_retries=max_retries,
                 timeout_seconds=timeout_seconds,
                 prompt_payload=prompt_bundle.user_payload,
+                request_options=request_options,
             )
             iteration_results.append(result)
 
@@ -112,6 +114,7 @@ class JudgeOrchestrator:
         max_retries: int,
         timeout_seconds: float | None,
         prompt_payload: dict[str, Any],
+        request_options: Mapping[str, Any] | None,
     ) -> NormalizedJudgeIterationResult:
         warnings: list[str] = []
         attempt_statuses: list[JudgeIterationStatus] = []
@@ -126,6 +129,7 @@ class JudgeOrchestrator:
                 messages=base_messages,
                 prompt_payload=prompt_payload,
                 timeout_seconds=timeout_seconds,
+                request_options=dict(request_options or {}),
             )
             raw_result = self._client.run_once(invocation)
             raw_results.append(raw_result)

@@ -184,6 +184,13 @@ def test_openclaw_run_fingerprint_uses_agent_identity_and_image_but_not_timeout(
     model_selection = ModelConfig.model_validate(
         {"model_id": "baseline_model", "requested_model": "openai/gpt-4o-mini"}
     )
+    model_selection_with_reasoning = ModelConfig.model_validate(
+        {
+            "model_id": "gpt55",
+            "requested_model": "openai/gpt-5.5",
+            "primary_params": {"reasoning": {"effort": "medium"}},
+        }
+    )
 
     base_input = build_run_fingerprint_input(
         test_config=case_config,
@@ -238,11 +245,22 @@ def test_openclaw_run_fingerprint_uses_agent_identity_and_image_but_not_timeout(
         "image": "ghcr.io/openclaw/openclaw:2026.4.15",
         "docker_cli": "docker",
         "openclaw_primary_model_ref": "openrouter/openai/gpt-4o-mini",
+        "model_selection_fragment": {},
     }
     assert base_input.fingerprint == changed_timeout_input.fingerprint
     assert base_input.fingerprint != changed_image_input.fingerprint
     assert base_input.fingerprint != changed_docker_cli_input.fingerprint
     assert base_input.fingerprint != changed_agent_input.fingerprint
+    reasoning_input = build_run_fingerprint_input(
+        test_config=case_config,
+        run_profile=run_profile,
+        model_selection=model_selection_with_reasoning,
+        openclaw_agent_fingerprint=agent_input.fingerprint,
+    )
+    assert base_input.fingerprint != reasoning_input.fingerprint
+    assert reasoning_input.payload.runner_config["model_selection_fragment"] == {
+        "primary_params": {"reasoning": {"effort": "medium"}}
+    }
 
 
 def test_openclaw_run_fingerprint_requires_agent_fingerprint(tmp_path: Path) -> None:

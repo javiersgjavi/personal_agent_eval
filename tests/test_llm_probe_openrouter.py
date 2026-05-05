@@ -96,6 +96,17 @@ def test_openrouter_client_builds_request_and_normalizes_response() -> None:
     assert response.assistant_message.tool_calls[0].parsed_arguments == {"city": "Madrid"}
 
 
+def test_openrouter_chat_request_rejects_reserved_extra_body_keys() -> None:
+    request = OpenRouterChatRequest(
+        model="openai/gpt-5-mini",
+        messages=({"role": "user", "content": "Hi"},),
+        extra_body={"model": "other-model", "reasoning": {"effort": "none"}},
+    )
+
+    with pytest.raises(ValueError, match="reserved keys: model"):
+        request.to_payload()
+
+
 @pytest.mark.parametrize(
     "body",
     [

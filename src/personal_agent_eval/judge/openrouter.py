@@ -29,6 +29,7 @@ class JudgeInvocation:
     messages: tuple[dict[str, str], ...]
     prompt_payload: dict[str, object] | None = None
     timeout_seconds: float | None = None
+    request_options: dict[str, object] | None = None
 
     @property
     def raw_result_ref(self) -> str:
@@ -59,16 +60,19 @@ class OpenRouterJudgeClient:
         request_messages = [dict(message) for message in invocation.messages]
 
         try:
+            request_options = dict(invocation.request_options or {})
+            temperature = request_options.pop("temperature", 0.0)
             response = self._client.create_chat_completion(
                 OpenRouterChatRequest(
                     model=invocation.judge_model,
                     messages=tuple(request_messages),
-                    temperature=0.0,
+                    temperature=temperature if isinstance(temperature, int | float) else 0.0,
                     metadata={
                         "judge_name": invocation.judge_name,
                         "repetition_index": invocation.repetition_index,
                         "attempt_index": invocation.attempt_index,
                     },
+                    extra_body=request_options,
                 ),
                 timeout_seconds=invocation.timeout_seconds,
             )

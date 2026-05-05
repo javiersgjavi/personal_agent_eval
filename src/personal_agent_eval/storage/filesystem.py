@@ -17,7 +17,7 @@ from personal_agent_eval.artifacts import (
     parse_openclaw_run_evidence,
     with_openclaw_run_evidence,
 )
-from personal_agent_eval.artifacts.run_artifact import ArtifactModel, RunArtifact
+from personal_agent_eval.artifacts.run_artifact import ArtifactModel, RunArtifact, RunStatus
 from personal_agent_eval.fingerprints import EvaluationFingerprintInput, RunFingerprintInput
 from personal_agent_eval.judge.models import AggregatedJudgeResult
 from personal_agent_eval.reporting.final_result_summary import (
@@ -505,14 +505,45 @@ class FilesystemStorage:
                 iteration.repetition_index == repetition_index
                 and iteration.run_fingerprint == run_fingerprint
             ):
-                return self.case_run_path(
+                run_path = self.case_run_path(
                     suite_id,
                     run_profile_fingerprint,
                     model_id,
                     case_id,
                     repetition_index,
-                ).is_file()
+                )
+                if not run_path.is_file():
+                    return False
+                return self._read_optional_model(run_path, RunArtifact) is not None
         return False
+
+    def has_reusable_case_run(
+        self,
+        *,
+        suite_id: str,
+        run_profile_fingerprint: str,
+        model_id: str,
+        case_id: str,
+        repetition_index: int,
+        run_fingerprint: str,
+    ) -> bool:
+        if not self.has_case_run(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model_id,
+            case_id=case_id,
+            repetition_index=repetition_index,
+            run_fingerprint=run_fingerprint,
+        ):
+            return False
+        artifact = self.read_case_run(
+            suite_id=suite_id,
+            run_profile_fingerprint=run_profile_fingerprint,
+            model_id=model_id,
+            case_id=case_id,
+            repetition_index=repetition_index,
+        )
+        return artifact.status not in (RunStatus.INVALID, RunStatus.FAILED)
 
     def read_case_run(
         self,

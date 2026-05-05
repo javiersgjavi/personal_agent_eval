@@ -86,6 +86,7 @@ Authoring rules:
 - `runner.type: openclaw` runs an autonomous agent in Docker. Put expected workspace outputs under `input.context.openclaw.expected_artifact`.
 - For OpenClaw suites, `run_profile.openclaw.agent_id` is the default agent. Use `suite.openclaw.agent_assignments` to route different cases or tags to different agents in the same suite.
 - For OpenClaw follow-up messages, use `input.turns`. The harness invokes `openclaw agent` once per turn with the same workspace, state directory, and `--session-id`; `input.messages` is initial context for the first turn.
+- For GPT-5.x reasoning, set `primary_params.reasoning.effort` on suite models for OpenClaw primaries, and `request_options.reasoning.effort` on judges. Typical values are `medium` for thinking and `none` for fast/no-reasoning judging.
 - Include `expectations` and `rubric` whenever possible. They make judge output more stable and easier to debug.
 - Add deterministic checks for hard evidence: `final_response_present`, file checks for `llm_probe`, and `openclaw_workspace_file_present` for OpenClaw workspace outputs.
 

@@ -324,3 +324,97 @@ def _write_openclaw_multiturn_case(tmp_path: Path) -> CaseConfig:
 def _host_root_from_argv(argv: list[str]) -> Path:
     volume_spec = argv[argv.index("-v") + 1]
     return Path(volume_spec.split(":", 2)[0])
+
+
+def test_workspace_snapshot_excludes_venvs_and_caches(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tarfile as _tarfile
+
+    from personal_agent_eval.domains.openclaw.runner import (
+        _is_excluded_workspace_path,
+        _write_workspace_artifacts,
+    )
+
+    workspace = tmp_path / "workspace"
+    template = tmp_path / "template"
+    for d in (workspace, template):
+        d.mkdir()
+        (d / "main.md").write_text("content", encoding="utf-8")
+
+    (workspace / ".venvs").mkdir()
+    (workspace / ".venvs" / "lib").mkdir()
+    (workspace / ".venvs" / "lib" / "heavy.so").write_bytes(b"\x00" * 1024)
+    (workspace / ".venv-custom").mkdir()
+    (workspace / ".venv-custom" / "pyvenv.cfg").write_text("home = /usr", encoding="utf-8")
+    (workspace / "__pycache__").mkdir()
+    (workspace / "__pycache__" / "mod.pyc").write_bytes(b"\x00" * 64)
+    (workspace / ".git").mkdir()
+    (workspace / ".git" / "HEAD").write_text("ref: refs/heads/main", encoding="utf-8")
+    (workspace / "node_modules").mkdir()
+    (workspace / "node_modules" / "pkg").mkdir()
+    (workspace / "node_modules" / "pkg" / "index.js").write_text(
+        "module.exports={}", encoding="utf-8"
+    )
+    (workspace / "subdir").mkdir()
+    (workspace / "subdir" / "__pycache__").mkdir()
+    (workspace / "subdir" / "__pycache__" / "nested.pyc").write_bytes(b"\x00" * 32)
+    (workspace / "subdir" / "keep.txt").write_text("kept", encoding="utf-8")
+    (workspace / "tts").mkdir()
+    (workspace / "tts" / "audio.mp3").write_bytes(b"\x00" * 1024)
+    (workspace / "downloads").mkdir()
+    (workspace / "downloads" / "file.pdf").write_bytes(b"\x00" * 1024)
+    (workspace / "tmp").mkdir()
+    (workspace / "tmp" / "scratch.bin").write_bytes(b"\x00" * 64)
+
+    snapshot = tmp_path / "snapshot.tar.gz"
+    diff = tmp_path / "diff.txt"
+    _write_workspace_artifacts(
+        template_dir=template,
+        workspace_dir=workspace,
+        snapshot_path=snapshot,
+        diff_path=diff,
+    )
+
+    with _tarfile.open(snapshot, "r:gz") as archive:
+        names = {m.name for m in archive.getmembers()}
+
+    assert "workspace/main.md" in names
+    assert "workspace/subdir/keep.txt" in names
+    assert not any(".venvs" in n for n in names)
+    assert not any(".venv-custom" in n for n in names)
+    assert not any("__pycache__" in n for n in names)
+    assert not any(".git" in n for n in names)
+    assert not any("node_modules" in n for n in names)
+    assert not any("/tts/" in n or n.endswith("/tts") for n in names)
+    assert not any("/downloads/" in n or n.endswith("/downloads") for n in names)
+    assert not any("/tmp/" in n or n.endswith("/tmp") for n in names)
+
+    assert not _is_excluded_workspace_path(workspace / "main.md", workspace)
+    assert _is_excluded_workspace_path(workspace / ".venvs" / "lib" / "heavy.so", workspace)
+    assert _is_excluded_workspace_path(workspace / ".venv-custom" / "pyvenv.cfg", workspace)
+    assert _is_excluded_workspace_path(workspace / "__pycache__" / "mod.pyc", workspace)
+    assert _is_excluded_workspace_path(workspace / ".git" / "HEAD", workspace)
+    assert _is_excluded_workspace_path(workspace / "node_modules" / "pkg" / "index.js", workspace)
+    assert _is_excluded_workspace_path(
+        workspace / "subdir" / "__pycache__" / "nested.pyc", workspace
+    )
+    assert not _is_excluded_workspace_path(workspace / "subdir" / "keep.txt", workspace)
+    assert _is_excluded_workspace_path(workspace / "tts" / "audio.mp3", workspace)
+    assert _is_excluded_workspace_path(workspace / "downloads" / "file.pdf", workspace)
+    assert _is_excluded_workspace_path(workspace / "tmp" / "scratch.bin", workspace)
+
+    diff_text = diff.read_text(encoding="utf-8")
+    assert not any(
+        skip in diff_text
+        for skip in (
+            ".venvs",
+            ".venv-custom",
+            "__pycache__",
+            ".git",
+            "node_modules",
+            "/tts/",
+            "/downloads/",
+            "/tmp/",
+        )
+    )
