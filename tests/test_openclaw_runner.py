@@ -49,6 +49,8 @@ def test_run_openclaw_case_success_captures_external_evidence(
     assert evidence.workspace_diff is not None
     assert len(artifact.output_artifacts) == 1
     assert len(evidence.key_output_artifacts) == 1
+    assert artifact.output_artifacts[0].metadata == {"workspace_relative_path": "report.md"}
+    assert evidence.key_output_artifacts[0].metadata == {"workspace_relative_path": "report.md"}
 
     generated_config_path = Path(evidence.generated_openclaw_config.uri.removeprefix("file://"))
     raw_trace_path = Path(evidence.raw_session_trace.uri.removeprefix("file://"))
@@ -202,6 +204,49 @@ def test_run_openclaw_case_persists_observable_summary_metadata(
     assert isinstance(observable_summary, dict)
     assert observable_summary["final_assistant_visible_text"].startswith("Consulta completada")
     assert observable_summary["tool_summary"]["tools"] == ["web_search", "write"]
+
+
+def test_run_openclaw_case_extracts_usage_and_estimates_cost(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = json.dumps(
+        {
+            "content": "done",
+            "meta": {
+                "agentMeta": {
+                    "usage": {
+                        "input": 1_000_000,
+                        "output": 100_000,
+                        "cacheRead": 500_000,
+                        "cacheWrite": 200_000,
+                        "total": 1_800_000,
+                    }
+                }
+            },
+        }
+    )
+    patch_openclaw_docker_run(monkeypatch, run_stdout=payload)
+
+    case_config = _write_openclaw_case(tmp_path)
+    run_profile = load_run_profile(FIXTURES_ROOT / "configs" / "run_profiles" / "openclaw.yaml")
+    agent_config = load_openclaw_agent(FIXTURES_ROOT / "configs" / "agents" / "support_agent")
+    artifact = run_openclaw_case(
+        run_id="run_usage",
+        suite_id="example_suite",
+        case_config=case_config,
+        run_profile=run_profile,
+        model_selection=ModelConfig.model_validate(
+            {"model_id": "sonnet", "requested_model": "anthropic/claude-sonnet-4.6"}
+        ),
+        agent_config=agent_config,
+        runtime_root=tmp_path / "runtime-usage",
+    )
+
+    assert artifact.usage.normalized.input_tokens == 1_000_000
+    assert artifact.usage.normalized.output_tokens == 100_000
+    assert artifact.usage.normalized.cached_input_tokens == 500_000
+    assert artifact.usage.normalized.cache_write_tokens == 200_000
+    assert artifact.usage.cost_usd == pytest.approx(5.4)
 
 
 def test_run_openclaw_case_runs_turns_in_one_session(

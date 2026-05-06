@@ -61,6 +61,12 @@ def output_artifact_resolves_to_workspace_file(
 ) -> bool:
     """Return whether ``ref`` points at a file whose path ends with ``relative_path``."""
     normalized = relative_path.replace("\\", "/").lstrip("/")
+    workspace_relative_path = ref.metadata.get("workspace_relative_path")
+    if isinstance(workspace_relative_path, str):
+        normalized_ref_path = workspace_relative_path.replace("\\", "/").lstrip("/")
+        if normalized_ref_path == normalized:
+            return True
+
     path = _path_from_uri(ref.uri)
     if path is None or not path.is_file():
         return False
@@ -68,7 +74,11 @@ def output_artifact_resolves_to_workspace_file(
         suffix = path.resolve().as_posix()
     except OSError:
         return False
-    return suffix.endswith(normalized) or path.name == Path(normalized).name
+    return (
+        suffix.endswith(normalized)
+        or path.name == Path(normalized).name
+        or _stored_artifact_basename(path.name) == Path(normalized).name
+    )
 
 
 def read_output_artifact_text(ref: OutputArtifactRef, *, max_bytes: int) -> str | None:
@@ -82,6 +92,13 @@ def _path_from_uri(uri: str) -> Path | None:
         return None
     path = Path(parsed.path)
     return path if path.is_file() else None
+
+
+def _stored_artifact_basename(name: str) -> str:
+    """Return the original basename from persisted refs like ``artifact_id--file.md``."""
+    if "--" not in name:
+        return name
+    return name.split("--", 1)[1]
 
 
 def _read_text_from_uri(uri: str, *, max_bytes: int) -> str | None:

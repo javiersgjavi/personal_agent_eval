@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
 from statistics import mean, median
 from typing import Any, Protocol
@@ -27,6 +29,7 @@ from personal_agent_eval.deterministic import DeterministicEvaluator
 from personal_agent_eval.deterministic.models import DeterministicEvaluationResult
 from personal_agent_eval.domains.llm_probe import OpenRouterClient, run_llm_probe_case
 from personal_agent_eval.domains.openclaw import run_openclaw_case
+from personal_agent_eval.domains.openclaw.runner import _OPENROUTER_PRICING_USD_PER_MILLION
 from personal_agent_eval.domains.openclaw.workspace import materialize_openclaw_workspace
 from personal_agent_eval.fingerprints import (
     RunFingerprintInput,
@@ -1386,6 +1389,10 @@ def _latency_from_run_artifact(run_artifact: RunArtifact) -> float | None:
 
 def _usage_from_run_artifact(run_artifact: RunArtifact) -> UsageSummary:
     normalized = run_artifact.usage.normalized
+    if run_artifact.usage.cost_usd is None and run_artifact.identity.runner_type == "openclaw":
+        fallback = _usage_from_legacy_openclaw_trace(run_artifact)
+        if fallback is not None:
+            return fallback
     return UsageSummary(
         input_tokens=normalized.input_tokens or 0,
         output_tokens=normalized.output_tokens or 0,
@@ -1395,6 +1402,65 @@ def _usage_from_run_artifact(run_artifact: RunArtifact) -> UsageSummary:
         cache_write_tokens=normalized.cache_write_tokens or 0,
         cost_usd=run_artifact.usage.cost_usd or 0.0,
     )
+
+
+def _usage_from_legacy_openclaw_trace(run_artifact: RunArtifact) -> UsageSummary | None:
+    requested_model = run_artifact.request.requested_model
+    pricing = _OPENROUTER_PRICING_USD_PER_MILLION.get(requested_model)
+    if pricing is None:
+        return None
+    usages: list[Mapping[str, Any]] = []
+    for event in run_artifact.trace:
+        if event.event_type != "final_output" or not hasattr(event, "content"):
+            continue
+        content = event.content
+        if not isinstance(content, str) or '"agentMeta"' not in content:
+            continue
+        try:
+            payload = json.loads(content)
+        except json.JSONDecodeError:
+            continue
+        usage = _extract_openclaw_agent_usage(payload)
+        if usage is not None:
+            usages.append(usage)
+    if not usages:
+        return None
+
+    input_tokens = sum(_coerce_usage_int(item.get("input")) for item in usages)
+    output_tokens = sum(_coerce_usage_int(item.get("output")) for item in usages)
+    total_tokens = sum(_coerce_usage_int(item.get("total")) for item in usages)
+    cached_input_tokens = sum(_coerce_usage_int(item.get("cacheRead")) for item in usages)
+    cache_write_tokens = sum(_coerce_usage_int(item.get("cacheWrite")) for item in usages)
+    cost = 0.0
+    for item in usages:
+        for usage_key in ("input", "output", "cacheRead", "cacheWrite"):
+            tokens = _coerce_usage_int(item.get(usage_key))
+            price = pricing.get(usage_key)
+            if price is not None:
+                cost += tokens * price / 1_000_000
+    return UsageSummary(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=total_tokens,
+        cached_input_tokens=cached_input_tokens,
+        cache_write_tokens=cache_write_tokens,
+        cost_usd=cost,
+    )
+
+
+def _extract_openclaw_agent_usage(payload: object) -> Mapping[str, Any] | None:
+    if not isinstance(payload, Mapping):
+        return None
+    raw_meta = payload.get("meta")
+    if not isinstance(raw_meta, Mapping):
+        return None
+    raw_agent_meta = raw_meta.get("agentMeta")
+    if not isinstance(raw_agent_meta, Mapping):
+        return None
+    raw_usage = raw_agent_meta.get("usage")
+    if not isinstance(raw_usage, Mapping):
+        return None
+    return raw_usage
 
 
 def _usage_from_judge_result(judge_result: AggregatedJudgeResult) -> UsageSummary:

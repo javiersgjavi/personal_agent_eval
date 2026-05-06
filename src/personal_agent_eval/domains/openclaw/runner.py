@@ -34,6 +34,7 @@ from personal_agent_eval.artifacts import (
 from personal_agent_eval.artifacts.run_artifact import (
     FinalOutputTraceEvent,
     MessageTraceEvent,
+    NormalizedUsage,
     RunnerTraceEvent,
     TraceEvent,
     UsageMetadata,
@@ -93,6 +94,57 @@ _OPENCLAW_DOCKER_HOST_ENV_EXACT: frozenset[str] = frozenset(
         "COHERE_API_KEY",
     }
 )
+
+_OPENROUTER_PRICING_USD_PER_MILLION: dict[str, dict[str, float]] = {
+    "anthropic/claude-sonnet-4.6": {
+        "input": 3.0,
+        "output": 15.0,
+        "cacheRead": 0.30,
+        "cacheWrite": 3.75,
+    },
+    "anthropic/claude-opus-4.6": {
+        "input": 5.0,
+        "output": 25.0,
+        "cacheRead": 0.50,
+        "cacheWrite": 6.25,
+    },
+    "deepseek/deepseek-v4-flash": {
+        "input": 0.14,
+        "output": 0.28,
+        "cacheRead": 0.028,
+        "cacheWrite": 0.14,
+    },
+    "deepseek/deepseek-v4-pro": {
+        "input": 0.435,
+        "output": 0.87,
+        "cacheRead": 0.145,
+        "cacheWrite": 0.435,
+    },
+    "google/gemma-4-31b-it": {
+        "input": 0.13,
+        "output": 0.38,
+        "cacheRead": 0.13,
+        "cacheWrite": 0.13,
+    },
+    "moonshotai/kimi-k2.6": {
+        "input": 0.74,
+        "output": 3.49,
+        "cacheRead": 0.74,
+        "cacheWrite": 0.74,
+    },
+    "openai/gpt-5.5": {
+        "input": 5.0,
+        "output": 30.0,
+        "cacheRead": 0.50,
+        "cacheWrite": 5.0,
+    },
+    "z-ai/glm-5.1": {
+        "input": 1.05,
+        "output": 3.50,
+        "cacheRead": 1.05,
+        "cacheWrite": 1.05,
+    },
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -347,6 +399,7 @@ def run_openclaw_case(
             log_path=command_log_path,
             workspace_snapshot_path=workspace_snapshot_path,
             workspace_diff_path=workspace_diff_path,
+            workspace_dir=workspace_dir,
             key_output_paths=[],
         )
 
@@ -454,7 +507,10 @@ def run_openclaw_case(
         ),
         request=request,
         provider=provider.model_copy(update={"metadata": {"returncode": run_result.returncode}}),
-        usage=UsageMetadata(),
+        usage=_build_usage_metadata_from_openclaw_payloads(
+            run_payload_texts=[item[2] for item in turn_results],
+            requested_model=model_selection.requested_model,
+        ),
         trace=trace_builder.events,
         error=error,
         output_artifacts=[
@@ -463,6 +519,7 @@ def run_openclaw_case(
                 artifact_id=f"openclaw_key_output_{index + 1}",
                 artifact_type=OpenClawEvidenceArtifactTypes.KEY_OUTPUT,
                 media_type=_media_type_for_path(path),
+                metadata=_workspace_relative_metadata(path=path, workspace_dir=workspace_dir),
             )
             for index, path in enumerate(key_output_paths)
         ],
@@ -476,6 +533,7 @@ def run_openclaw_case(
         log_path=command_log_path,
         workspace_snapshot_path=workspace_snapshot_path,
         workspace_diff_path=workspace_diff_path,
+        workspace_dir=workspace_dir,
         key_output_paths=key_output_paths,
         observable_summary=_build_openclaw_observable_summary(
             run_payload_text=run_payload_text,
@@ -825,6 +883,7 @@ def _attach_openclaw_evidence(
     log_path: Path,
     workspace_snapshot_path: Path,
     workspace_diff_path: Path,
+    workspace_dir: Path,
     key_output_paths: list[Path],
     observable_summary: dict[str, Any] | None = None,
 ) -> RunArtifact:
@@ -867,6 +926,7 @@ def _attach_openclaw_evidence(
                 artifact_id=f"openclaw_key_output_{index + 1}",
                 artifact_type=OpenClawEvidenceArtifactTypes.KEY_OUTPUT,
                 media_type=_media_type_for_path(path),
+                metadata=_workspace_relative_metadata(path=path, workspace_dir=workspace_dir),
             )
             for index, path in enumerate(key_output_paths)
         ],
@@ -924,9 +984,105 @@ def _parse_openclaw_payload(raw_text: str) -> dict[str, Any] | None:
             "payloads" in payload
             or "finalAssistantVisibleText" in payload
             or "finalPromptText" in payload
+            or (
+                isinstance(payload.get("meta"), Mapping)
+                and isinstance(payload["meta"].get("agentMeta"), Mapping)
+            )
             or (isinstance(payload.get("meta"), Mapping) and "toolSummary" in payload["meta"])
         ):
             return payload
+    return None
+
+
+def _build_usage_metadata_from_openclaw_payloads(
+    *,
+    run_payload_texts: list[str],
+    requested_model: str | None,
+) -> UsageMetadata:
+    raw_usages: list[Mapping[str, Any]] = []
+    for run_payload_text in run_payload_texts:
+        payload = _parse_openclaw_payload(run_payload_text)
+        if payload is None:
+            continue
+        raw_usage = _extract_openclaw_agent_usage(payload)
+        if raw_usage is not None:
+            raw_usages.append(raw_usage)
+    if not raw_usages:
+        return UsageMetadata()
+
+    raw_usage = _sum_openclaw_agent_usages(raw_usages)
+    normalized = NormalizedUsage(
+        input_tokens=_coerce_usage_int(raw_usage.get("input")),
+        output_tokens=_coerce_usage_int(raw_usage.get("output")),
+        total_tokens=_coerce_usage_int(raw_usage.get("total")),
+        cached_input_tokens=_coerce_usage_int(raw_usage.get("cacheRead")),
+        cache_write_tokens=_coerce_usage_int(raw_usage.get("cacheWrite")),
+    )
+    cost_usd = _estimate_openrouter_cost_usd(
+        usage=raw_usage,
+        requested_model=requested_model,
+    )
+    return UsageMetadata(
+        normalized=normalized,
+        cost_usd=cost_usd,
+        raw_provider_usage=dict(raw_usage),
+    )
+
+
+def _sum_openclaw_agent_usages(usages: list[Mapping[str, Any]]) -> dict[str, int]:
+    totals: dict[str, int] = {}
+    for usage in usages:
+        for key in ("input", "output", "total", "cacheRead", "cacheWrite"):
+            value = _coerce_usage_int(usage.get(key))
+            if value is not None:
+                totals[key] = totals.get(key, 0) + value
+    return totals
+
+
+def _extract_openclaw_agent_usage(payload: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    raw_meta = payload.get("meta")
+    if not isinstance(raw_meta, Mapping):
+        return None
+    raw_agent_meta = raw_meta.get("agentMeta")
+    if not isinstance(raw_agent_meta, Mapping):
+        return None
+    raw_usage = raw_agent_meta.get("usage")
+    if not isinstance(raw_usage, Mapping):
+        return None
+    return raw_usage
+
+
+def _estimate_openrouter_cost_usd(
+    *,
+    usage: Mapping[str, Any],
+    requested_model: str | None,
+) -> float | None:
+    if requested_model is None:
+        return None
+    pricing = _OPENROUTER_PRICING_USD_PER_MILLION.get(requested_model)
+    if pricing is None:
+        return None
+    cost = 0.0
+    for usage_key in ("input", "output", "cacheRead", "cacheWrite"):
+        tokens = _coerce_usage_int(usage.get(usage_key))
+        price = pricing.get(usage_key)
+        if tokens is not None and price is not None:
+            cost += tokens * price / 1_000_000
+    return cost
+
+
+def _coerce_usage_int(value: Any) -> int | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return None
     return None
 
 
@@ -955,6 +1111,7 @@ def _artifact_ref_for_path(
     artifact_id: str,
     artifact_type: str,
     media_type: str | None,
+    metadata: dict[str, Any] | None = None,
 ) -> OutputArtifactRef:
     payload = path.read_bytes()
     return OutputArtifactRef(
@@ -964,7 +1121,16 @@ def _artifact_ref_for_path(
         media_type=media_type,
         byte_size=len(payload),
         sha256=hashlib.sha256(payload).hexdigest(),
+        metadata=metadata or {},
     )
+
+
+def _workspace_relative_metadata(*, path: Path, workspace_dir: Path) -> dict[str, Any]:
+    try:
+        relative_path = path.resolve().relative_to(workspace_dir.resolve()).as_posix()
+    except ValueError:
+        return {}
+    return {"workspace_relative_path": relative_path}
 
 
 def _media_type_for_path(path: Path) -> str | None:
