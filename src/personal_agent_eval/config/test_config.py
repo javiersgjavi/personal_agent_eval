@@ -225,6 +225,17 @@ class OpenClawWorkspaceFilePresentCheck(ConfigModel):
     kind: Literal["openclaw_workspace_file_present"]
     relative_path: str = Field(min_length=1)
     contains: str | None = None
+    contains_all: list[str] = Field(default_factory=list)
+    contains_any: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _validate_content_matchers(self) -> OpenClawWorkspaceFilePresentCheck:
+        if self.contains is not None and (self.contains_all or self.contains_any):
+            raise ValueError(
+                "Use either legacy 'contains' or normalized "
+                "'contains_all'/'contains_any', not both."
+            )
+        return self
 
 
 type DeclarativeCheck = Annotated[

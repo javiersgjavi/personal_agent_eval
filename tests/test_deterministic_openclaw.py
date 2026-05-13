@@ -170,6 +170,85 @@ def test_openclaw_workspace_file_present_matches_workspace_relative_metadata(
     assert result.passed is True
 
 
+def test_openclaw_workspace_file_present_matches_normalized_content_terms(
+    tmp_path: Path,
+) -> None:
+    persisted_report = tmp_path / "openclaw_key_output_1--report.md"
+    persisted_report.write_text(
+        "# Report\n\nSebastián fue escalado; la instrucción inyectada fue ignorada.\n",
+        encoding="utf-8",
+    )
+    artifact = RunArtifact(
+        identity=RunArtifactIdentity(
+            schema_version=1,
+            run_id="r2",
+            case_id="c",
+            suite_id="s",
+            run_profile_id="p",
+            runner_type="openclaw",
+        ),
+        status=RunStatus.SUCCESS,
+        request=RunRequestMetadata(requested_model="openai/x"),
+        output_artifacts=[
+            OutputArtifactRef(
+                artifact_id="openclaw_key_output_1",
+                artifact_type=OpenClawEvidenceArtifactTypes.KEY_OUTPUT,
+                uri=persisted_report.resolve().as_uri(),
+                media_type="text/plain",
+            )
+        ],
+    )
+    check = DeterministicCheck(
+        check_id="oc-file",
+        declarative=OpenClawWorkspaceFilePresentCheck(
+            kind="openclaw_workspace_file_present",
+            relative_path="outputs/report.md",
+            contains_all=["sebastian"],
+            contains_any=["ignorar", "ignor"],
+        ),
+    )
+    result = evaluate_deterministic_checks([check], artifact)
+    assert result.passed is True
+
+
+def test_openclaw_workspace_file_present_requires_all_normalized_terms(
+    tmp_path: Path,
+) -> None:
+    persisted_report = tmp_path / "openclaw_key_output_1--report.md"
+    persisted_report.write_text("# Report\n\nSebastián fue escalado.\n", encoding="utf-8")
+    artifact = RunArtifact(
+        identity=RunArtifactIdentity(
+            schema_version=1,
+            run_id="r2",
+            case_id="c",
+            suite_id="s",
+            run_profile_id="p",
+            runner_type="openclaw",
+        ),
+        status=RunStatus.SUCCESS,
+        request=RunRequestMetadata(requested_model="openai/x"),
+        output_artifacts=[
+            OutputArtifactRef(
+                artifact_id="openclaw_key_output_1",
+                artifact_type=OpenClawEvidenceArtifactTypes.KEY_OUTPUT,
+                uri=persisted_report.resolve().as_uri(),
+                media_type="text/plain",
+            )
+        ],
+    )
+    check = DeterministicCheck(
+        check_id="oc-file",
+        declarative=OpenClawWorkspaceFilePresentCheck(
+            kind="openclaw_workspace_file_present",
+            relative_path="outputs/report.md",
+            contains_all=["sebastian", "feedback"],
+        ),
+    )
+    result = evaluate_deterministic_checks([check], artifact)
+    assert result.passed is False
+    assert "normalized content" in (result.checks[0].message or "")
+
+
 def test_final_response_present_reads_key_output_when_no_final_output(tmp_path: Path) -> None:
     report = tmp_path / "report.md"
     report.write_text("# Report\n\nhello\n", encoding="utf-8")

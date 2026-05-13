@@ -60,13 +60,28 @@ def _scale_latencies(latencies: list[float | None]) -> list[float]:
     return sizes
 
 
-def _label_offsets(costs: list[float]) -> list[tuple[int, int]]:
+_LABEL_OFFSET_OVERRIDES: dict[str, tuple[int, int]] = {
+    "gpt55": (-18, -30),
+    "glm_51": (-10, 26),
+    "claude_sonnet_46": (20, -26),
+    "claude_opus_46": (-18, 16),
+    "gemma_4_31b": (18, -18),
+    "deepseek_v4_flash": (18, 26),
+    "deepseek_v4_pro": (20, -24),
+    "kimi_k26": (18, -26),
+}
+
+
+def _label_offsets(labels: list[str], costs: list[float]) -> list[tuple[int, int]]:
     x_min = min(costs)
     x_max = max(costs)
     x_range = x_max - x_min or 1.0
     vertical = [12, -16, 18, -20, 4, -8, 24, -24]
     offsets: list[tuple[int, int]] = []
-    for index, x_value in enumerate(costs):
+    for index, (label, x_value) in enumerate(zip(labels, costs, strict=True)):
+        if label in _LABEL_OFFSET_OVERRIDES:
+            offsets.append(_LABEL_OFFSET_OVERRIDES[label])
+            continue
         if x_value <= x_min + x_range * 0.12:
             dx = 14
         elif x_value >= x_max - x_range * 0.12:
@@ -136,7 +151,7 @@ def render_score_cost_chart_png(
 
     for (x, y, label), (dx, dy) in zip(
         zip(costs, scores, labels, strict=True),
-        _label_offsets(costs),
+        _label_offsets(labels, costs),
         strict=True,
     ):
         ax.annotate(

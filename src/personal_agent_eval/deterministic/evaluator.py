@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import importlib.util
 import inspect
+import unicodedata
 from pathlib import Path
 from types import ModuleType
 from typing import Any, Literal
@@ -358,6 +359,24 @@ class DeterministicEvaluator:
                 outputs={"relative_path": declarative.relative_path, "matched_count": 0},
             )
         if declarative.contains is None:
+            if declarative.contains_all or declarative.contains_any:
+                texts = [read_output_artifact_text(ref, max_bytes=512_000) or "" for ref in matches]
+                passed = any(_matches_normalized_content(declarative, text) for text in texts)
+                return self._result(
+                    check=check,
+                    kind=declarative.kind,
+                    source="declarative",
+                    passed=passed,
+                    message=None
+                    if passed
+                    else "Matched workspace file did not satisfy normalized content matchers.",
+                    outputs={
+                        "relative_path": declarative.relative_path,
+                        "matched_count": len(matches),
+                        "contains_all": declarative.contains_all,
+                        "contains_any": declarative.contains_any,
+                    },
+                )
             return self._result(
                 check=check,
                 kind=declarative.kind,
@@ -553,6 +572,23 @@ class DeterministicEvaluator:
             description=check.description,
             message=message,
         )
+
+
+def _matches_normalized_content(
+    declarative: OpenClawWorkspaceFilePresentCheck,
+    text: str,
+) -> bool:
+    normalized_text = _normalize_match_text(text)
+    required_terms = [_normalize_match_text(term) for term in declarative.contains_all]
+    optional_terms = [_normalize_match_text(term) for term in declarative.contains_any]
+    return all(term in normalized_text for term in required_terms) and (
+        not optional_terms or any(term in normalized_text for term in optional_terms)
+    )
+
+
+def _normalize_match_text(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text.casefold())
+    return "".join(char for char in normalized if not unicodedata.combining(char))
 
 
 def evaluate_test_config_deterministic_checks(
