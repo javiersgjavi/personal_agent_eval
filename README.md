@@ -134,6 +134,18 @@ The deterministic and judge layers are independent. Changing the judge model re-
 
 ---
 
+## Example visual output
+
+The repo does not publish my private evaluation scenarios. Those are more useful when they stay private and do not leak into model training or benchmark tuning.
+
+It does include the runner, example cases, docs, and the charting/reporting pipeline. This is an example score/cost chart generated from one of my private OpenClaw benchmark runs:
+
+![Example OpenClaw private benchmark score/cost chart](docs/assets/openclaw-private-benchmark-score-cost.png)
+
+Each bubble is one model. Higher is better, further left is cheaper, and larger bubbles took longer on average.
+
+---
+
 ## Scoring
 
 Every case is scored on six dimensions (0–10 scale):
