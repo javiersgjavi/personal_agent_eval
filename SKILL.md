@@ -89,6 +89,7 @@ Authoring rules:
 - For GPT-5.x reasoning, set `primary_params.reasoning.effort` on suite models for OpenClaw primaries, and `request_options.reasoning.effort` on judges. Typical values are `medium` for thinking and `none` for fast/no-reasoning judging.
 - Include `expectations` and `rubric` whenever possible. They make judge output more stable and easier to debug.
 - Add deterministic checks for hard evidence: `final_response_present`, file checks for `llm_probe`, and `openclaw_workspace_file_present` for OpenClaw workspace outputs.
+- For stricter OpenClaw artifact checks, prefer `contains_all` / `contains_any` on `openclaw_workspace_file_present`. These match normalized text (case-folded, accents stripped), so Spanish names and casing do not create false negatives. Use legacy `contains` only when you need exact substring matching; do not mix both styles in one check.
 
 Do not duplicate full YAML examples in this file. If a field is unclear, open `skill/references/config-fields.md`; if an OpenClaw workspace/agent detail is unclear, open `skill/references/openclaw-agents.md`.
 
@@ -234,6 +235,8 @@ The workspace is copied into an ephemeral directory before each run. The agent s
 
 **Do not set `agent.prompt` in `agent.yaml` unless you intend to test a modified configuration.** Omitting it is the correct default. OpenClaw has its own internal system prompt that is separate from the workspace files — those files are context the agent reads, not the system prompt itself. Setting `agent.prompt` replaces that internal prompt, which modifies the OpenClaw harness and means you are no longer benchmarking the same agent your users interact with.
 
+To benchmark a real OpenClaw agent, import or copy its workspace into `configs/agents/<agent_id>/workspace/`. Keep memory, skills, tool notes, and context files if they are part of the agent you actually use. The framework runs that workspace inside the pinned OpenClaw image from the run profile, so the evaluation covers the full agent definition rather than a stripped prompt-only fixture.
+
 Then wire the agent into your run profile:
 
 ```yaml
@@ -257,6 +260,21 @@ Add to `models:` in the suite YAML and re-run. Only the new model's cases execut
 ### Add a new test case
 
 Create `configs/cases/<new_case_id>/test.yaml` or `configs/cases/<group>/<new_case_id>/test.yaml`, add the ID to `case_selection.include_case_ids`, re-run.
+
+### Add a stricter OpenClaw workspace check
+
+Use normalized content matchers when exact accents or casing should not matter:
+
+```yaml
+deterministic_checks:
+  - check_id: report-has-evidence
+    dimensions: [task, process]
+    declarative:
+      kind: openclaw_workspace_file_present
+      relative_path: outputs/report.md
+      contains_all: [sebastian, feedback]
+      contains_any: [ignorar, ignor]
+```
 
 ### Change the judge without re-running
 

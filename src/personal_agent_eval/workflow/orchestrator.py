@@ -8,7 +8,7 @@ import tempfile
 from collections.abc import Mapping
 from pathlib import Path
 from statistics import mean, median
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 from uuid import uuid4
 
 from personal_agent_eval.aggregation import HybridAggregator
@@ -1451,16 +1451,19 @@ def _usage_from_legacy_openclaw_trace(run_artifact: RunArtifact) -> UsageSummary
 def _extract_openclaw_agent_usage(payload: object) -> Mapping[str, Any] | None:
     if not isinstance(payload, Mapping):
         return None
-    raw_meta = payload.get("meta")
+    payload_mapping = cast(Mapping[str, Any], payload)
+    raw_meta = payload_mapping.get("meta")
     if not isinstance(raw_meta, Mapping):
         return None
-    raw_agent_meta = raw_meta.get("agentMeta")
+    meta_mapping = cast(Mapping[str, Any], raw_meta)
+    raw_agent_meta = meta_mapping.get("agentMeta")
     if not isinstance(raw_agent_meta, Mapping):
         return None
-    raw_usage = raw_agent_meta.get("usage")
+    agent_meta_mapping = cast(Mapping[str, Any], raw_agent_meta)
+    raw_usage = agent_meta_mapping.get("usage")
     if not isinstance(raw_usage, Mapping):
         return None
-    return raw_usage
+    return cast(Mapping[str, Any], raw_usage)
 
 
 def _usage_from_judge_result(judge_result: AggregatedJudgeResult) -> UsageSummary:

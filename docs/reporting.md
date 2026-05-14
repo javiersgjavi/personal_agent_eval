@@ -162,6 +162,7 @@ For `pae eval`, `pae run-eval`, and `pae report`, the CLI writes a PNG bubble ch
 - X axis: total cost per model (USD)
 - Y axis: mean final score per model
 - Bubble area: proportional to mean run latency
+- Labels are offset from the bubbles to avoid hiding points. The renderer also has small per-model overrides for known crowded labels in the OpenClaw benchmark.
 
 ```bash
 # use the default path

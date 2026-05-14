@@ -183,6 +183,7 @@ For `pae eval`, `pae run-eval`, and `pae report`, the CLI writes a PNG chart by 
 
 - **Default path:** `outputs/charts/<evaluation_profile_id>/score_cost.png`
 - Each bubble is one model; X axis = total cost, Y axis = mean score, bubble size = mean latency
+- Labels are drawn next to the bubbles rather than inside them; the renderer includes small overrides for crowded OpenClaw benchmark labels.
 - Requires the optional `[charts]` extra: `uv sync --extra charts`
 
 ```bash

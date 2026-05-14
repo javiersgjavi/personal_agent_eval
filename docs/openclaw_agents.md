@@ -132,7 +132,9 @@ If you have an existing OpenClaw deployment, capture its workspace directly:
 openclaw onboard --output configs/agents/my_agent/workspace/
 ```
 
-This produces the standard workspace files populated with the agent's actual configuration. The `basic_agent` in this repo was captured this way from `ghcr.io/openclaw/openclaw:2026.4.15`.
+This produces the standard workspace files populated with the agent's actual configuration. You can also copy an existing workspace into `configs/agents/<agent_id>/workspace/` if you already have one exported. Keep the real memory, skills, tool notes, and context files if the goal is to benchmark the agent as you actually use it.
+
+The benchmark copies that workspace into a fresh OpenClaw run directory and executes it through the pinned image in the run profile. That means the subject under test is the real agent definition, not a simplified prompt-only version. The `basic_agent` in this repo was captured this way from `ghcr.io/openclaw/openclaw:2026.4.15`.
 
 ### From an existing agent
 

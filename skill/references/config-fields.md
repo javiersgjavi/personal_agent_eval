@@ -172,9 +172,11 @@ Valid dimension names: `task`, `process`, `autonomy`, `closeness`, `efficiency`,
 | `path_exists` | `path` | Path exists (file or directory) |
 | `status_is` | `expected` | Terminal run status matches (`success`, `failed`, `timed_out`, `invalid`, `provider_error`) |
 | `output_artifact_present` | `artifact_type`? | Run artifact records a matching output artifact |
-| `openclaw_workspace_file_present` | `relative_path`, `contains`? | Workspace diff contains the file (OpenClaw only) |
+| `openclaw_workspace_file_present` | `relative_path`, `contains`?, `contains_all`?, `contains_any`? | Workspace diff contains the file (OpenClaw only); `contains_all` / `contains_any` use normalized case/accent-insensitive matching |
 
 Paths in checks resolve relative to `test.yaml`.
+
+For `openclaw_workspace_file_present`, use either legacy `contains` or the normalized `contains_all` / `contains_any` fields. The normalized fields case-fold text and strip accents, so `Sebastián` matches `sebastian`. `contains_all` requires every listed term; `contains_any` requires at least one listed term when present.
 
 #### PythonHook
 

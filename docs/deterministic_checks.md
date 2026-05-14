@@ -121,7 +121,14 @@ deterministic_checks:
 
 ### `openclaw_workspace_file_present`
 
-For `openclaw` runs only. Passes if a recorded output artifact resolves to a workspace file whose path ends with the given `relative_path`. Optionally also checks that the file contains a specific substring.
+For `openclaw` runs only. Passes if a recorded output artifact resolves to a workspace file whose path ends with the given `relative_path`.
+
+Content checks have two modes:
+
+- `contains`: legacy exact substring match.
+- `contains_all` / `contains_any`: normalized matching. Text is case-folded and accents are stripped, so `Sebastián` matches `sebastian`.
+
+Do not mix `contains` with `contains_all` or `contains_any` in the same check.
 
 ```yaml
 deterministic_checks:
@@ -137,6 +144,14 @@ deterministic_checks:
       kind: openclaw_workspace_file_present
       relative_path: report.md
       contains: openclaw-tool-example
+
+  - check_id: report-md-has-normalized-evidence
+    dimensions: [task, process]
+    declarative:
+      kind: openclaw_workspace_file_present
+      relative_path: report.md
+      contains_all: [sebastian, feedback]
+      contains_any: [ignorar, ignor]
 ```
 
 ---
