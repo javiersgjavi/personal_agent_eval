@@ -1,0 +1,3491 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Open evaluation framework for LLM and agent-based systems">
+      
+      
+      
+        <link rel="canonical" href="https://javiersgjavi.github.io/personal_agent_eval/configuration/">
+      
+      
+        <link rel="prev" href="../config_model/">
+      
+      
+        <link rel="next" href="../cli/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Configuration Reference - personal_agent_eval</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#configuration-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="personal_agent_eval" class="md-header__button md-logo" aria-label="personal_agent_eval" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            personal_agent_eval
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Configuration Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/javiersgjavi/personal_agent_eval" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    javiersgjavi/personal_agent_eval
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../getting_started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../concepts/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Concepts
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../config_model/" class="md-tabs__link">
+          
+  
+  
+  How It Works
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../deterministic_checks/" class="md-tabs__link">
+          
+  
+  
+  Evaluation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../run_artifacts/" class="md-tabs__link">
+          
+  
+  
+  Outputs
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../examples/runnable_examples/" class="md-tabs__link">
+          
+  
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="personal_agent_eval" class="md-nav__button md-logo" aria-label="personal_agent_eval" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    personal_agent_eval
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/javiersgjavi/personal_agent_eval" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    javiersgjavi/personal_agent_eval
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How It Works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-case-testyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test case (test.yaml)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test case (test.yaml)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#top-level-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        runner
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        input
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="input">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#message" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#messagesource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MessageSource
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openclaw-multiturn-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenClaw multiturn input
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attachments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attachments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inputcontextllm_probe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        input.context.llm_probe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inputcontextopenclaw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        input.context.openclaw
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expectations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        expectations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="expectations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#expectation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expectation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rubric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rubric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deterministic_checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        deterministic_checks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="deterministic_checks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#declarative-check-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declarative check kinds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pythonhook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PythonHook
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minimal-testyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal test.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#suite-suiteyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suite (suite.yaml)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Suite (suite.yaml)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#top-level-fields_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#models-modelconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        models — ModelConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#case_selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        case_selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openclawagent_assignments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        openclaw.agent_assignments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-profile-run_profileyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run profile (run_profile.yaml)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Run profile (run_profile.yaml)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#top-level-fields_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runner_defaults-model_overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        runner_defaults / model_overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution_policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        execution_policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openclaw-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        openclaw block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-profile-evaluation_profileyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation profile (evaluation_profile.yaml)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Evaluation profile (evaluation_profile.yaml)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#top-level-fields_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#judges-judgeconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        judges — JudgeConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#judge_runs-judgerunconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        judge_runs — JudgeRunConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aggregation-how-iterations-combine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        aggregation — how iterations combine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anchors-calibration-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        anchors — calibration examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security_policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        security_policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openclaw-agent-configsagentsagent_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenClaw agent (configs/agents/&lt;agent_id&gt;/)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OpenClaw agent (configs/agents/&lt;agent_id&gt;/)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentyaml-top-level-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        agent.yaml top-level fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openclaw-fragments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        openclaw fragments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workspace-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workspace contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fingerprints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fingerprints & Reuse
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../openclaw_agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenClaw Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deterministic_checks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deterministic Checks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../judge_prompt_redesign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Judge Prompt Redesign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../judge_results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Judge Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hybrid_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hybrid Evaluation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Outputs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Outputs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run_artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reporting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reporting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/runnable_examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runnable Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/minimal_llm_probe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    llm_probe Walkthrough
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/minimal_openclaw/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenClaw Walkthrough
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-case-testyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test case (test.yaml)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test case (test.yaml)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#top-level-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        runner
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        input
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="input">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#message" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#messagesource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MessageSource
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openclaw-multiturn-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenClaw multiturn input
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attachments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attachments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inputcontextllm_probe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        input.context.llm_probe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inputcontextopenclaw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        input.context.openclaw
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expectations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        expectations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="expectations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#expectation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expectation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rubric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rubric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deterministic_checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        deterministic_checks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="deterministic_checks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#declarative-check-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declarative check kinds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pythonhook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PythonHook
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minimal-testyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal test.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#suite-suiteyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suite (suite.yaml)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Suite (suite.yaml)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#top-level-fields_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#models-modelconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        models — ModelConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#case_selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        case_selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openclawagent_assignments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        openclaw.agent_assignments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-profile-run_profileyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run profile (run_profile.yaml)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Run profile (run_profile.yaml)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#top-level-fields_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runner_defaults-model_overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        runner_defaults / model_overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution_policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        execution_policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openclaw-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        openclaw block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-profile-evaluation_profileyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation profile (evaluation_profile.yaml)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Evaluation profile (evaluation_profile.yaml)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#top-level-fields_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#judges-judgeconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        judges — JudgeConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#judge_runs-judgerunconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        judge_runs — JudgeRunConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aggregation-how-iterations-combine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        aggregation — how iterations combine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anchors-calibration-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        anchors — calibration examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security_policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        security_policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openclaw-agent-configsagentsagent_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenClaw agent (configs/agents/&lt;agent_id&gt;/)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OpenClaw agent (configs/agents/&lt;agent_id&gt;/)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentyaml-top-level-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        agent.yaml top-level fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openclaw-fragments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        openclaw fragments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workspace-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workspace contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="configuration-reference">Configuration Reference<a class="headerlink" href="#configuration-reference" title="Permanent link">&para;</a></h1>
+<p>All YAML files must declare <code>schema_version: 1</code> at the top. The loader raises an explicit <code>ConfigError</code> on any schema violation — there are no silent defaults for required fields.</p>
+<hr />
+<h2 id="quick-reference">Quick reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Config type</th>
+<th>Default path</th>
+<th>ID field</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test case</td>
+<td><code>configs/cases/&lt;case_id&gt;/test.yaml</code> or grouped as <code>configs/cases/&lt;group&gt;/&lt;case_id&gt;/test.yaml</code></td>
+<td><code>case_id</code></td>
+</tr>
+<tr>
+<td>Suite</td>
+<td><code>configs/suites/&lt;suite_id&gt;.yaml</code></td>
+<td><code>suite_id</code></td>
+</tr>
+<tr>
+<td>Run profile</td>
+<td><code>configs/run_profiles/&lt;profile_id&gt;.yaml</code></td>
+<td><code>run_profile_id</code></td>
+</tr>
+<tr>
+<td>Evaluation profile</td>
+<td><code>configs/evaluation_profiles/&lt;profile_id&gt;.yaml</code></td>
+<td><code>evaluation_profile_id</code></td>
+</tr>
+<tr>
+<td>OpenClaw agent</td>
+<td><code>configs/agents/&lt;agent_id&gt;/agent.yaml</code> + <code>workspace/</code></td>
+<td><code>agent_id</code></td>
+</tr>
+</tbody>
+</table>
+<p>CLI flags (<code>--suite</code>, <code>--run-profile</code>, <code>--evaluation-profile</code>) accept either an explicit YAML path or just the plain ID, which is resolved automatically under the conventional directory.</p>
+<hr />
+<h2 id="test-case-testyaml">Test case (<code>test.yaml</code>)<a class="headerlink" href="#test-case-testyaml" title="Permanent link">&para;</a></h2>
+<p>Defines one atomic evaluation scenario. The same case can be included in multiple suites and evaluated against multiple models without modification.</p>
+<h3 id="top-level-fields">Top-level fields<a class="headerlink" href="#top-level-fields" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schema_version</code></td>
+<td><code>1</code></td>
+<td>yes</td>
+<td>Must be <code>1</code></td>
+</tr>
+<tr>
+<td><code>case_id</code></td>
+<td>slug</td>
+<td>yes</td>
+<td>Unique identifier; used as directory name in <code>outputs/</code></td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Human-readable label</td>
+</tr>
+<tr>
+<td><code>runner</code></td>
+<td><code>RunnerConfig</code></td>
+<td>yes</td>
+<td>Runner type and optional case-level overrides</td>
+</tr>
+<tr>
+<td><code>input</code></td>
+<td><code>TestInput</code></td>
+<td>yes</td>
+<td>Messages, attachments, and runner context</td>
+</tr>
+<tr>
+<td><code>expectations</code></td>
+<td><code>Expectations</code></td>
+<td>no</td>
+<td>Hard/soft expectation list for the judge</td>
+</tr>
+<tr>
+<td><code>rubric</code></td>
+<td><code>Rubric</code></td>
+<td>no</td>
+<td>Scored anchors and criteria shown to the judge</td>
+</tr>
+<tr>
+<td><code>deterministic_checks</code></td>
+<td>list</td>
+<td>no</td>
+<td>Checks run against the <code>RunArtifact</code> without an LLM</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>list of strings</td>
+<td>no</td>
+<td>Free tags; used by <code>case_selection.include_tags</code> / <code>exclude_tags</code></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>mapping</td>
+<td>no</td>
+<td>Arbitrary key/value; not used by the framework</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="runner"><code>runner</code><a class="headerlink" href="#runner" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>"llm_probe"</code> or <code>"openclaw"</code></td>
+<td>yes</td>
+<td>Selects the runner implementation</td>
+</tr>
+</tbody>
+</table>
+<p>Any extra fields (e.g. <code>temperature: 0</code>) are treated as case-level runner overrides and take precedence over <code>run_profile.runner_defaults</code> but are overridden by <code>run_profile.model_overrides</code>.</p>
+<hr />
+<h3 id="input"><code>input</code><a class="headerlink" href="#input" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>messages</code></td>
+<td>list of <code>Message</code></td>
+<td><code>[]</code></td>
+<td>Ordered message sequence sent to the model; for OpenClaw multiturn cases, optional initial context</td>
+</tr>
+<tr>
+<td><code>turns</code></td>
+<td>list of <code>Message</code></td>
+<td><code>[]</code></td>
+<td>OpenClaw-only user turns executed as separate agent invocations in one session</td>
+</tr>
+<tr>
+<td><code>attachments</code></td>
+<td>list of paths</td>
+<td><code>[]</code></td>
+<td>Local files injected as extra user messages</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td>mapping</td>
+<td><code>{}</code></td>
+<td>Runner-specific context: tools, openclaw hints, etc.</td>
+</tr>
+</tbody>
+</table>
+<p>All relative paths in <code>input</code> resolve relative to the <code>test.yaml</code> file.</p>
+<h4 id="message">Message<a class="headerlink" href="#message" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>role</code></td>
+<td><code>"system"</code> / <code>"user"</code> / <code>"assistant"</code> / <code>"tool"</code></td>
+<td>yes</td>
+<td>Message role</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td>string</td>
+<td>one of <code>content</code> / <code>source</code></td>
+<td>Inline message text</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td><code>MessageSource</code></td>
+<td>one of <code>content</code> / <code>source</code></td>
+<td>External file reference</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>no</td>
+<td>Optional name annotation</td>
+</tr>
+</tbody>
+</table>
+<p><code>content</code> and <code>source</code> are mutually exclusive.</p>
+<h4 id="messagesource">MessageSource<a class="headerlink" href="#messagesource" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">source</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">messages/user_prompt.yaml</span><span class="w">   </span><span class="c1"># relative to test.yaml</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">yaml</span><span class="w">                      </span><span class="c1"># optional; auto-detected from extension</span>
+</code></pre></div>
+<p>The referenced file may resolve to a single message object or a list of messages.</p>
+<h4 id="openclaw-multiturn-input">OpenClaw multiturn input<a class="headerlink" href="#openclaw-multiturn-input" title="Permanent link">&para;</a></h4>
+<p>For <code>runner.type: openclaw</code>, <code>input.messages</code> preserves the existing single-turn behavior: the messages are rendered into one OpenClaw <code>--message</code> invocation. To test follow-up user messages, use <code>input.turns</code>. Each turn is sent through <code>openclaw agent --session-id &lt;run-session&gt;</code> using the same ephemeral workspace and <code>OPENCLAW_STATE_DIR</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">input</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">messages</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keep context across user turns.</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">turns</span><span class="p">:</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">user</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Create draft.md.</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">user</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Revise draft.md and create report.md.</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="nt">context</span><span class="p">:</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="nt">openclaw</span><span class="p">:</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">      </span><span class="nt">expected_artifact</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">report.md</span>
+</code></pre></div>
+<p>When <code>turns</code> is present, <code>messages</code> is treated as initial context and included with the first turn only. Final workspace checks run after the last successful turn, and the raw session trace records all turn payloads.</p>
+<h4 id="attachments">Attachments<a class="headerlink" href="#attachments" title="Permanent link">&para;</a></h4>
+<p>Files in <code>input.attachments</code> are injected as additional <code>user</code> messages just before the first <code>user</code> message:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Attached context file: &lt;filename&gt;
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>--- BEGIN ATTACHMENT &lt;filename&gt; ---
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>&lt;file content&gt;
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>--- END ATTACHMENT &lt;filename&gt; ---
+</code></pre></div>
+<p>Attachments are content-addressed in the fingerprint (SHA-256 + byte size), not path-addressed.</p>
+<h4 id="inputcontextllm_probe"><code>input.context.llm_probe</code><a class="headerlink" href="#inputcontextllm_probe" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tools</code></td>
+<td>list of strings</td>
+<td>Tools to expose to the model: <code>exec_shell</code>, <code>write_file</code>, <code>read_file</code>, <code>web_search</code>, etc.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="inputcontextopenclaw"><code>input.context.openclaw</code><a class="headerlink" href="#inputcontextopenclaw" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>expected_artifact</code></td>
+<td>string</td>
+<td>Hint for the harness: the filename of the expected output in the workspace</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="expectations"><code>expectations</code><a class="headerlink" href="#expectations" title="Permanent link">&para;</a></h3>
+<p>Shown to the judge as part of the evaluation target. Hard expectations are treated as critical requirements; soft ones are scored with partial credit.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hard_expectations</code></td>
+<td>list of <code>Expectation</code></td>
+<td>Requirements the judge must treat as critical</td>
+</tr>
+<tr>
+<td><code>soft_expectations</code></td>
+<td>list of <code>Expectation</code></td>
+<td>Requirements scored with partial credit</td>
+</tr>
+</tbody>
+</table>
+<h4 id="expectation">Expectation<a class="headerlink" href="#expectation" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Natural-language expectation statement</td>
+</tr>
+<tr>
+<td><code>weight</code></td>
+<td>float</td>
+<td>no (default <code>1.0</code>)</td>
+<td>Relative weight within the group</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="rubric"><code>rubric</code><a class="headerlink" href="#rubric" title="Permanent link">&para;</a></h3>
+<p>An optional structured rubric shown to the judge to calibrate scoring. It replaces free-form judge guessing with explicit anchors and criteria.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">rubric</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">scale</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">anchors</span><span class="p">:</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">      </span><span class="s">&quot;10&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">All required steps completed correctly and concisely.</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">      </span><span class="s">&quot;7&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Mostly correct with minor clarity issues.</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">      </span><span class="s">&quot;4&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Partial completion; missing a required step.</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">      </span><span class="s">&quot;0&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">No attempt, irrelevant output, or empty.</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span><span class="nt">criteria</span><span class="p">:</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Tool-grounded correctness</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">      </span><span class="nt">what_good_looks_like</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Uses required tools and reports observed results.</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">      </span><span class="nt">what_bad_looks_like</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Invents results or skips required steps.</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Concise confirmation</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">      </span><span class="nt">what_good_looks_like</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Confirms actions in 2–4 lines.</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">      </span><span class="nt">what_bad_looks_like</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Overly verbose or unclear.</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">  </span><span class="nt">scoring_instructions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="no">Use this rubric to set overall.score. Cap at ≤ 4 if a hard</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="no">expectation or deterministic check fails.</span>
+</code></pre></div>
+<hr />
+<h3 id="deterministic_checks"><code>deterministic_checks</code><a class="headerlink" href="#deterministic_checks" title="Permanent link">&para;</a></h3>
+<p>Each entry is a <code>DeterministicCheck</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>check_id</code></td>
+<td>slug</td>
+<td>yes</td>
+<td>Unique within the case</td>
+</tr>
+<tr>
+<td><code>dimensions</code></td>
+<td>list of dimension names</td>
+<td>no</td>
+<td>Dimensions this check affects in aggregation</td>
+</tr>
+<tr>
+<td><code>declarative</code></td>
+<td><code>DeclarativeCheck</code></td>
+<td>one of</td>
+<td>Built-in check specification</td>
+</tr>
+<tr>
+<td><code>python_hook</code></td>
+<td><code>PythonHook</code></td>
+<td>one of</td>
+<td>Custom Python callable</td>
+</tr>
+</tbody>
+</table>
+<p><code>declarative</code> and <code>python_hook</code> are mutually exclusive.</p>
+<p>Valid dimension names: <code>task</code>, <code>process</code>, <code>autonomy</code>, <code>closeness</code>, <code>efficiency</code>, <code>spark</code>.</p>
+<h4 id="declarative-check-kinds">Declarative check kinds<a class="headerlink" href="#declarative-check-kinds" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th><code>kind</code></th>
+<th>Extra fields</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>final_response_present</code></td>
+<td>—</td>
+<td>Non-empty final output in the trace (also checks last assistant message or workspace output for openclaw)</td>
+</tr>
+<tr>
+<td><code>tool_call_count</code></td>
+<td><code>count</code> (int)</td>
+<td>Exact tool call count</td>
+</tr>
+<tr>
+<td><code>file_exists</code></td>
+<td><code>path</code></td>
+<td>File exists on host filesystem</td>
+</tr>
+<tr>
+<td><code>file_contains</code></td>
+<td><code>path</code>, <code>text</code></td>
+<td>File exists and contains substring</td>
+</tr>
+<tr>
+<td><code>path_exists</code></td>
+<td><code>path</code></td>
+<td>Path exists (file or directory)</td>
+</tr>
+<tr>
+<td><code>status_is</code></td>
+<td><code>status</code></td>
+<td>Terminal run status matches</td>
+</tr>
+<tr>
+<td><code>output_artifact_present</code></td>
+<td><code>artifact_type</code>?</td>
+<td>Run artifact records a matching output artifact</td>
+</tr>
+<tr>
+<td><code>openclaw_workspace_file_present</code></td>
+<td><code>relative_path</code>, <code>contains</code>?, <code>contains_all</code>?, <code>contains_any</code>?</td>
+<td>Workspace diff contains the file (OpenClaw only); <code>contains_all</code> / <code>contains_any</code> use normalized case/accent-insensitive matching</td>
+</tr>
+</tbody>
+</table>
+<p>Paths resolve relative to <code>test.yaml</code>.</p>
+<p>For <code>openclaw_workspace_file_present</code>, use either legacy <code>contains</code> or the normalized <code>contains_all</code> / <code>contains_any</code> fields. The loader rejects checks that mix both styles.</p>
+<h4 id="pythonhook">PythonHook<a class="headerlink" href="#pythonhook" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">python_hook</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hooks/my_check.py</span><span class="w">        </span><span class="c1"># relative to test.yaml (mutually exclusive with import_path)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="c1"># import_path: my_pkg.checks   # dotted import path (mutually exclusive with path)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">callable_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_output</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Python hooks are disabled by default. Enable them with <code>security_policy.allow_local_python_hooks: true</code> in the evaluation profile.</p>
+</div>
+<hr />
+<h3 id="minimal-testyaml">Minimal <code>test.yaml</code><a class="headerlink" href="#minimal-testyaml" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">case_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my_case</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">My case</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nt">runner</span><span class="p">:</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">llm_probe</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nt">input</span><span class="p">:</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="nt">messages</span><span class="p">:</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">user</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">      </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">What is 2 + 2?</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="nt">expectations</span><span class="p">:</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">  </span><span class="nt">hard_expectations</span><span class="p">:</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Answers with 4.</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="nt">deterministic_checks</span><span class="p">:</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">check_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">response-present</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span><span class="nt">dimensions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">task</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="nt">declarative</span><span class="p">:</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">      </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">final_response_present</span>
+</code></pre></div>
+<hr />
+<h2 id="suite-suiteyaml">Suite (<code>suite.yaml</code>)<a class="headerlink" href="#suite-suiteyaml" title="Permanent link">&para;</a></h2>
+<p>Groups models with a case selection policy to form a benchmark campaign.</p>
+<h3 id="top-level-fields_1">Top-level fields<a class="headerlink" href="#top-level-fields_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schema_version</code></td>
+<td><code>1</code></td>
+<td>yes</td>
+<td>Must be <code>1</code></td>
+</tr>
+<tr>
+<td><code>suite_id</code></td>
+<td>slug</td>
+<td>yes</td>
+<td>Unique identifier</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Human-readable label</td>
+</tr>
+<tr>
+<td><code>models</code></td>
+<td>list of <code>ModelConfig</code></td>
+<td>no</td>
+<td>Models to run against the selected cases</td>
+</tr>
+<tr>
+<td><code>case_selection</code></td>
+<td><code>CaseSelection</code></td>
+<td>no</td>
+<td>Filters determining which cases are included</td>
+</tr>
+<tr>
+<td><code>openclaw</code></td>
+<td><code>SuiteOpenClawConfig</code></td>
+<td>no</td>
+<td>Optional per-case OpenClaw agent assignments</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>mapping</td>
+<td>no</td>
+<td>Arbitrary annotation bag</td>
+</tr>
+</tbody>
+</table>
+<h3 id="models-modelconfig"><code>models</code> — ModelConfig<a class="headerlink" href="#models-modelconfig" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model_id</code></td>
+<td>slug</td>
+<td>yes</td>
+<td>Local name used in artifact paths and reports</td>
+</tr>
+<tr>
+<td><code>label</code></td>
+<td>string</td>
+<td>no</td>
+<td>Human-readable display name</td>
+</tr>
+<tr>
+<td><code>requested_model</code></td>
+<td>string</td>
+<td>no</td>
+<td>OpenRouter model string (e.g. <code>openai/gpt-4o-mini</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Any extra fields are passed through to the runner. The <code>llm_probe</code> runner resolves the model in this priority order: <code>requested_model</code> → <code>openrouter_model</code> → <code>provider</code> + <code>model_name</code> → <code>model_id</code>.</p>
+<p>For OpenClaw campaigns, extra model fields can also carry OpenRouter model parameters. The current benchmark uses <code>primary_params.reasoning.effort</code> to control GPT-5 reasoning on the primary model, for example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">models</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpt55</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">requested_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai/gpt-5.5</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nt">primary_params</span><span class="p">:</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">      </span><span class="nt">reasoning</span><span class="p">:</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">        </span><span class="nt">effort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">medium</span>
+</code></pre></div>
+<h3 id="case_selection"><code>case_selection</code><a class="headerlink" href="#case_selection" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>include_case_ids</code></td>
+<td>list of strings</td>
+<td>Explicit case IDs to include</td>
+</tr>
+<tr>
+<td><code>exclude_case_ids</code></td>
+<td>list of strings</td>
+<td>Explicit case IDs to exclude</td>
+</tr>
+<tr>
+<td><code>include_tags</code></td>
+<td>list of strings</td>
+<td>Include cases that have at least one of these tags</td>
+</tr>
+<tr>
+<td><code>exclude_tags</code></td>
+<td>list of strings</td>
+<td>Exclude cases that have at least one of these tags</td>
+</tr>
+</tbody>
+</table>
+<p>Precedence: <code>include_case_ids</code> &gt; tag filters &gt; <code>exclude_case_ids</code>. Unknown case IDs in <code>include_case_ids</code> are a hard error.</p>
+<h3 id="openclawagent_assignments"><code>openclaw.agent_assignments</code><a class="headerlink" href="#openclawagent_assignments" title="Permanent link">&para;</a></h3>
+<p>Use this when one suite should run different OpenClaw cases with different reusable agents. Each assignment selects cases by ID and/or tag and points them at <code>configs/agents/&lt;agent_id&gt;/</code>. Cases that match no assignment use <code>run_profile.openclaw.agent_id</code> as the default. A case that matches more than one assignment is rejected before execution.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">openclaw</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">agent_assignments</span><span class="p">:</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">agent_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agent_1</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">      </span><span class="nt">case_selection</span><span class="p">:</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">        </span><span class="nt">include_case_ids</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">case_a</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">case_b</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">case_c</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">case_d</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">agent_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agent_2</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">case_selection</span><span class="p">:</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">        </span><span class="nt">include_case_ids</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">case_e</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">case_f</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">agent_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agent_3</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">      </span><span class="nt">case_selection</span><span class="p">:</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">        </span><span class="nt">include_tags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">long_context</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">        </span><span class="nt">exclude_case_ids</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">case_f</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nt">suite_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my_suite</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">My benchmark suite</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nt">models</span><span class="p">:</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpt4o_mini</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="nt">requested_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai/gpt-4o-mini</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GPT-4o mini</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minimax_m27</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="nt">requested_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minimax/minimax-m2.7</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="nt">case_selection</span><span class="p">:</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span><span class="nt">include_tags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">smoke</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">  </span><span class="nt">exclude_case_ids</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">known_flaky_case</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="nt">openclaw</span><span class="p">:</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">  </span><span class="nt">agent_assignments</span><span class="p">:</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">agent_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">support_agent</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">      </span><span class="nt">case_selection</span><span class="p">:</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">        </span><span class="nt">include_tags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">support_agent</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<hr />
+<h2 id="run-profile-run_profileyaml">Run profile (<code>run_profile.yaml</code>)<a class="headerlink" href="#run-profile-run_profileyaml" title="Permanent link">&para;</a></h2>
+<p>Controls execution behavior. A SHA-256 fingerprint of the effective settings scopes campaign storage directories — changing any execution parameter produces a new fingerprint and a new directory.</p>
+<h3 id="top-level-fields_2">Top-level fields<a class="headerlink" href="#top-level-fields_2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schema_version</code></td>
+<td><code>1</code></td>
+<td>yes</td>
+<td>Must be <code>1</code></td>
+</tr>
+<tr>
+<td><code>run_profile_id</code></td>
+<td>slug</td>
+<td>yes</td>
+<td>Unique identifier</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Human-readable label</td>
+</tr>
+<tr>
+<td><code>runner_defaults</code></td>
+<td>mapping</td>
+<td>no</td>
+<td>Default runner settings applied to every case</td>
+</tr>
+<tr>
+<td><code>model_overrides</code></td>
+<td>mapping</td>
+<td>no</td>
+<td>Per-model setting overrides (key = <code>model_id</code>)</td>
+</tr>
+<tr>
+<td><code>execution_policy</code></td>
+<td><code>ExecutionPolicy</code></td>
+<td>no</td>
+<td>Concurrency and error-handling controls</td>
+</tr>
+<tr>
+<td><code>openclaw</code></td>
+<td><code>OpenClawRunProfile</code></td>
+<td>no</td>
+<td>OpenClaw runtime block (agent, image, timeout)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="runner_defaults-model_overrides"><code>runner_defaults</code> / <code>model_overrides</code><a class="headerlink" href="#runner_defaults-model_overrides" title="Permanent link">&para;</a></h3>
+<p>Merge order (later wins): <code>runner_defaults</code> → <code>model_overrides[model_id]</code> → case-level <code>runner:</code> fields.</p>
+<p>Recognized <code>llm_probe</code> fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>temperature</code></td>
+<td>float 0–2</td>
+<td>provider default</td>
+<td>Sampling temperature</td>
+</tr>
+<tr>
+<td><code>top_p</code></td>
+<td>float 0–1</td>
+<td>provider default</td>
+<td>Nucleus sampling</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td>int</td>
+<td>provider default</td>
+<td>Max tokens to generate</td>
+</tr>
+<tr>
+<td><code>seed</code></td>
+<td>int</td>
+<td>null</td>
+<td>Reproducibility seed</td>
+</tr>
+<tr>
+<td><code>timeout_seconds</code></td>
+<td>int</td>
+<td><code>30</code></td>
+<td>Per-request wall-clock timeout</td>
+</tr>
+<tr>
+<td><code>retries</code></td>
+<td>int</td>
+<td><code>5</code></td>
+<td>Retry attempts on transient failures</td>
+</tr>
+<tr>
+<td><code>max_turns</code></td>
+<td>int</td>
+<td><code>8</code></td>
+<td>Max tool-use turns before forcing a final response</td>
+</tr>
+</tbody>
+</table>
+<h3 id="execution_policy"><code>execution_policy</code><a class="headerlink" href="#execution_policy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max_concurrency</code></td>
+<td>int ≥ 1</td>
+<td><code>1</code></td>
+<td>Parallel case executions</td>
+</tr>
+<tr>
+<td><code>run_repetitions</code></td>
+<td>int ≥ 1</td>
+<td><code>1</code></td>
+<td>Runs per <code>(model, case)</code>; each gets a distinct fingerprint</td>
+</tr>
+<tr>
+<td><code>fail_fast</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Stop after the first case failure</td>
+</tr>
+<tr>
+<td><code>stop_on_runner_error</code></td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Stop after the first unrecoverable runner error</td>
+</tr>
+</tbody>
+</table>
+<h3 id="openclaw-block"><code>openclaw</code> block<a class="headerlink" href="#openclaw-block" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agent_id</code></td>
+<td>slug</td>
+<td>yes</td>
+<td>Resolves <code>configs/agents/&lt;agent_id&gt;/</code></td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Pinned OCI image for the <code>openclaw</code> CLI</td>
+</tr>
+<tr>
+<td><code>timeout_seconds</code></td>
+<td>int</td>
+<td>yes</td>
+<td>Wall-clock timeout for the container run</td>
+</tr>
+<tr>
+<td><code>docker_cli</code></td>
+<td>string</td>
+<td>no (default <code>docker</code>)</td>
+<td>OCI runtime CLI (e.g. <code>podman</code>)</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">OpenClaw model routing</p>
+<p>The suite model is mapped to an OpenRouter ref (<code>openrouter/&lt;provider&gt;/&lt;model&gt;</code>) and injected as <code>agents.defaults.model.primary</code> in the generated <code>openclaw.json</code>. Fallbacks are rejected: a benchmark run must execute against exactly one model.</p>
+</div>
+<h3 id="example_1">Example<a class="headerlink" href="#example_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nt">run_profile_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_run</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Standard run profile</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nt">runner_defaults</span><span class="p">:</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span><span class="nt">max_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1024</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span><span class="nt">timeout_seconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">  </span><span class="nt">retries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">  </span><span class="nt">max_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="nt">model_overrides</span><span class="p">:</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">  </span><span class="nt">big_model</span><span class="p">:</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">    </span><span class="nt">max_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4096</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span><span class="nt">timeout_seconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">120</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="nt">execution_policy</span><span class="p">:</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">  </span><span class="nt">max_concurrency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">  </span><span class="nt">run_repetitions</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">  </span><span class="nt">fail_fast</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="w">  </span><span class="nt">stop_on_runner_error</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<hr />
+<h2 id="evaluation-profile-evaluation_profileyaml">Evaluation profile (<code>evaluation_profile.yaml</code>)<a class="headerlink" href="#evaluation-profile-evaluation_profileyaml" title="Permanent link">&para;</a></h2>
+<p>Defines the judges, their repetition plans, aggregation policies, and security controls.</p>
+<h3 id="top-level-fields_3">Top-level fields<a class="headerlink" href="#top-level-fields_3" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schema_version</code></td>
+<td><code>1</code></td>
+<td>yes</td>
+<td>Must be <code>1</code></td>
+</tr>
+<tr>
+<td><code>evaluation_profile_id</code></td>
+<td>slug</td>
+<td>yes</td>
+<td>Unique identifier</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Human-readable label</td>
+</tr>
+<tr>
+<td><code>judges</code></td>
+<td>list of <code>JudgeConfig</code></td>
+<td>no</td>
+<td>Named judge definitions</td>
+</tr>
+<tr>
+<td><code>judge_runs</code></td>
+<td>list of <code>JudgeRunConfig</code></td>
+<td>no</td>
+<td>Execution plans referencing a judge</td>
+</tr>
+<tr>
+<td><code>aggregation</code></td>
+<td><code>JudgeAggregationConfig</code></td>
+<td>no</td>
+<td>How to aggregate judge iterations</td>
+</tr>
+<tr>
+<td><code>anchors</code></td>
+<td><code>AnchorsConfig</code></td>
+<td>no</td>
+<td>Calibration anchors for the judge prompt</td>
+</tr>
+<tr>
+<td><code>security_policy</code></td>
+<td><code>SecurityPolicy</code></td>
+<td>no</td>
+<td>Execution security controls</td>
+</tr>
+<tr>
+<td><code>judge_system_prompt_path</code></td>
+<td>path</td>
+<td>no</td>
+<td>Path to system prompt file, relative to this YAML</td>
+</tr>
+<tr>
+<td><code>judge_system_prompt</code></td>
+<td>string</td>
+<td>no</td>
+<td>Inline system prompt text</td>
+</tr>
+</tbody>
+</table>
+<p><code>judge_system_prompt_path</code> and <code>judge_system_prompt</code> are mutually exclusive.</p>
+<h3 id="judges-judgeconfig"><code>judges</code> — JudgeConfig<a class="headerlink" href="#judges-judgeconfig" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>judge_id</code></td>
+<td>slug</td>
+<td>yes</td>
+<td>Logical name referenced by <code>judge_runs</code></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Judge backend (<code>"llm_probe"</code>)</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>string</td>
+<td>no</td>
+<td>Model to call (e.g. <code>"openai/gpt-5.4-mini"</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Any extra judge fields are passed through as OpenRouter <code>request_options</code>. Use this for request-level controls such as <code>temperature</code> or <code>reasoning.effort</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">judges</span><span class="p">:</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">judge_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpt54_fast_judge</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">llm_probe</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai/gpt-5.4</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="nt">request_options</span><span class="p">:</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">      </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nt">reasoning</span><span class="p">:</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">        </span><span class="nt">effort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
+</code></pre></div>
+<h3 id="judge_runs-judgerunconfig"><code>judge_runs</code> — JudgeRunConfig<a class="headerlink" href="#judge_runs-judgerunconfig" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>judge_run_id</code></td>
+<td>slug</td>
+<td>—</td>
+<td>Unique run identifier</td>
+</tr>
+<tr>
+<td><code>judge_id</code></td>
+<td>slug</td>
+<td>—</td>
+<td>Must match a declared judge</td>
+</tr>
+<tr>
+<td><code>repetitions</code></td>
+<td>int ≥ 1</td>
+<td><code>1</code></td>
+<td>How many times to call the judge per case</td>
+</tr>
+<tr>
+<td><code>sample_size</code></td>
+<td>int or null</td>
+<td><code>null</code></td>
+<td>Subset of repetitions used for aggregation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="aggregation-how-iterations-combine"><code>aggregation</code> — how iterations combine<a class="headerlink" href="#aggregation-how-iterations-combine" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>method</code></td>
+<td><code>"median"</code> / <code>"mean"</code> / <code>"majority_vote"</code> / <code>"all_pass"</code></td>
+<td><code>"median"</code></td>
+<td>Aggregation across successful iterations</td>
+</tr>
+<tr>
+<td><code>pass_threshold</code></td>
+<td>float or null</td>
+<td>null</td>
+<td>Score threshold below which a dimension is considered failed</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title"><code>final_score</code></p>
+<p><code>final_score</code> comes from <code>judge_overall.score</code>. Deterministic checks are informative evidence for the judge and for debugging, but there is no separate weighting policy for the final score.</p>
+</div>
+<h3 id="anchors-calibration-examples"><code>anchors</code> — calibration examples<a class="headerlink" href="#anchors-calibration-examples" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">anchors</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">references</span><span class="p">:</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">anchor_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">perfect_tool_use</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">      </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Perfect</span><span class="nv"> </span><span class="s">tool-use</span><span class="nv"> </span><span class="s">chain&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">      </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Used</span><span class="nv"> </span><span class="s">all</span><span class="nv"> </span><span class="s">three</span><span class="nv"> </span><span class="s">tools</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">order,</span><span class="nv"> </span><span class="s">file</span><span class="nv"> </span><span class="s">contents</span><span class="nv"> </span><span class="s">exact,</span><span class="nv"> </span><span class="s">confirmation</span><span class="nv"> </span><span class="s">clear.&quot;</span>
+</code></pre></div>
+<p>When <code>enabled: true</code>, anchor texts are injected into the judge prompt to help calibrate scoring.</p>
+<h3 id="security_policy"><code>security_policy</code><a class="headerlink" href="#security_policy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>allow_local_python_hooks</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Allow Python hook files in test cases to execute</td>
+</tr>
+<tr>
+<td><code>network_access</code></td>
+<td><code>"deny"</code> / <code>"allow"</code></td>
+<td><code>"deny"</code></td>
+<td>Network access for hook execution</td>
+</tr>
+<tr>
+<td><code>redact_secrets</code></td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Strip known secret patterns from artifact payloads</td>
+</tr>
+</tbody>
+</table>
+<h3 id="full-example">Full example<a class="headerlink" href="#full-example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nt">evaluation_profile_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">judge_gpt4o_mini</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Judge with GPT-4o mini (3 repetitions)</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nt">judge_system_prompt_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prompts/judge_system_default.md</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="nt">judges</span><span class="p">:</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">judge_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main_judge</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">llm_probe</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">    </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai/gpt-4o-mini</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="nt">judge_runs</span><span class="p">:</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">judge_run_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main_run</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">    </span><span class="nt">judge_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main_judge</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">    </span><span class="nt">repetitions</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="nt">aggregation</span><span class="p">:</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">  </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">median</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="nt">anchors</span><span class="p">:</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="nt">security_policy</span><span class="p">:</span>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="w">  </span><span class="nt">allow_local_python_hooks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="w">  </span><span class="nt">network_access</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deny</span>
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="w">  </span><span class="nt">redact_secrets</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<hr />
+<h2 id="openclaw-agent-configsagentsagent_id">OpenClaw agent (<code>configs/agents/&lt;agent_id&gt;/</code>)<a class="headerlink" href="#openclaw-agent-configsagentsagent_id" title="Permanent link">&para;</a></h2>
+<p>A directory-based config surface for OpenClaw benchmarks:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>configs/agents/&lt;agent_id&gt;/
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  agent.yaml
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  workspace/
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    AGENTS.md
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    SOUL.md
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    ...           ← any workspace template files
+</code></pre></div>
+<h3 id="agentyaml-top-level-fields"><code>agent.yaml</code> top-level fields<a class="headerlink" href="#agentyaml-top-level-fields" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schema_version</code></td>
+<td><code>1</code></td>
+<td>yes</td>
+<td>Must be <code>1</code></td>
+</tr>
+<tr>
+<td><code>agent_id</code></td>
+<td>slug</td>
+<td>yes</td>
+<td>Must match the directory name</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>string</td>
+<td>yes</td>
+<td>Human-readable label</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td>no</td>
+<td>Optional summary</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>list</td>
+<td>no</td>
+<td>Free tags</td>
+</tr>
+<tr>
+<td><code>openclaw</code></td>
+<td><code>OpenClawFragments</code></td>
+<td>no</td>
+<td>Fragments merged into generated <code>openclaw.json</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="openclaw-fragments"><code>openclaw</code> fragments<a class="headerlink" href="#openclaw-fragments" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>identity</code></td>
+<td>Not written to <code>openclaw.json</code> (fails strict validation); keep persona in workspace files instead</td>
+</tr>
+<tr>
+<td><code>agents_defaults</code></td>
+<td>Merged into <code>agents.defaults</code></td>
+</tr>
+<tr>
+<td><code>agent</code></td>
+<td>Used to build <code>agents.list[0]</code> (<code>id</code>, <code>prompt</code> → <code>systemPromptOverride</code>)</td>
+</tr>
+<tr>
+<td><code>model_defaults</code></td>
+<td><code>aliases</code> mapped to <code>agents.defaults.models[&lt;primary&gt;].alias</code>; <code>fallbacks</code> are rejected</td>
+</tr>
+</tbody>
+</table>
+<p><code>openclaw.agent.id</code> is used as the agent ID passed to <code>openclaw agent --agent</code>. It can differ from <code>agent_id</code> (e.g. <code>agent_id: support_agent</code> with <code>openclaw.agent.id: support-agent</code>).</p>
+<h3 id="workspace-contract">Workspace contract<a class="headerlink" href="#workspace-contract" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>workspace/</code> must exist beside <code>agent.yaml</code></li>
+<li>The harness copies it into an ephemeral temp directory before each run</li>
+<li>Missing standard files (<code>AGENTS.md</code>, <code>IDENTITY.md</code>, <code>SOUL.md</code>, <code>TOOLS.md</code>, <code>USER.md</code>) are filled with deterministic placeholder content</li>
+<li>The agent fingerprint covers the SHA-256 of every file in <code>workspace/</code> — changing any workspace file invalidates all stored runs for that agent</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.highlight", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
